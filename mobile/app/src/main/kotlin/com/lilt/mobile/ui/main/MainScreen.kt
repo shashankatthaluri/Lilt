@@ -44,6 +44,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -205,6 +206,8 @@ fun MainScreen(
     // Engine settings state
     var activeTone by remember { mutableStateOf(settings.activeTone) }
     var activeLanguageMode by remember { mutableStateOf(settings.activeLanguageMode) }
+    var enabledLanguageCodes by remember { mutableStateOf(settings.enabledLanguageCodes) }
+    var showLanguagePickerDialog by remember { mutableStateOf(false) }
     var spokenNumbers by remember { mutableStateOf(settings.spokenNumbers) }
     var spokenEmoji by remember { mutableStateOf(settings.spokenEmoji) }
     var numberSymbols by remember { mutableStateOf(settings.numberSymbols) }
@@ -802,56 +805,185 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 2b. Language & Script Selector Strip
-            Text(
-                text = "LANGUAGE & SCRIPT MODE",
-                color = NothingTextMuted,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.2.sp,
+            // 2b. Language & Script Selector Strip (Dynamic User-Selected Pool + Bounded Auto Mode)
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 4.dp)
-            )
+                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "LANGUAGE & SCRIPT MODE",
+                    color = NothingTextMuted,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.2.sp
+                )
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(Color(0x1AFFFFFF))
+                        .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(999.dp))
+                        .clickable { showLanguagePickerDialog = true }
+                        .padding(horizontal = 10.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        text = "+ Choose Languages (${enabledLanguageCodes.size})",
+                        color = Color.White,
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 TonePill(
-                    label = "Auto",
+                    label = "Auto (${enabledLanguageCodes.size})",
                     isActive = activeLanguageMode == "auto",
-                    modifier = Modifier.weight(1.1f),
+                    modifier = Modifier.width(96.dp),
                     onClick = {
                         activeLanguageMode = "auto"
                         settings.activeLanguageMode = "auto"
                     }
                 )
+                val enabledLangObjs = enabledLanguageCodes.mapNotNull { SettingsManager.findLanguageByCode(it) }
+                enabledLangObjs.forEach { lang ->
+                    TonePill(
+                        label = lang.shortLabel,
+                        isActive = activeLanguageMode == lang.code,
+                        modifier = Modifier.width(96.dp),
+                        onClick = {
+                            activeLanguageMode = lang.code
+                            settings.activeLanguageMode = lang.code
+                        }
+                    )
+                }
                 TonePill(
-                    label = "English",
-                    isActive = activeLanguageMode == "en",
-                    modifier = Modifier.weight(1.1f),
-                    onClick = {
-                        activeLanguageMode = "en"
-                        settings.activeLanguageMode = "en"
-                    }
+                    label = "+ Add",
+                    isActive = false,
+                    modifier = Modifier.width(76.dp),
+                    onClick = { showLanguagePickerDialog = true }
                 )
-                TonePill(
-                    label = "Tenglish",
-                    isActive = activeLanguageMode == "te_roman",
-                    modifier = Modifier.weight(1.15f),
-                    onClick = {
-                        activeLanguageMode = "te_roman"
-                        settings.activeLanguageMode = "te_roman"
-                    }
-                )
-                TonePill(
-                    label = "Hinglish",
-                    isActive = activeLanguageMode == "hi_roman",
-                    modifier = Modifier.weight(1.1f),
-                    onClick = {
-                        activeLanguageMode = "hi_roman"
-                        settings.activeLanguageMode = "hi_roman"
+            }
+
+            val poolSummary = enabledLanguageCodes.mapNotNull { SettingsManager.findLanguageByCode(it)?.shortLabel }.joinToString(", ")
+            Text(
+                text = if (activeLanguageMode == "auto") {
+                    "Auto locks strictly to: $poolSummary · Say \"Romanized Telugu\" or \"Romanized Hindi\" to force Latin script."
+                } else {
+                    val currentObj = SettingsManager.findLanguageByCode(activeLanguageMode)
+                    "Locked to ${currentObj?.fullName ?: activeLanguageMode} · Say \"Romanized <Language>\" anytime to switch script."
+                },
+                color = NothingTextMuted,
+                fontSize = 10.5.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+            )
+
+            if (showLanguagePickerDialog) {
+                AlertDialog(
+                    onDismissRequest = { showLanguagePickerDialog = false },
+                    containerColor = Color(0xFF141418),
+                    titleContentColor = Color.White,
+                    textContentColor = Color(0xFFD4D4D8),
+                    title = {
+                        Column {
+                            Text(
+                                text = "Select Your Languages",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                color = Color.White
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Auto Mode restricts recognition & text output strictly to the languages you check below. Say \"Romanized Telugu\" or \"Romanized Hindi\" before speaking to automatically output in Latin script.",
+                                fontSize = 12.sp,
+                                color = NothingTextMuted
+                            )
+                        }
+                    },
+                    text = {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(380.dp)
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            SettingsManager.ALL_SUPPORTED_LANGUAGES.forEach { lang ->
+                                val isChecked = enabledLanguageCodes.contains(lang.code)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(if (isChecked) Color(0x26FF3B1F) else Color(0x12FFFFFF))
+                                        .border(
+                                            1.dp,
+                                            if (isChecked) Color(0x88FF3B1F) else Color(0x22FFFFFF),
+                                            RoundedCornerShape(12.dp)
+                                        )
+                                        .clickable {
+                                            val updated = if (isChecked) {
+                                                if (enabledLanguageCodes.size > 1) enabledLanguageCodes - lang.code else enabledLanguageCodes
+                                            } else {
+                                                enabledLanguageCodes + lang.code
+                                            }
+                                            enabledLanguageCodes = updated
+                                            settings.enabledLanguageCodes = updated
+                                            if (activeLanguageMode != "auto" && !updated.contains(activeLanguageMode)) {
+                                                activeLanguageMode = "auto"
+                                                settings.activeLanguageMode = "auto"
+                                            }
+                                        }
+                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = lang.fullName,
+                                            color = Color.White,
+                                            fontSize = 13.5.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            text = if (lang.isRomanized) "Voice trigger: \"Romanized ${lang.baseLanguageName}\"" else "Whisper ISO: ${lang.whisperIsoCode.uppercase()}",
+                                            color = NothingTextMuted,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .size(22.dp)
+                                            .clip(CircleShape)
+                                            .background(if (isChecked) Color(0xFFFF3B1F) else Color(0x22FFFFFF)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (isChecked) {
+                                            Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(Color.White)
+                                .clickable { showLanguagePickerDialog = false }
+                                .padding(horizontal = 18.dp, vertical = 8.dp)
+                        ) {
+                            Text("Done", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
                     }
                 )
             }
@@ -3392,10 +3524,15 @@ fun MainScreen(
                                                         .filter { it.isNotEmpty() }
                                                     val reps = settings.getReplacements().associate { it.heard to it.replacement }
 
+                                                    val directive = CloudCleanupEngine.parseLanguageDirective(
+                                                        sandboxInput,
+                                                        sandboxLangOverride ?: activeLanguageMode,
+                                                        enabledLanguageCodes
+                                                    )
                                                     var result = ""
                                                     if (settings.cloudAiEnabled && settings.cloudApiKey.isNotBlank()) {
                                                         val cloudRes = CloudCleanupEngine.polish(
-                                                            rawText = sandboxInput,
+                                                            rawText = directive.strippedText,
                                                             provider = settings.cloudProvider,
                                                             apiKey = settings.cloudApiKey,
                                                             model = settings.cloudModel,
@@ -3403,7 +3540,8 @@ fun MainScreen(
                                                             customVocabulary = customVocab,
                                                             replacements = reps,
                                                             voiceCommands = settings.getVoiceCommands(),
-                                                            languageMode = sandboxLangOverride ?: activeLanguageMode
+                                                            languageMode = directive.effectiveLanguageMode,
+                                                            enabledLanguages = enabledLanguageCodes
                                                         )
                                                         if (cloudRes.isSuccess) {
                                                             result = cloudRes.getOrThrow()

@@ -227,56 +227,106 @@ object CloudCleanupEngine {
         val wasExplicitDirective: Boolean
     )
 
-    fun parseLanguageDirective(text: String, currentMode: String): LanguageDirectiveResult {
+    fun parseLanguageDirective(
+        text: String,
+        currentMode: String,
+        enabledLanguages: List<String> = listOf("en", "te_roman", "hi_roman")
+    ): LanguageDirectiveResult {
         val trimmed = text.trim()
 
-        // 1. Telugu directives
-        val teluguPatterns = listOf(
-            Regex("(?i)^\\s*(?:romanized|romanised|romanize|romanise)\\s+telugu(?:\\s*[:,\\-—]\\s*|\\s+)", RegexOption.IGNORE_CASE),
-            Regex("(?i)^\\s*(?:write\\s+in\\s+telugu|in\\s+telugu|telugu\\s+lo|telugulo|tenglish)(?:\\s*[:,\\-—]\\s*|\\s+)", RegexOption.IGNORE_CASE)
+        // 1. Explicit "Romanized <Language>" spoken prefix (e.g., "Romanized Telugu ...", "Romanized Hindi ...", "Romanized Tamil ...", "Romanized Arabic ...")
+        val romanizedGeneric = Regex(
+            "(?i)^\\s*(?:in\\s+)?(?:romanized|romanised|romanize|romanise)\\s+([a-zA-Z]+)(?:\\s*[:,\\-—]\\s*|\\s+)",
+            RegexOption.IGNORE_CASE
+        ).find(trimmed)
+        if (romanizedGeneric != null) {
+            val langWord = romanizedGeneric.groupValues[1].lowercase()
+            val remainder = trimmed.substring(romanizedGeneric.range.last + 1).trim()
+            val modeCode = when (langWord) {
+                "telugu", "tenglish" -> "te_roman"
+                "hindi", "hinglish" -> "hi_roman"
+                "tamil", "tanglish" -> "ta_roman"
+                "kannada", "kanglish" -> "kn_roman"
+                "malayalam", "manglish" -> "ml_roman"
+                "marathi", "minglish" -> "mr_roman"
+                "bengali", "bangla", "banglish" -> "bn_roman"
+                "gujarati", "gujlish" -> "gu_roman"
+                "punjabi" -> "pa_roman"
+                "urdu" -> "ur_roman"
+                else -> "romanized_custom:$langWord"
+            }
+            val processed = if (modeCode == "te_roman") transliterateTeluguToRoman(remainder) else remainder
+            return LanguageDirectiveResult(processed, modeCode, true)
+        }
+
+        // 2. Colloquial Romanized / Native shortcuts ("Tenglish ...", "Hinglish ...", "Tanglish ...", "Kanglish ...", "Manglish ...")
+        val colloquialMap = listOf(
+            Regex("(?i)^\\s*(?:tenglish|telugu\\s+lo|telugulo)(?:\\s*[:,\\-—]\\s*|\\s+)") to "te_roman",
+            Regex("(?i)^\\s*(?:hinglish|hindi\\s+mein|hindimein)(?:\\s*[:,\\-—]\\s*|\\s+)") to "hi_roman",
+            Regex("(?i)^\\s*(?:tanglish|tamil\\s+la)(?:\\s*[:,\\-—]\\s*|\\s+)") to "ta_roman",
+            Regex("(?i)^\\s*(?:kanglish)(?:\\s*[:,\\-—]\\s*|\\s+)") to "kn_roman",
+            Regex("(?i)^\\s*(?:manglish)(?:\\s*[:,\\-—]\\s*|\\s+)") to "ml_roman",
+            Regex("(?i)^\\s*(?:minglish)(?:\\s*[:,\\-—]\\s*|\\s+)") to "mr_roman",
+            Regex("(?i)^\\s*(?:banglish)(?:\\s*[:,\\-—]\\s*|\\s+)") to "bn_roman"
         )
-        for (pattern in teluguPatterns) {
+        for ((pattern, modeCode) in colloquialMap) {
             val match = pattern.find(trimmed)
             if (match != null) {
                 val remainder = trimmed.substring(match.range.last + 1).trim()
-                val romanized = transliterateTeluguToRoman(remainder)
-                return LanguageDirectiveResult(romanized, "te_roman", true)
+                val processed = if (modeCode == "te_roman") transliterateTeluguToRoman(remainder) else remainder
+                return LanguageDirectiveResult(processed, modeCode, true)
             }
         }
 
-        // 2. Hindi directives
-        val hindiPatterns = listOf(
-            Regex("(?i)^\\s*(?:romanized|romanised|romanize|romanise)\\s+hindi(?:\\s*[:,\\-—]\\s*|\\s+)", RegexOption.IGNORE_CASE),
-            Regex("(?i)^\\s*(?:write\\s+in\\s+hindi|in\\s+hindi|hindi\\s+mein|hindimein|hinglish)(?:\\s*[:,\\-—]\\s*|\\s+)", RegexOption.IGNORE_CASE)
-        )
-        for (pattern in hindiPatterns) {
-            val match = pattern.find(trimmed)
-            if (match != null) {
-                val remainder = trimmed.substring(match.range.last + 1).trim()
-                return LanguageDirectiveResult(remainder, "hi_roman", true)
+        // 3. Explicit "Write in <Language>" / "In <Language>" spoken prefix
+        val inLangMatch = Regex(
+            "(?i)^\\s*(?:write\\s+in|speak\\s+in|type\\s+in|in)\\s+(english|telugu|hindi|tamil|kannada|malayalam|marathi|bengali|gujarati|punjabi|urdu|spanish|french|german|portuguese|italian|japanese|korean|chinese|mandarin|arabic|russian|turkish|indonesian|vietnamese)(?:\\s*[:,\\-—]\\s*|\\s+)",
+            RegexOption.IGNORE_CASE
+        ).find(trimmed)
+        if (inLangMatch != null) {
+            val langWord = inLangMatch.groupValues[1].lowercase()
+            val remainder = trimmed.substring(inLangMatch.range.last + 1).trim()
+            val resolvedCode = when (langWord) {
+                "english" -> "en"
+                "telugu" -> if (enabledLanguages.contains("te") && !enabledLanguages.contains("te_roman")) "te" else "te_roman"
+                "hindi" -> if (enabledLanguages.contains("hi") && !enabledLanguages.contains("hi_roman")) "hi" else "hi_roman"
+                "tamil" -> if (enabledLanguages.contains("ta") && !enabledLanguages.contains("ta_roman")) "ta" else "ta_roman"
+                "kannada" -> if (enabledLanguages.contains("kn") && !enabledLanguages.contains("kn_roman")) "kn" else "kn_roman"
+                "malayalam" -> if (enabledLanguages.contains("ml") && !enabledLanguages.contains("ml_roman")) "ml" else "ml_roman"
+                "marathi" -> "mr_roman"
+                "bengali" -> "bn_roman"
+                "gujarati" -> "gu_roman"
+                "punjabi" -> "pa_roman"
+                "urdu" -> "ur_roman"
+                "spanish" -> "es"
+                "french" -> "fr"
+                "german" -> "de"
+                "portuguese" -> "pt"
+                "italian" -> "it"
+                "japanese" -> "ja"
+                "korean" -> "ko"
+                "chinese", "mandarin" -> "zh"
+                "arabic" -> "ar"
+                "russian" -> "ru"
+                "turkish" -> "tr"
+                "indonesian" -> "id"
+                "vietnamese" -> "vi"
+                else -> "en"
             }
+            val processed = if (resolvedCode == "te_roman") transliterateTeluguToRoman(remainder) else remainder
+            return LanguageDirectiveResult(processed, resolvedCode, true)
         }
 
-        // 3. English directives
-        val englishPatterns = listOf(
-            Regex("(?i)^\\s*(?:write\\s+in\\s+english|in\\s+english)(?:\\s*[:,\\-—]\\s*|\\s+)", RegexOption.IGNORE_CASE)
-        )
-        for (pattern in englishPatterns) {
-            val match = pattern.find(trimmed)
-            if (match != null) {
-                val remainder = trimmed.substring(match.range.last + 1).trim()
-                return LanguageDirectiveResult(remainder, "en", true)
-            }
-        }
-
-        // 4. Default: If no directive spoken, default to English (or user-selected tab)
-        val effectiveMode = if (currentMode == "auto") "te_roman" else currentMode
-        val processed = if (effectiveMode == "te_roman" || trimmed.any { it in '\u0C00'..'\u0C7F' }) {
+        // 4. Default when no voice prefix was spoken:
+        // Stay in currentMode ("auto" uses the user's bounded enabledLanguages pool, or specific selected tab)
+        val shouldTransliterateTelugu = currentMode == "te_roman" ||
+            (currentMode == "auto" && enabledLanguages.contains("te_roman") && !enabledLanguages.contains("te"))
+        val processed = if (shouldTransliterateTelugu && trimmed.any { it in '\u0C00'..'\u0C7F' }) {
             transliterateTeluguToRoman(trimmed)
         } else {
             trimmed
         }
-        return LanguageDirectiveResult(processed, effectiveMode, false)
+        return LanguageDirectiveResult(processed, currentMode, false)
     }
 
     private fun formatEmailsAndCurrencies(text: String): String {
@@ -340,8 +390,18 @@ object CloudCleanupEngine {
         }
     }
 
-    private fun sanitizePunctuationAndCasing(text: String): String {
-        var result = transliterateTeluguToRoman(text.trim())
+    private fun sanitizePunctuationAndCasing(
+        text: String,
+        languageMode: String = "en",
+        enabledLanguages: List<String> = listOf("en", "te_roman", "hi_roman")
+    ): String {
+        val shouldTransliterateTelugu = languageMode == "te_roman" ||
+            (languageMode == "auto" && enabledLanguages.contains("te_roman") && !enabledLanguages.contains("te"))
+        var result = if (shouldTransliterateTelugu) {
+            transliterateTeluguToRoman(text.trim())
+        } else {
+            text.trim()
+        }
         result = result
             .replace(Regex("\\s+,\\s*"), ", ")
             .replace(Regex(",{2,}"), ",")
@@ -366,7 +426,8 @@ object CloudCleanupEngine {
         customVocabulary: List<String> = emptyList(),
         replacements: Map<String, String> = emptyMap(),
         voiceCommands: List<com.lilt.mobile.data.VoiceCommandItem> = emptyList(),
-        languageMode: String = "en"
+        languageMode: String = "en",
+        enabledLanguages: List<String> = listOf("en", "te_roman", "hi_roman")
     ): Result<String> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank()) {
             return@withContext Result.failure(IllegalArgumentException("Cloud API Key is missing"))
@@ -378,7 +439,14 @@ object CloudCleanupEngine {
         }
 
         try {
-            val systemPrompt = buildSystemPrompt(tone, customVocabulary, replacements, voiceCommands, languageMode)
+            val systemPrompt = buildSystemPrompt(
+                tone = tone,
+                customVocabulary = customVocabulary,
+                replacements = replacements,
+                voiceCommands = voiceCommands,
+                languageMode = languageMode,
+                enabledLanguages = enabledLanguages
+            )
             val jsonPayload = JSONObject().apply {
                 put("model", model)
                 put("temperature", 0.0)
@@ -416,7 +484,7 @@ object CloudCleanupEngine {
                 val respJson = JSONObject(response)
                 val choices = respJson.optJSONArray("choices")
                 val text = choices?.optJSONObject(0)?.optJSONObject("message")?.optString("content")?.trim() ?: rawText
-                val sanitized = sanitizePunctuationAndCasing(text)
+                val sanitized = sanitizePunctuationAndCasing(text, languageMode, enabledLanguages)
                 DiagnosticLogger.log("CloudCleanupEngine", "Success from $provider ($model): sanitized output: '$sanitized'")
                 Result.success(sanitized)
             } else {
@@ -457,7 +525,8 @@ object CloudCleanupEngine {
         customVocabulary: List<String>,
         replacements: Map<String, String>,
         voiceCommands: List<com.lilt.mobile.data.VoiceCommandItem> = emptyList(),
-        languageMode: String = "en"
+        languageMode: String = "en",
+        enabledLanguages: List<String> = listOf("en", "te_roman", "hi_roman")
     ): String {
         val toneInstruction = when (tone.lowercase()) {
             "pro" -> "Format professionally with refined executive vocabulary, precise grammar, and formal sentence structure."
@@ -466,17 +535,17 @@ object CloudCleanupEngine {
             else -> "Format naturally: preserve the speaker's original voice, flow, and intent while ensuring clean punctuation and capitalization."
         }
 
-        val languageInstruction = when (languageMode) {
-            "en" -> """
+        val languageInstruction = when {
+            languageMode == "en" -> """
 
 === STRICT LANGUAGE LOCK: 100% PURE ENGLISH ONLY ===
 - ACTIVE SELECTION: The user has explicitly selected ENGLISH MODE.
 - ABSOLUTE REQUIREMENT: The final output MUST be 100% in the English language.
 - Under NO circumstance should any Telugu, Hindi, Spanish, Welsh, or foreign words appear in the output.
-- If the raw speech contains any Indian words or foreign acoustic misrecognitions, translate or adapt them into natural, standard English.
+- If the raw speech contains any foreign acoustic misrecognitions, translate or adapt them into natural, standard English.
 - Use natural, polished English grammar, spelling, and sentence-level capitalization.
 """
-            "te_roman" -> """
+            languageMode == "te_roman" -> """
 
 === STRICT LANGUAGE LOCK: ROMANIZED TELUGU (TENGLISH) ONLY ===
 - ACTIVE SELECTION: The user has explicitly selected TENGLISH / ROMANIZED TELUGU MODE.
@@ -489,24 +558,17 @@ object CloudCleanupEngine {
   * DO NOT capitalize every word. NEVER use Title Case like "Nenu Repu Morning Office Ki Vasthanu".
   * Use standard natural sentence casing: ONLY capitalize the first letter of the sentence, and proper nouns / acronyms (e.g. 'Hyderabad', 'Google', 'WhatsApp', 'API', 'UI', 'AM', 'PM').
   * All other words MUST be in natural lowercase.
-  * Correct: "Nenu repu morning 10 AM ki office ki vasthanu, client meeting undi."
-  * Incorrect: "Nenu Repu Morning 10 AM Ki Office Ki Vasthanu, Client Meeting Undi." (NEVER DO THIS).
 - NATURAL, MINIMALIST PUNCTUATION:
   * DO NOT insert unnecessary commas between words or short phrases.
   * ONLY add a question mark ('?') if the speaker is genuinely asking a clear question (e.g. "Ela unnaru?", "Eppudu vasthunnav?", "Bhojanam chesara?"). If the speaker is making a statement or giving an update, end with a simple period ('.'), NEVER a question mark.
 - MODERN CONVERSATIONAL SPELLING (WHATSAPP / DAILY TEXTING STYLE):
-  * Statements: "Nenu ippude reach ayyanu.", "Repu morning 10 AM ki meeting undi.", "Work complete ayyaka ping chesthanu.", "Konchem late avvachu.", "Dinner ayyaka matladadam."
-  * Questions: "Ela unnaru?", "Bagunnara?", "Ekkada unnaru?", "Eppudu start avuthunnav?"
   * ZERO MECHANICAL TRANSLITERATIONS OF ENGLISH WORDS:
-    - NEVER output phonetic distortions of English words like 'aaphees', 'sinimaa', 'meeytingu', 'lamch', 'kaaru'.
-    - ALWAYS preserve standard English spelling: 'office', 'cinema', 'meeting', 'lunch', 'car', 'developer', 'project', 'client', 'call', 'update', 'status', 'laptop', 'bug', 'deploy', 'presentation', 'hospital', 'doctor', 'flight', 'ticket'.
+    - ALWAYS preserve standard English spelling: 'office', 'cinema', 'meeting', 'lunch', 'car', 'developer', 'project', 'client', 'call', 'update', 'status', 'laptop', 'bug', 'deploy'.
   * TELUGU POSTPOSITION DETACHMENT:
-    - Keep Telugu postposition suffixes separated from English words by a space: 'office ki' (not 'officeki'), 'meeting lo' (not 'meetinglo'), 'client tho' (not 'clienttho'), 'call cheyali' (not 'callcheyali').
-  * HIGH-FREQUENCY WHATSAPP ORTHOGRAPHY:
-    - ALWAYS prefer: 'ivala' (not 'eevala' or 'Iwala'), 'eppudu' (not 'epudu'), 'enduku' (not 'yendhuku'), 'ekkada' (not 'yekkada'), 'vellali' (not 'velarali'), 'avutundi' (not 'out thundi').
+    - Keep Telugu postposition suffixes separated from English words by a space: 'office ki' (not 'officeki'), 'meeting lo' (not 'meetinglo'), 'client tho' (not 'clienttho').
   * Remove Telugu verbal hesitation fillers ('ante', 'adi', 'mari', 'chudu', 'chudandi', 'vachesi', 'um', 'uh').
 """
-            "hi_roman" -> """
+            languageMode == "hi_roman" -> """
 
 === STRICT LANGUAGE LOCK: ROMANIZED HINDI (HINGLISH) ONLY ===
 - ACTIVE SELECTION: The user has explicitly selected HINGLISH / ROMANIZED HINDI MODE.
@@ -517,30 +579,66 @@ object CloudCleanupEngine {
   * If the input transcript contains Devanagari script (e.g. 'आप कैसे हो' or 'कल सुबह मीटिंग करते हैं'), you MUST TRANSLITERATE it into modern Romanized conversational Hinglish immediately (e.g. 'Aap kaise ho', 'Kal subah meeting karte hain').
 - NATURAL SENTENCE CASING (STRICT NO TITLE-CASING RULE):
   * DO NOT capitalize every word. Never use Title Case like "Aap Kaise Ho Kya Chal Raha Hai".
-  * Use standard natural sentence casing: ONLY capitalize the first letter of the sentence, and proper nouns / acronyms (e.g. 'Delhi', 'Mumbai', 'Google', 'WhatsApp', 'API', 'UI', 'AM', 'PM').
-  * All other words MUST be in natural lowercase.
+  * Use standard natural sentence casing: ONLY capitalize the first letter of the sentence, and proper nouns / acronyms.
 - NATURAL, MINIMALIST PUNCTUATION:
-  * DO NOT insert unnecessary commas between words or short phrases.
-  * ONLY add a question mark ('?') if the speaker is asking an actual question (e.g. "Aap kaise ho?", "Kya chal raha hai?", "Kahan par ho?"). For statements, always end with a simple period ('.').
-- MODERN CONVERSATIONAL SPELLING (WHATSAPP / DAILY TEXTING STYLE):
-  * Statements: "Main abhi office pahunch gaya.", "Kal subah 10 AM ko meeting karte hain.", "Mujhe project update bhej do.", "Kaam khatam karke call karta hoon.", "Thoda late ho sakta hai."
-  * Questions: "Aap kaise ho?", "Kya chal raha hai?", "Kahan par ho?", "Kab tak aaoge?"
-  * Keep all English words in standard English spelling (e.g. 'meeting', 'project', 'client', 'call', 'office', 'update', 'status', 'laptop', 'developer').
+  * ONLY add a question mark ('?') if the speaker is asking an actual question (e.g. "Aap kaise ho?", "Kya chal raha hai?"). For statements, always end with a simple period ('.').
+  * Keep all English words in standard English spelling ('meeting', 'project', 'client', 'call', 'office', 'update', 'status').
   * Remove Hindi verbal hesitation fillers ('matlab', 'woh', 'haan', 'arre', 'um', 'uh').
 """
-            else -> """
+            languageMode.startsWith("romanized_custom:") || languageMode.endsWith("_roman") -> {
+                val langObj = com.lilt.mobile.data.SettingsManager.findLanguageByCode(languageMode)
+                val langName = langObj?.baseLanguageName ?: languageMode.removePrefix("romanized_custom:").replaceFirstChar { it.uppercaseChar() }
+                """
 
-=== STRICT LANGUAGE LOCK: THREE-LANGUAGE SYSTEM (AUTO MODE) ===
-- In AUTO MODE, the user's speech is guaranteed to be ONE of these THREE languages:
-  1. Pure English
-  2. Tenglish (Romanized Telugu + English)
-  3. Hinglish (Romanized Hindi + English)
-- STABLE LANGUAGE LOCK: Classify the entire utterance into exactly ONE of these three languages. Output MUST consist strictly of that single language mode.
-- ABSOLUTE SCRIPT RULE: Output EXCLUSIVELY in the Roman alphabet (Latin/English letters). NEVER output native Telugu script (తెలుగు) and NEVER output Devanagari script (देवनागरी). If the input contains any native Indian script, TRANSLITERATE it into Roman script immediately.
-- ZERO UNRELATED FOREIGN LANGUAGES: Under NO circumstance output any other language (no Welsh, Turkish, Arabic, German, Spanish, French, Chinese, or East Asian words). If acoustic noise produced foreign tokens in the raw transcript, discard them and output only in the detected language (English, Tenglish, or Hinglish).
+=== STRICT LANGUAGE LOCK: ROMANIZED ${langName.uppercase()} (LATIN SCRIPT) ONLY ===
+- ACTIVE SELECTION: The user has explicitly requested ROMANIZED $langName (Latin alphabet transliteration + English).
+- ABSOLUTE SCRIPT RULE: Output EXCLUSIVELY in the Roman alphabet (English/Latin letters A-Z, a-z).
+  * NEVER output native non-Latin script for $langName.
+  * If the raw transcript contains native $langName script, you MUST TRANSLITERATE it into modern, natural conversational Romanized $langName immediately.
+  * Preserve all English loanwords in standard English spelling (e.g. 'office', 'meeting', 'project', 'call', 'update', 'laptop').
+- NATURAL SENTENCE CASING: Capitalize ONLY the first letter of the sentence and proper nouns. NEVER capitalize every word.
+- ZERO UNRELATED FOREIGN LANGUAGES: Output strictly in Romanized $langName and English.
+"""
+            }
+            languageMode != "auto" -> {
+                val langObj = com.lilt.mobile.data.SettingsManager.findLanguageByCode(languageMode)
+                val langName = langObj?.fullName ?: languageMode
+                """
+
+=== STRICT LANGUAGE LOCK: ${langName.uppercase()} ONLY ===
+- ACTIVE SELECTION: The user has explicitly selected $langName.
+- ABSOLUTE REQUIREMENT: The final output MUST be strictly in $langName (preserving standard English technical loanwords if naturally spoken).
+- Under NO circumstance should unrelated foreign languages appear in the output.
+- Use natural, polished grammar, native orthography, and clean sentence-level punctuation.
+"""
+            }
+            else -> {
+                val enabledObjs = enabledLanguages.mapNotNull { com.lilt.mobile.data.SettingsManager.findLanguageByCode(it) }
+                    .ifEmpty { listOfNotNull(com.lilt.mobile.data.SettingsManager.findLanguageByCode("en")) }
+                val bulletList = enabledObjs.mapIndexed { idx, lang ->
+                    val scriptNote = if (lang.isRomanized) " [MUST output in Roman/Latin alphabet A-Z ONLY — NEVER native script]" else ""
+                    "  ${idx + 1}. ${lang.fullName}$scriptNote"
+                }.joinToString("\n")
+                val namesSummary = enabledObjs.joinToString(", ") { it.fullName }
+                val allRomanOnly = enabledObjs.all { it.code == "en" || it.isRomanized || it.whisperIsoCode in listOf("es", "fr", "de", "pt", "it", "nl", "tr", "id", "vi", "pl") }
+                val scriptRule = if (allRomanOnly) {
+                    "- ABSOLUTE SCRIPT RULE: Every language in the user's selected pool uses the Roman/Latin alphabet. Output EXCLUSIVELY in Latin letters — if the raw transcript contains any native Indian or non-Latin script (such as తెలుగు or देवनागरी), TRANSLITERATE it into clean Roman script immediately."
+                } else {
+                    "- SCRIPT RULE: For any Romanized language in the list above, output strictly in the Roman/Latin alphabet. For Native-script languages in the list, use their standard native script."
+                }
+                """
+
+=== STRICT BOUNDED AUTO MODE: USER'S SELECTED LANGUAGES ONLY ===
+- The user has configured AUTO MODE to listen and output EXCLUSIVELY in the following selected language(s):
+$bulletList
+- STABLE LANGUAGE LOCK: Classify the utterance into one of the user's selected languages above ($namesSummary) and output strictly in that language mode.
+- ZERO UNSELECTED LANGUAGES: Under NO circumstance output any language that is NOT in the numbered list above (for example, never output random Welsh, Galician, Turkish, Arabic, or unselected languages due to mic noise). If acoustic noise produced foreign tokens outside ($namesSummary), adapt or discard them so the output remains 100% within ($namesSummary).
+$scriptRule
+- VOICE PREFIX OVERRIDE: If the transcript starts with "Romanized <Language>" (e.g. "Romanized Telugu", "Romanized Hindi", "Romanized Tamil") or "In <Language>", strip that prefix phrase and format the output in that exact requested language and script.
 - STRICT NO TITLE-CASING: Normal sentence casing only. Capitalize ONLY the first letter of the sentence and proper nouns. NEVER capitalize every word.
 - NATURAL PUNCTUATION: Use '?' only for genuine questions; use '.' for statements. No random commas.
 """
+            }
         }
 
         val vocabSection = if (customVocabulary.isNotEmpty()) {
@@ -662,26 +760,20 @@ Carefully inspect the opening utterance of the user's transcript for voice forma
      * 10-digit phone numbers: When spoken in chunks (e.g. "double 9 double 8 63 triple 5 8" or "9 8 4 9 0 1 2 3 4 5"), ALWAYS fuse into a single unbroken 10-digit phone number: "9988635558".
      * OTPs / Codes: Fuse without spaces ("4499222").
 
-7. SPOKEN LANGUAGE DIRECTIVES (VOICE-TRIGGERED LANGUAGE SWITCHING):
-   - ROMANIZED TELUGU (TENGLISH):
-     * Triggers: Starts with or contains phrases like "romanized telugu", "romanize telugu", "in telugu", "tenglish", "telugu lo", "write in telugu".
+7. SPOKEN LANGUAGE DIRECTIVES (VOICE-TRIGGERED LANGUAGE & SCRIPT SWITCHING):
+   - ROMANIZED <LANGUAGE> (e.g., "Romanized Telugu", "Romanized Hindi", "Romanized Tamil", "Romanized Kannada", "Romanized Malayalam", "Romanized Marathi", "Romanized Bengali", "Romanized Gujarati", "Romanized Punjabi", "Romanized Urdu"):
+     * Triggers: Starts with or contains phrases like "romanized telugu", "romanized hindi", "romanized tamil", "romanized <language>", "tenglish", "hinglish", "tanglish", "kanglish", "manglish".
      * Actions:
-       - STRIP the language command phrase completely (never repeat "romanized telugu" or "in telugu" in the output).
-       - Transcribe & format the speech strictly in Modern Conversational Romanized Telugu (Tenglish) + English (WhatsApp texting style).
-       - Never output native Telugu script (తెలుగు). Transliterate all Telugu words into clean Latin letters (e.g. "Office ki velthunnanu", "Cinema choodataniki veldam vastava?").
+       - STRIP the language command phrase completely (never repeat "romanized telugu" or "romanized hindi" in the output).
+       - Transcribe & format the speech strictly in Modern Conversational Romanized <Language> + English (WhatsApp texting style) using EXCLUSIVELY the Latin alphabet (A-Z, a-z).
+       - Never output native non-Latin script when "Romanized <Language>" is requested.
        - Natural sentence casing only. Never Title Case every word.
-   - ROMANIZED HINDI (HINGLISH):
-     * Triggers: Starts with or contains phrases like "romanized hindi", "romanize hindi", "in hindi", "hinglish", "hindi mein", "write in hindi".
-     * Actions:
-       - STRIP the language command phrase completely.
-       - Transcribe & format strictly in Modern Conversational Romanized Hindi (Hinglish) + English.
-       - Never output Devanagari script. Natural sentence casing only.
-   - PURE ENGLISH DIRECTIVE:
-     * Triggers: Starts with "in english" or "write in english".
-     * Actions: STRIP the trigger phrase and format 100% in pure English.
+   - IN <LANGUAGE> DIRECTIVE:
+     * Triggers: Starts with "in english", "write in english", "in spanish", "in french", "in german", "in hindi", "in telugu", "in tamil", etc.
+     * Actions: STRIP the trigger phrase and format strictly in the requested language.
 
 8. DEFAULT MODE (No language directive detected):
-   - If no language directive is spoken, the default output MUST be 100% in PURE ENGLISH (unless user explicitly selected Tenglish/Hinglish mode).
+   - If no language directive is spoken, strictly follow the ACTIVE LANGUAGE LOCK / BOUNDED AUTO MODE rules below.
    - If no formatting directive is present, format normally:
      * Remove all verbal fillers and hesitations ('um', 'uh', 'like', 'you know', repeated stutter words).
      * Add precise punctuation and capitalization.

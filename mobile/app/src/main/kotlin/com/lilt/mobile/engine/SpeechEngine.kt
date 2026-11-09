@@ -259,23 +259,29 @@ class SpeechEngine(private val context: Context) {
                     bitsPerSample = 16
                 )
 
-                // Language hint and acoustic prompt for Whisper matched to active mode
-                val (langHint, whisperPrompt) = when (settings.activeLanguageMode) {
-                    "en" -> Pair(
-                        "en",
-                        "Natural, clean English conversational dictation. Only English."
+                // Language hint and acoustic prompt for Whisper matched to active mode or user's selected Auto pool
+                val enabledLangs = settings.getEnabledLanguages()
+                val enabledCodes = settings.enabledLanguageCodes
+                val (langHint, whisperPrompt) = if (settings.activeLanguageMode != "auto") {
+                    val selected = SettingsManager.findLanguageByCode(settings.activeLanguageMode)
+                    Pair(
+                        selected?.whisperIsoCode ?: "en",
+                        "${selected?.sampleWhisperPrompt ?: "Natural conversational dictation."} Spoken strictly in ${selected?.baseLanguageName ?: "English"}."
                     )
-                    "te_roman" -> Pair(
-                        "te",
-                        "Modern conversational Romanized Telugu and English (Tenglish): Ela unnaru, bagunnara, nenu ippude reach ayyanu, repu morning meeting undi, time ki randi, office lo unnanu. Strictly Telugu and English only."
+                } else if (enabledLangs.size == 1) {
+                    val single = enabledLangs.first()
+                    Pair(
+                        single.whisperIsoCode,
+                        "${single.sampleWhisperPrompt} Spoken strictly in ${single.baseLanguageName}."
                     )
-                    "hi_roman" -> Pair(
-                        "hi",
-                        "Modern conversational Romanized Hindi and English (Hinglish): Aap kaise ho, kya chal raha hai, kal subah meeting karte hain, main abhi office pahunch gaya, mujhe update bhej do. Strictly Hindi and English only."
-                    )
-                    else -> Pair(
-                        null,
-                        "Conversational dictation in English, Romanized Telugu (Tenglish: Ela unnaru, bagunnara, nenu reach ayyanu, repu meeting undi), or Romanized Hindi (Hinglish: Aap kaise ho, kal meeting karte hain, main office pahunch gaya). Spoken strictly in English, Telugu, or Hindi."
+                } else {
+                    val distinctIsos = enabledLangs.map { it.whisperIsoCode }.distinct()
+                    val isoHint = if (distinctIsos.size == 1) distinctIsos.first() else null
+                    val namesList = enabledLangs.joinToString(", ") { it.fullName }
+                    val samplesList = enabledLangs.joinToString(" | ") { it.sampleWhisperPrompt }
+                    Pair(
+                        isoHint,
+                        "Conversational dictation strictly in ($namesList): $samplesList"
                     )
                 }
                 val topRegionalVocab = listOf(
@@ -318,8 +324,8 @@ class SpeechEngine(private val context: Context) {
                 DiagnosticLogger.log(tag, "Whisper Raw Result: '$rawText'")
                 listener?.onPartialResult("Polishing with Qwen…")
 
-                // Detect Voice-Triggered Language Directive ("Romanized Telugu...", "In Hindi...", etc.)
-                val directive = CloudCleanupEngine.parseLanguageDirective(rawText, settings.activeLanguageMode)
+                // Detect Voice-Triggered Language Directive ("Romanized Telugu...", "Romanized Hindi...", "In Spanish...", etc.)
+                val directive = CloudCleanupEngine.parseLanguageDirective(rawText, settings.activeLanguageMode, enabledCodes)
                 val textToClean = directive.strippedText
                 val effectiveLangMode = directive.effectiveLanguageMode
 
@@ -340,7 +346,8 @@ class SpeechEngine(private val context: Context) {
                         customVocabulary = customVocabList,
                         replacements = replacementMap,
                         voiceCommands = settings.getVoiceCommands(),
-                        languageMode = effectiveLangMode
+                        languageMode = effectiveLangMode,
+                        enabledLanguages = enabledCodes
                     )
 
                     if (polishResult.isSuccess) {
@@ -348,8 +355,11 @@ class SpeechEngine(private val context: Context) {
                     }
                 }
 
+                val shouldTransliterateTelugu = effectiveLangMode == "te_roman" ||
+                    (effectiveLangMode == "auto" && enabledCodes.contains("te_roman") && !enabledCodes.contains("te"))
+
                 if (cleanedText.isBlank()) {
-                    val rawCleaned = if (textToClean.any { it in '\u0C00'..'\u0C7F' } || effectiveLangMode == "te_roman") {
+                    val rawCleaned = if (shouldTransliterateTelugu && textToClean.any { it in '\u0C00'..'\u0C7F' }) {
                         CloudCleanupEngine.transliterateTeluguToRoman(textToClean)
                     } else textToClean
 
@@ -365,7 +375,7 @@ class SpeechEngine(private val context: Context) {
                     )
                 }
 
-                if (cleanedText.any { it in '\u0C00'..'\u0C7F' } || effectiveLangMode == "te_roman") {
+                if (shouldTransliterateTelugu && cleanedText.any { it in '\u0C00'..'\u0C7F' }) {
                     cleanedText = CloudCleanupEngine.transliterateTeluguToRoman(cleanedText)
                 }
 
@@ -481,8 +491,9 @@ class SpeechEngine(private val context: Context) {
 
                             val replacementMap = settings.getReplacements().associate { it.heard to it.replacement }
 
-                            // Detect Voice-Triggered Language Directive ("Romanized Telugu...", "In Hindi...", etc.)
-                            val directive = CloudCleanupEngine.parseLanguageDirective(rawText, settings.activeLanguageMode)
+                            // Detect Voice-Triggered Language Directive ("Romanized Telugu...", "Romanized Hindi...", "In Spanish...", etc.)
+                            val enabledCodes = settings.enabledLanguageCodes
+                            val directive = CloudCleanupEngine.parseLanguageDirective(rawText, settings.activeLanguageMode, enabledCodes)
                             val textToClean = directive.strippedText
                             val effectiveLangMode = directive.effectiveLanguageMode
 
@@ -498,15 +509,19 @@ class SpeechEngine(private val context: Context) {
                                     customVocabulary = customVocabList,
                                     replacements = replacementMap,
                                     voiceCommands = settings.getVoiceCommands(),
-                                    languageMode = effectiveLangMode
+                                    languageMode = effectiveLangMode,
+                                    enabledLanguages = enabledCodes
                                 )
                                 if (cloudResult.isSuccess) {
                                     cleanedText = cloudResult.getOrThrow()
                                 }
                             }
 
+                            val shouldTransliterateTelugu = effectiveLangMode == "te_roman" ||
+                                (effectiveLangMode == "auto" && enabledCodes.contains("te_roman") && !enabledCodes.contains("te"))
+
                             if (cleanedText.isBlank()) {
-                                val rawCleaned = if (textToClean.any { it in '\u0C00'..'\u0C7F' } || effectiveLangMode == "te_roman") {
+                                val rawCleaned = if (shouldTransliterateTelugu && textToClean.any { it in '\u0C00'..'\u0C7F' }) {
                                     CloudCleanupEngine.transliterateTeluguToRoman(textToClean)
                                 } else textToClean
 
@@ -522,7 +537,7 @@ class SpeechEngine(private val context: Context) {
                                 )
                             }
 
-                            if (cleanedText.any { it in '\u0C00'..'\u0C7F' } || effectiveLangMode == "te_roman") {
+                            if (shouldTransliterateTelugu && cleanedText.any { it in '\u0C00'..'\u0C7F' }) {
                                 cleanedText = CloudCleanupEngine.transliterateTeluguToRoman(cleanedText)
                             }
 

@@ -156,6 +156,17 @@ data class ReminderItem(
 
 
 
+data class LiltLanguage(
+    val code: String,
+    val shortLabel: String,
+    val fullName: String,
+    val whisperIsoCode: String,
+    val androidLocaleTag: String,
+    val isRomanized: Boolean = false,
+    val baseLanguageName: String,
+    val sampleWhisperPrompt: String
+)
+
 class SettingsManager(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences("lilt_settings", Context.MODE_PRIVATE)
@@ -182,11 +193,40 @@ class SettingsManager(context: Context) {
         get() = prefs.getString(KEY_LANGUAGE_MODE, "auto") ?: "auto"
         set(value) = prefs.edit().putString(KEY_LANGUAGE_MODE, value).apply()
 
-    fun getRecognitionLanguageTag(): String = when (activeLanguageMode) {
-        "te_roman" -> "te-IN"
-        "hi_roman" -> "hi-IN"
-        "en" -> "en-US"
-        else -> "te-IN" // Captures Telugu/Tenglish & English loanwords natively without mutilating into English homophones
+    /**
+     * User-selected languages that Auto Mode is strictly bounded to.
+     * Defaults to ["en", "te_roman", "hi_roman"] so out-of-the-box English, Tenglish, and Hinglish work immediately,
+     * while allowing users to select any combination of Whisper's top languages.
+     */
+    var enabledLanguageCodes: List<String>
+        get() {
+            val raw = prefs.getString(KEY_ENABLED_LANGUAGES, null)
+            if (raw.isNullOrBlank()) return listOf("en", "te_roman", "hi_roman")
+            val parsed = raw.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+            return if (parsed.isEmpty()) listOf("en") else parsed
+        }
+        set(value) {
+            val safe = if (value.isEmpty()) listOf("en") else value.distinct()
+            prefs.edit().putString(KEY_ENABLED_LANGUAGES, safe.joinToString(",")).apply()
+        }
+
+    fun getEnabledLanguages(): List<LiltLanguage> {
+        val codes = enabledLanguageCodes
+        return codes.mapNotNull { findLanguageByCode(it) }.ifEmpty {
+            listOfNotNull(findLanguageByCode("en"))
+        }
+    }
+
+    fun getRecognitionLanguageTag(): String {
+        if (activeLanguageMode != "auto") {
+            return findLanguageByCode(activeLanguageMode)?.androidLocaleTag ?: "en-US"
+        }
+        val enabled = getEnabledLanguages()
+        if (enabled.size == 1) return enabled.first().androidLocaleTag
+        // If Telugu/Tenglish is in the user's enabled pool, te-IN captures both Telugu and English loanwords cleanly on Android
+        if (enabled.any { it.whisperIsoCode == "te" }) return "te-IN"
+        if (enabled.any { it.whisperIsoCode == "hi" }) return "hi-IN"
+        return enabled.firstOrNull()?.androidLocaleTag ?: "en-US"
     }
 
     var spokenNumbers: Boolean
@@ -626,6 +666,7 @@ class SettingsManager(context: Context) {
         private const val KEY_CLEANUP_LEVEL = "cleanup_level"
         private const val KEY_ACTIVE_TONE = "active_tone"
         private const val KEY_LANGUAGE_MODE = "active_language_mode"
+        private const val KEY_ENABLED_LANGUAGES = "enabled_language_codes"
         private const val KEY_SPOKEN_NUMBERS = "spoken_numbers"
         private const val KEY_SPOKEN_EMOJI = "spoken_emoji"
         private const val KEY_NUMBER_SYMBOLS = "number_symbols"
@@ -658,6 +699,309 @@ class SettingsManager(context: Context) {
 
 
         val historyUpdatedFlow = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+        /**
+         * Curated catalog of top languages supported by Groq Whisper Large-v3-Turbo & Qwen 3,
+         * including Romanized (Latin script) and Native Script modes.
+         */
+        val ALL_SUPPORTED_LANGUAGES: List<LiltLanguage> = listOf(
+            // Primary & Romanized Indian Languages
+            LiltLanguage(
+                code = "en",
+                shortLabel = "English",
+                fullName = "English",
+                whisperIsoCode = "en",
+                androidLocaleTag = "en-US",
+                isRomanized = false,
+                baseLanguageName = "English",
+                sampleWhisperPrompt = "Natural, clean English conversational dictation."
+            ),
+            LiltLanguage(
+                code = "te_roman",
+                shortLabel = "Tenglish",
+                fullName = "Romanized Telugu (Tenglish)",
+                whisperIsoCode = "te",
+                androidLocaleTag = "te-IN",
+                isRomanized = true,
+                baseLanguageName = "Telugu",
+                sampleWhisperPrompt = "Modern conversational Romanized Telugu and English (Tenglish): Ela unnaru, bagunnara, nenu ippude reach ayyanu, repu morning meeting undi, time ki randi."
+            ),
+            LiltLanguage(
+                code = "hi_roman",
+                shortLabel = "Hinglish",
+                fullName = "Romanized Hindi (Hinglish)",
+                whisperIsoCode = "hi",
+                androidLocaleTag = "hi-IN",
+                isRomanized = true,
+                baseLanguageName = "Hindi",
+                sampleWhisperPrompt = "Modern conversational Romanized Hindi and English (Hinglish): Aap kaise ho, kya chal raha hai, kal subah meeting karte hain, main abhi office pahunch gaya."
+            ),
+            LiltLanguage(
+                code = "ta_roman",
+                shortLabel = "Tanglish",
+                fullName = "Romanized Tamil (Tanglish)",
+                whisperIsoCode = "ta",
+                androidLocaleTag = "ta-IN",
+                isRomanized = true,
+                baseLanguageName = "Tamil",
+                sampleWhisperPrompt = "Modern conversational Romanized Tamil and English (Tanglish): Epdi irukinga, naalaikku morning meeting irukku, office vandhuten."
+            ),
+            LiltLanguage(
+                code = "kn_roman",
+                shortLabel = "Kanglish",
+                fullName = "Romanized Kannada (Kanglish)",
+                whisperIsoCode = "kn",
+                androidLocaleTag = "kn-IN",
+                isRomanized = true,
+                baseLanguageName = "Kannada",
+                sampleWhisperPrompt = "Modern conversational Romanized Kannada and English (Kanglish): Hegiddira, naale morning meeting ide, office ge bandidini."
+            ),
+            LiltLanguage(
+                code = "ml_roman",
+                shortLabel = "Manglish",
+                fullName = "Romanized Malayalam (Manglish)",
+                whisperIsoCode = "ml",
+                androidLocaleTag = "ml-IN",
+                isRomanized = true,
+                baseLanguageName = "Malayalam",
+                sampleWhisperPrompt = "Modern conversational Romanized Malayalam and English (Manglish): Sukhamano, naale morning meeting undu, office ethi."
+            ),
+            LiltLanguage(
+                code = "mr_roman",
+                shortLabel = "Minglish",
+                fullName = "Romanized Marathi (Minglish)",
+                whisperIsoCode = "mr",
+                androidLocaleTag = "mr-IN",
+                isRomanized = true,
+                baseLanguageName = "Marathi",
+                sampleWhisperPrompt = "Modern conversational Romanized Marathi and English: Kase aahat, udya sakali meeting aahe, mi office la pohochlo."
+            ),
+            LiltLanguage(
+                code = "bn_roman",
+                shortLabel = "Banglish",
+                fullName = "Romanized Bengali (Banglish)",
+                whisperIsoCode = "bn",
+                androidLocaleTag = "bn-IN",
+                isRomanized = true,
+                baseLanguageName = "Bengali",
+                sampleWhisperPrompt = "Modern conversational Romanized Bengali and English: Kemon achen, agamikal sokale meeting ache, ami office e pouche gechi."
+            ),
+            LiltLanguage(
+                code = "gu_roman",
+                shortLabel = "Gujlish",
+                fullName = "Romanized Gujarati",
+                whisperIsoCode = "gu",
+                androidLocaleTag = "gu-IN",
+                isRomanized = true,
+                baseLanguageName = "Gujarati",
+                sampleWhisperPrompt = "Modern conversational Romanized Gujarati and English: Kem cho, kale savare meeting che, hu office pahochi gayo."
+            ),
+            LiltLanguage(
+                code = "pa_roman",
+                shortLabel = "Punjabi (Rom)",
+                fullName = "Romanized Punjabi",
+                whisperIsoCode = "pa",
+                androidLocaleTag = "pa-IN",
+                isRomanized = true,
+                baseLanguageName = "Punjabi",
+                sampleWhisperPrompt = "Modern conversational Romanized Punjabi and English: Ki haal hai, kal savere meeting hai."
+            ),
+            LiltLanguage(
+                code = "ur_roman",
+                shortLabel = "Urdu (Rom)",
+                fullName = "Romanized Urdu",
+                whisperIsoCode = "ur",
+                androidLocaleTag = "ur-PK",
+                isRomanized = true,
+                baseLanguageName = "Urdu",
+                sampleWhisperPrompt = "Modern conversational Romanized Urdu and English: Aap kaise hain, kal subah meeting hai."
+            ),
+            // Native Script Indian Languages
+            LiltLanguage(
+                code = "te",
+                shortLabel = "తెలుగు",
+                fullName = "Telugu (Native Script తెలుగు)",
+                whisperIsoCode = "te",
+                androidLocaleTag = "te-IN",
+                isRomanized = false,
+                baseLanguageName = "Telugu",
+                sampleWhisperPrompt = "Conversational Telugu dictation in native Telugu script."
+            ),
+            LiltLanguage(
+                code = "hi",
+                shortLabel = "हिन्दी",
+                fullName = "Hindi (Native Script हिन्दी)",
+                whisperIsoCode = "hi",
+                androidLocaleTag = "hi-IN",
+                isRomanized = false,
+                baseLanguageName = "Hindi",
+                sampleWhisperPrompt = "Conversational Hindi dictation in native Devanagari script."
+            ),
+            LiltLanguage(
+                code = "ta",
+                shortLabel = "தமிழ்",
+                fullName = "Tamil (Native Script தமிழ்)",
+                whisperIsoCode = "ta",
+                androidLocaleTag = "ta-IN",
+                isRomanized = false,
+                baseLanguageName = "Tamil",
+                sampleWhisperPrompt = "Conversational Tamil dictation in native Tamil script."
+            ),
+            LiltLanguage(
+                code = "kn",
+                shortLabel = "ಕನ್ನಡ",
+                fullName = "Kannada (Native Script ಕನ್ನಡ)",
+                whisperIsoCode = "kn",
+                androidLocaleTag = "kn-IN",
+                isRomanized = false,
+                baseLanguageName = "Kannada",
+                sampleWhisperPrompt = "Conversational Kannada dictation in native Kannada script."
+            ),
+            LiltLanguage(
+                code = "ml",
+                shortLabel = "മലയാളം",
+                fullName = "Malayalam (Native Script മലയാളം)",
+                whisperIsoCode = "ml",
+                androidLocaleTag = "ml-IN",
+                isRomanized = false,
+                baseLanguageName = "Malayalam",
+                sampleWhisperPrompt = "Conversational Malayalam dictation in native Malayalam script."
+            ),
+            // Global Tier-1 Whisper Languages
+            LiltLanguage(
+                code = "es",
+                shortLabel = "Spanish",
+                fullName = "Spanish (Español)",
+                whisperIsoCode = "es",
+                androidLocaleTag = "es-ES",
+                isRomanized = false,
+                baseLanguageName = "Spanish",
+                sampleWhisperPrompt = "Dictado conversacional natural en español."
+            ),
+            LiltLanguage(
+                code = "fr",
+                shortLabel = "French",
+                fullName = "French (Français)",
+                whisperIsoCode = "fr",
+                androidLocaleTag = "fr-FR",
+                isRomanized = false,
+                baseLanguageName = "French",
+                sampleWhisperPrompt = "Dictée conversationnelle naturelle en français."
+            ),
+            LiltLanguage(
+                code = "de",
+                shortLabel = "German",
+                fullName = "German (Deutsch)",
+                whisperIsoCode = "de",
+                androidLocaleTag = "de-DE",
+                isRomanized = false,
+                baseLanguageName = "German",
+                sampleWhisperPrompt = "Natürliches Gesprächsdiktat auf Deutsch."
+            ),
+            LiltLanguage(
+                code = "pt",
+                shortLabel = "Portuguese",
+                fullName = "Portuguese (Português)",
+                whisperIsoCode = "pt",
+                androidLocaleTag = "pt-BR",
+                isRomanized = false,
+                baseLanguageName = "Portuguese",
+                sampleWhisperPrompt = "Ditado conversacional natural em português."
+            ),
+            LiltLanguage(
+                code = "it",
+                shortLabel = "Italian",
+                fullName = "Italian (Italiano)",
+                whisperIsoCode = "it",
+                androidLocaleTag = "it-IT",
+                isRomanized = false,
+                baseLanguageName = "Italian",
+                sampleWhisperPrompt = "Dettatura conversazionale naturale in italiano."
+            ),
+            LiltLanguage(
+                code = "ja",
+                shortLabel = "Japanese",
+                fullName = "Japanese (日本語)",
+                whisperIsoCode = "ja",
+                androidLocaleTag = "ja-JP",
+                isRomanized = false,
+                baseLanguageName = "Japanese",
+                sampleWhisperPrompt = "自然な日本語の音声入力。"
+            ),
+            LiltLanguage(
+                code = "ko",
+                shortLabel = "Korean",
+                fullName = "Korean (한국어)",
+                whisperIsoCode = "ko",
+                androidLocaleTag = "ko-KR",
+                isRomanized = false,
+                baseLanguageName = "Korean",
+                sampleWhisperPrompt = "자연스러운 한국어 음성 받아쓰기."
+            ),
+            LiltLanguage(
+                code = "zh",
+                shortLabel = "Chinese",
+                fullName = "Mandarin Chinese (中文)",
+                whisperIsoCode = "zh",
+                androidLocaleTag = "zh-CN",
+                isRomanized = false,
+                baseLanguageName = "Chinese",
+                sampleWhisperPrompt = "自然的中文语音听写。"
+            ),
+            LiltLanguage(
+                code = "ar",
+                shortLabel = "Arabic",
+                fullName = "Arabic (العربية)",
+                whisperIsoCode = "ar",
+                androidLocaleTag = "ar-SA",
+                isRomanized = false,
+                baseLanguageName = "Arabic",
+                sampleWhisperPrompt = "إملاء صوتي طبيعي باللغة العربية."
+            ),
+            LiltLanguage(
+                code = "ru",
+                shortLabel = "Russian",
+                fullName = "Russian (Русский)",
+                whisperIsoCode = "ru",
+                androidLocaleTag = "ru-RU",
+                isRomanized = false,
+                baseLanguageName = "Russian",
+                sampleWhisperPrompt = "Естественная голосовая диктовка на русском языке."
+            ),
+            LiltLanguage(
+                code = "tr",
+                shortLabel = "Turkish",
+                fullName = "Turkish (Türkçe)",
+                whisperIsoCode = "tr",
+                androidLocaleTag = "tr-TR",
+                isRomanized = false,
+                baseLanguageName = "Turkish",
+                sampleWhisperPrompt = "Türkçe doğal konuşma diktesi."
+            ),
+            LiltLanguage(
+                code = "id",
+                shortLabel = "Indonesian",
+                fullName = "Indonesian (Bahasa)",
+                whisperIsoCode = "id",
+                androidLocaleTag = "id-ID",
+                isRomanized = false,
+                baseLanguageName = "Indonesian",
+                sampleWhisperPrompt = "Dikte percakapan alami dalam Bahasa Indonesia."
+            ),
+            LiltLanguage(
+                code = "vi",
+                shortLabel = "Vietnamese",
+                fullName = "Vietnamese (Tiếng Việt)",
+                whisperIsoCode = "vi",
+                androidLocaleTag = "vi-VN",
+                isRomanized = false,
+                baseLanguageName = "Vietnamese",
+                sampleWhisperPrompt = "Đọc chính tả hội thoại tự nhiên bằng tiếng Việt."
+            )
+        )
+
+        fun findLanguageByCode(code: String): LiltLanguage? =
+            ALL_SUPPORTED_LANGUAGES.find { it.code.equals(code, ignoreCase = true) }
 
         @Volatile
         private var instance: SettingsManager? = null
