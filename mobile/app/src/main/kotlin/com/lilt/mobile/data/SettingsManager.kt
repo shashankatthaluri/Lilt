@@ -189,6 +189,10 @@ class SettingsManager(context: Context) {
         get() = prefs.getString(KEY_ACTIVE_TONE, "natural") ?: "natural"
         set(value) = prefs.edit().putString(KEY_ACTIVE_TONE, value).apply()
 
+    var themeMode: String
+        get() = prefs.getString(KEY_THEME_MODE, "dark") ?: "dark"
+        set(value) = prefs.edit().putString(KEY_THEME_MODE, value).apply()
+
     var activeLanguageMode: String
         get() = prefs.getString(KEY_LANGUAGE_MODE, "auto") ?: "auto"
         set(value) = prefs.edit().putString(KEY_LANGUAGE_MODE, value).apply()
@@ -665,6 +669,7 @@ class SettingsManager(context: Context) {
     companion object {
         private const val KEY_CLEANUP_LEVEL = "cleanup_level"
         private const val KEY_ACTIVE_TONE = "active_tone"
+        private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_LANGUAGE_MODE = "active_language_mode"
         private const val KEY_ENABLED_LANGUAGES = "enabled_language_codes"
         private const val KEY_SPOKEN_NUMBERS = "spoken_numbers"

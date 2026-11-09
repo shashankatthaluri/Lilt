@@ -176,11 +176,21 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.material.icons.filled.Tune
 import kotlinx.coroutines.launch
+import com.lilt.mobile.ui.theme.LiltGlassCardBrush
+import com.lilt.mobile.ui.theme.LiltGlassSpecularBorderBrush
+import com.lilt.mobile.ui.theme.LiltNavBorderBrush
+import com.lilt.mobile.ui.theme.LiltNavGlassColor
+import com.lilt.mobile.ui.theme.LiltNavSelectedBrush
+import com.lilt.mobile.ui.theme.LiltNavSelectedTint
+import com.lilt.mobile.ui.theme.LiltNavUnselectedTint
+import com.lilt.mobile.ui.theme.LiltThemeState
 import com.lilt.mobile.ui.theme.NothingBlack
 import com.lilt.mobile.ui.theme.NothingBorder
 import com.lilt.mobile.ui.theme.NothingBorderSubtle
 import com.lilt.mobile.ui.theme.NothingCard
+import com.lilt.mobile.ui.theme.NothingCardElevated
 import com.lilt.mobile.ui.theme.NothingGreen
+import com.lilt.mobile.ui.theme.NothingOledDark
 import com.lilt.mobile.ui.theme.NothingRed
 import com.lilt.mobile.ui.theme.NothingTextMuted
 import com.lilt.mobile.ui.theme.NothingTextPrimary
@@ -203,7 +213,8 @@ fun MainScreen(
     var isFloatingPillActive by remember { mutableStateOf(settings.floatingPillEnabled) }
     var isAlwaysOnActive by remember { mutableStateOf(!settings.floatingCircleContextualOnly) }
 
-    // Engine settings state
+    // Engine & Liquid Glass Theme settings state
+    var themeMode by remember { mutableStateOf(settings.themeMode.also { LiltThemeState.mode = it }) }
     var activeTone by remember { mutableStateOf(settings.activeTone) }
     var activeLanguageMode by remember { mutableStateOf(settings.activeLanguageMode) }
     var enabledLanguageCodes by remember { mutableStateOf(settings.enabledLanguageCodes) }
@@ -381,16 +392,11 @@ fun MainScreen(
             ) {
                 Surface(
                     shape = RoundedCornerShape(32.dp),
-                    color = Color(0xE6101117),
+                    color = LiltNavGlassColor,
                     shadowElevation = 20.dp,
                     border = BorderStroke(
                         width = 1.2.dp,
-                        brush = Brush.verticalGradient(
-                            listOf(
-                                Color(0x55FFFFFF),
-                                Color(0x15FFFFFF)
-                            )
-                        )
+                        brush = LiltNavBorderBrush
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -426,9 +432,7 @@ fun MainScreen(
                                     .clip(RoundedCornerShape(25.dp))
                                     .background(
                                         if (isSelected) {
-                                            Brush.verticalGradient(
-                                                listOf(Color(0x38FFFFFF), Color(0x18FFFFFF))
-                                            )
+                                            LiltNavSelectedBrush
                                         } else {
                                             SolidColor(Color.Transparent)
                                         }
@@ -453,7 +457,6 @@ fun MainScreen(
                                                 historyItems = settings.getHistory()
                                                 remindersList = settings.getReminders()
                                             }
-                                            // Apple HIG: Tapping active tab smoothly animates scroll to top
                                             coroutineScope.launch {
                                                 mainScrollState.animateScrollTo(0)
                                             }
@@ -476,7 +479,7 @@ fun MainScreen(
                                     Icon(
                                         imageVector = icon,
                                         contentDescription = label,
-                                        tint = if (isSelected) Color.White else Color(0xFF6B7280),
+                                        tint = if (isSelected) LiltNavSelectedTint else LiltNavUnselectedTint,
                                         modifier = Modifier.size(20.dp)
                                     )
                                     Spacer(modifier = Modifier.height(3.dp))
@@ -484,7 +487,7 @@ fun MainScreen(
                                         text = label.uppercase(),
                                         fontSize = 11.sp,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isSelected) Color.White else Color(0xFF6B7280),
+                                        color = if (isSelected) LiltNavSelectedTint else LiltNavUnselectedTint,
                                         letterSpacing = 0.6.sp
                                     )
                                 }
@@ -495,17 +498,21 @@ fun MainScreen(
             }
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(mainScrollState)
-                .padding(horizontal = 20.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Layer 1: Adaptive Liquid Glass Ambient Mesh Backdrop (Dark Aurora / Light Quartz)
+            LiquidGlassAmbientBackdrop(isDark = LiltThemeState.isDark)
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(mainScrollState)
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
             Spacer(modifier = Modifier.height(6.dp))
 
-            // 1. Header: Nothing OS Minimalist Lockup (Persistent on all tabs)
+            // 1. Header: Universal Liquid Glass Lockup (Persistent on all tabs)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -523,27 +530,62 @@ fun MainScreen(
                     Column {
                         Text(
                             text = "L I L T",
-                            color = Color.White,
+                            color = NothingTextPrimary,
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 3.sp
                         )
                         Text(
-                            text = "Voice Dictation & Cleanup Engine",
-                            color = Color(0xFFA1A1AA),
+                            text = "Liquid Glass Voice Engine",
+                            color = NothingTextSecondary,
                             fontSize = 11.sp,
                             letterSpacing = 0.5.sp
                         )
                     }
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    // One-Tap Theme Switcher Pill (Dark Glass -> Light Glass -> System Auto)
+                    val themeLabel = when (themeMode) {
+                        "light" -> "☀️ LIGHT"
+                        "system" -> "◐ AUTO"
+                        else -> "🌙 DARK"
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(NothingCard)
+                            .border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(16.dp))
+                            .clickable {
+                                val next = when (themeMode) {
+                                    "dark" -> "light"
+                                    "light" -> "system"
+                                    else -> "dark"
+                                }
+                                themeMode = next
+                                settings.themeMode = next
+                                LiltThemeState.mode = next
+                            }
+                            .padding(horizontal = 9.dp, vertical = 5.dp)
+                    ) {
+                        Text(
+                            text = themeLabel,
+                            color = NothingTextPrimary,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.6.sp
+                        )
+                    }
+
                     // One-Click Report Button (Top Bar)
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
-                            .background(Color(0xFF141418))
-                            .border(1.dp, Color(0xFF282830), RoundedCornerShape(16.dp))
+                            .background(NothingCard)
+                            .border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(16.dp))
                             .clickable { showErrorDialog = true }
                             .padding(horizontal = 9.dp, vertical = 5.dp)
                     ) {
@@ -551,20 +593,19 @@ fun MainScreen(
                             Icon(
                                 imageVector = Icons.Default.BugReport,
                                 contentDescription = "Report Issue",
-                                tint = Color(0xFFA1A1AA),
+                                tint = NothingTextSecondary,
                                 modifier = Modifier.size(12.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "REPORT",
-                                color = Color(0xFFA1A1AA),
+                                color = NothingTextSecondary,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 0.8.sp
                             )
                         }
                     }
-
                 }
             }
 
@@ -890,16 +931,16 @@ fun MainScreen(
             if (showLanguagePickerDialog) {
                 AlertDialog(
                     onDismissRequest = { showLanguagePickerDialog = false },
-                    containerColor = Color(0xFF141418),
-                    titleContentColor = Color.White,
-                    textContentColor = Color(0xFFD4D4D8),
+                    containerColor = if (LiltThemeState.isDark) Color(0xFF141418) else Color(0xFFFBFBFD),
+                    titleContentColor = NothingTextPrimary,
+                    textContentColor = NothingTextSecondary,
                     title = {
                         Column {
                             Text(
                                 text = "Select Your Languages",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp,
-                                color = Color.White
+                                color = NothingTextPrimary
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
@@ -923,10 +964,10 @@ fun MainScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(if (isChecked) Color(0x26FF3B1F) else Color(0x12FFFFFF))
+                                        .background(if (isChecked) Color(0x26FF3B1F) else NothingCardElevated)
                                         .border(
                                             1.dp,
-                                            if (isChecked) Color(0x88FF3B1F) else Color(0x22FFFFFF),
+                                            if (isChecked) Color(0x88FF3B1F) else NothingBorder,
                                             RoundedCornerShape(12.dp)
                                         )
                                         .clickable {
@@ -949,7 +990,7 @@ fun MainScreen(
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = lang.fullName,
-                                            color = Color.White,
+                                            color = NothingTextPrimary,
                                             fontSize = 13.5.sp,
                                             fontWeight = FontWeight.SemiBold
                                         )
@@ -2461,13 +2502,88 @@ fun MainScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
-                text = "Engine, integrations & privacy",
+                text = "Universal Liquid Glass theme, engine, integrations & privacy",
                 color = NothingTextMuted,
                 fontSize = 12.sp,
                 modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(20.dp))
+
+            // 5.9 Universal Liquid Glass Appearance Selector
+            Text(
+                text = "APPEARANCE & LIQUID GLASS THEME",
+                color = NothingTextMuted,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = NothingCard)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Adaptive Liquid Glass Texture",
+                        color = NothingTextPrimary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "Switch between Obsidian Dark Glass, Alabaster Light Pearl Glass, or follow your phone's system theme.",
+                        color = NothingTextMuted,
+                        fontSize = 12.sp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        TonePill(
+                            label = "🌙 Dark Glass",
+                            isActive = themeMode == "dark",
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                themeMode = "dark"
+                                settings.themeMode = "dark"
+                                LiltThemeState.mode = "dark"
+                            }
+                        )
+                        TonePill(
+                            label = "☀️ Light Glass",
+                            isActive = themeMode == "light",
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                themeMode = "light"
+                                settings.themeMode = "light"
+                                LiltThemeState.mode = "light"
+                            }
+                        )
+                        TonePill(
+                            label = "◐ System",
+                            isActive = themeMode == "system",
+                            modifier = Modifier.weight(1f),
+                            onClick = {
+                                themeMode = "system"
+                                settings.themeMode = "system"
+                                LiltThemeState.mode = "system"
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
 
             // 6. System Integration Surfaces
             Text(
@@ -2499,7 +2615,7 @@ fun MainScreen(
                             modifier = Modifier
                                 .size(42.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Color(0xFF1C1C1C))
+                                .background(NothingCardElevated)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Keyboard,
@@ -2571,7 +2687,7 @@ fun MainScreen(
                         modifier = Modifier
                             .size(42.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFF1C1C1C))
+                            .background(NothingCardElevated)
                     ) {
                         Icon(
                             imageVector = Icons.Default.PictureInPicture,
@@ -4523,6 +4639,74 @@ fun MainScreen(
                 }
             )
         }
+        } // end LiquidGlassAmbientBackdrop Box
+    }
+}
+
+/**
+ * 4-Layer Liquid Glass Ambient Mesh Backdrop:
+ * Renders slow-breathing refractive light orbs behind all translucent cards
+ * ("Obsidian Aurora" in Dark Mode, "Alabaster Pearl Quartz" in Light Mode).
+ */
+@Composable
+fun LiquidGlassAmbientBackdrop(isDark: Boolean) {
+    val infiniteTransition = rememberInfiniteTransition(label = "liquid_mesh_drift")
+    val driftX by infiniteTransition.animateFloat(
+        initialValue = -0.06f,
+        targetValue = 0.08f,
+        animationSpec = infiniteRepeatable(tween(9000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "meshDriftX"
+    )
+    val driftY by infiniteTransition.animateFloat(
+        initialValue = -0.05f,
+        targetValue = 0.07f,
+        animationSpec = infiniteRepeatable(tween(11000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "meshDriftY"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(NothingBlack)
+    ) {
+        androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+            val w = size.width
+            val h = size.height
+
+            val orb1Color = if (isDark) Color(0x22FF3B1F) else Color(0x24FF6B4A)
+            val orb2Color = if (isDark) Color(0x1E6366F1) else Color(0x2438BDF8)
+            val orb3Color = if (isDark) Color(0x18FFB547) else Color(0x1CA855F7)
+
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(orb1Color, Color.Transparent),
+                    center = androidx.compose.ui.geometry.Offset(w * (0.82f + driftX), h * (0.14f + driftY)),
+                    radius = w * 0.72f
+                ),
+                radius = w * 0.72f,
+                center = androidx.compose.ui.geometry.Offset(w * (0.82f + driftX), h * (0.14f + driftY))
+            )
+
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(orb2Color, Color.Transparent),
+                    center = androidx.compose.ui.geometry.Offset(w * (0.18f - driftX), h * (0.48f - driftY)),
+                    radius = w * 0.78f
+                ),
+                radius = w * 0.78f,
+                center = androidx.compose.ui.geometry.Offset(w * (0.18f - driftX), h * (0.48f - driftY))
+            )
+
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(orb3Color, Color.Transparent),
+                    center = androidx.compose.ui.geometry.Offset(w * (0.75f + driftY), h * (0.84f - driftX)),
+                    radius = w * 0.68f
+                ),
+                radius = w * 0.68f,
+                center = androidx.compose.ui.geometry.Offset(w * (0.75f + driftY), h * (0.84f - driftX))
+            )
+        }
     }
 }
 
@@ -4550,7 +4734,8 @@ fun NothingSettingToggle(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Color(0xFF1E1E1E)),
+                    .background(NothingCardElevated)
+                    .border(1.dp, NothingBorderSubtle, RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -4584,7 +4769,7 @@ fun NothingSettingToggle(
                 checkedThumbColor = Color.White,
                 checkedTrackColor = Color(0xFFD71921),
                 uncheckedThumbColor = Color.Gray,
-                uncheckedTrackColor = Color(0xFF2C2C2E)
+                uncheckedTrackColor = if (LiltThemeState.isDark) Color(0xFF2C2C2E) else Color(0xFFD4D4D8)
             )
         )
     }
@@ -4597,6 +4782,7 @@ fun TonePill(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val isDark = LiltThemeState.isDark
     val scaleAnim by animateFloatAsState(
         targetValue = if (isActive) 1.04f else 1.0f,
         animationSpec = spring(
@@ -4607,13 +4793,13 @@ fun TonePill(
     )
 
     val textColorAnim by animateColorAsState(
-        targetValue = if (isActive) Color.White else Color(0xFFA1A1AA),
+        targetValue = if (isActive) Color.White else NothingTextSecondary,
         animationSpec = tween(220),
         label = "tone_pill_text_color"
     )
 
     val borderAlpha by animateFloatAsState(
-        targetValue = if (isActive) 0.65f else 0.15f,
+        targetValue = if (isActive) 0.65f else 0.22f,
         animationSpec = tween(220),
         label = "tone_pill_border_alpha"
     )
@@ -4639,22 +4825,35 @@ fun TonePill(
             .background(
                 if (isActive) {
                     Brush.verticalGradient(
-                        listOf(Color(0xFF2E3240), Color(0xFF1A1C24))
+                        listOf(Color(0xFF282C3A), Color(0xFF141620))
+                    )
+                } else if (isDark) {
+                    Brush.verticalGradient(
+                        listOf(Color(0xCC161822), Color(0xB30E1017))
                     )
                 } else {
                     Brush.verticalGradient(
-                        listOf(Color(0xFF13141A), Color(0xFF0C0D11))
+                        listOf(Color(0xF0FFFFFF), Color(0xD9F4F3EF))
                     )
                 }
             )
             .border(
                 width = 1.2.dp,
-                brush = Brush.verticalGradient(
-                    listOf(
-                        Color.White.copy(alpha = borderAlpha),
-                        Color.White.copy(alpha = borderAlpha * 0.3f)
+                brush = if (isDark || isActive) {
+                    Brush.verticalGradient(
+                        listOf(
+                            Color.White.copy(alpha = borderAlpha),
+                            Color.White.copy(alpha = borderAlpha * 0.3f)
+                        )
                     )
-                ),
+                } else {
+                    Brush.verticalGradient(
+                        listOf(
+                            Color.White,
+                            Color(0x280F172A)
+                        )
+                    )
+                },
                 shape = RoundedCornerShape(19.dp)
             )
             .clickable { onClick() }
@@ -4706,7 +4905,7 @@ fun ReminderCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (isCompleted) Color(0xFF111114) else Color(0xFF16161C)
+            containerColor = if (isCompleted) NothingCard else NothingCardElevated
         )
     ) {
         Column(
@@ -4714,7 +4913,7 @@ fun ReminderCard(
                 .fillMaxWidth()
                 .border(
                     1.dp,
-                    if (isCompleted) Color(0x15FFFFFF) else Color(0x28FFFFFF),
+                    LiltGlassSpecularBorderBrush,
                     RoundedCornerShape(18.dp)
                 )
                 .padding(16.dp)
@@ -5026,7 +5225,7 @@ fun VoiceNoteCard(
                 )
             },
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = if (isSelected) Color(0xFF14141A) else NothingCard)
+        colors = CardDefaults.cardColors(containerColor = if (isSelected) NothingCardElevated else NothingCard)
     ) {
         Column(
             modifier = Modifier
@@ -5125,7 +5324,7 @@ fun VoiceNoteCard(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(if (item.isPinned) Color(0x33FFB800) else Color(0xFF1C1C1C))
+                                .background(if (item.isPinned) Color(0x33FFB800) else NothingCardElevated)
                                 .border(1.dp, if (item.isPinned) Color(0x88FFB800) else Color.Transparent, CircleShape)
                                 .clickable {
                                     view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
@@ -5146,7 +5345,7 @@ fun VoiceNoteCard(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF1C1C1C))
+                                .background(NothingCardElevated)
                                 .clickable { onTogglePin() }
                         ) {
                             Icon(
@@ -5163,7 +5362,7 @@ fun VoiceNoteCard(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF1C1C1C))
+                                .background(NothingCardElevated)
                                 .clickable {
                                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                         type = "text/plain"
@@ -5188,7 +5387,7 @@ fun VoiceNoteCard(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF1C1C1C))
+                                .background(NothingCardElevated)
                                 .clickable { onCopy() }
                         ) {
                             Icon(
@@ -5205,7 +5404,7 @@ fun VoiceNoteCard(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF1C1C1C))
+                                .background(NothingCardElevated)
                                 .clickable { onDelete() }
                         ) {
                             Icon(
@@ -5361,7 +5560,7 @@ fun NoteCard(
                 )
             },
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = if (isSelected) Color(0xFF14141A) else Color(0xFF0D0D12))
+        colors = CardDefaults.cardColors(containerColor = if (isSelected) NothingCardElevated else NothingCard)
     ) {
         Column(
             modifier = Modifier
@@ -5458,7 +5657,7 @@ fun NoteCard(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(if (item.isPinned) Color(0x33FFB800) else Color(0xFF1C1C1C))
+                                .background(if (item.isPinned) Color(0x33FFB800) else NothingCardElevated)
                                 .border(1.dp, if (item.isPinned) Color(0x88FFB800) else Color.Transparent, CircleShape)
                                 .clickable {
                                     view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
@@ -5479,7 +5678,7 @@ fun NoteCard(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(if (isEditing) Color(0xFF262010) else Color(0xFF1C1C1C))
+                                .background(if (isEditing) Color(0x33FFB800) else NothingCardElevated)
                                 .border(1.dp, if (isEditing) Color(0xFFFFB800) else Color.Transparent, CircleShape)
                             .clickable {
                                 if (isEditing) {
@@ -5505,7 +5704,7 @@ fun NoteCard(
                                 modifier = Modifier
                                     .size(28.dp)
                                     .clip(CircleShape)
-                                    .background(Color(0xFF1C1C1C))
+                                    .background(NothingCardElevated)
                                     .clickable {
                                         editedText = item.cleanedText
                                         isEditing = false
@@ -5544,7 +5743,7 @@ fun NoteCard(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF1C1C1C))
+                                .background(NothingCardElevated)
                                 .clickable {
                                     val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                         type = "text/plain"
@@ -5569,7 +5768,7 @@ fun NoteCard(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF1C1C1C))
+                                .background(NothingCardElevated)
                                 .clickable { onCopy() }
                         ) {
                             Icon(
@@ -5586,7 +5785,7 @@ fun NoteCard(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF1C1C1C))
+                                .background(NothingCardElevated)
                                 .clickable { onDelete() }
                         ) {
                             Icon(
@@ -5696,7 +5895,7 @@ fun NoteCard(
                                     val highlightedItemText = rememberHighlightedText(itemText, searchQuery)
                                     Text(
                                         text = highlightedItemText,
-                                        color = if (isStruck) Color(0xFF71717A) else Color.White,
+                                        color = if (isStruck) NothingTextMuted else NothingTextPrimary,
                                         fontSize = 14.sp,
                                         lineHeight = 20.sp,
                                         textDecoration = if (isStruck) TextDecoration.LineThrough else TextDecoration.None
@@ -5705,7 +5904,7 @@ fun NoteCard(
                             } else if (line.isNotBlank()) {
                                 Text(
                                     text = line,
-                                    color = Color.White,
+                                    color = NothingTextPrimary,
                                     fontSize = 14.sp,
                                     lineHeight = 20.sp
                                 )
@@ -5716,7 +5915,7 @@ fun NoteCard(
                     val highlightedNoteText = rememberHighlightedText(item.cleanedText, searchQuery)
                     Text(
                         text = highlightedNoteText,
-                        color = Color.White,
+                        color = NothingTextPrimary,
                         fontSize = 14.sp,
                         lineHeight = 21.sp,
                         fontWeight = FontWeight.Normal
