@@ -262,18 +262,46 @@
   function initHeroDemo() {
     const rawEl = $("#hero-raw");
     const cleanEl = $("#hero-clean");
-    const pill = $("#hero-pill");
+    const pillStack = $("#hero-pill");
+    const winPill = $("#hero-win-pill");
+    const winDot = $("#hero-win-dot");
+    const mobDot = $("#hero-mob-dot");
     const status = $("#hero-pill-status");
-    const wave = makeWave($("#hero-wave"), { bars: 18 });
     let gen = 0;
     let idx = 0;
+
+    function setHeroState(phase) {
+      if (!winPill || !winDot || !mobDot || !status) return;
+      winDot.className = "lilt-status-dot";
+      mobDot.className = "lilt-status-dot";
+      if (phase === "idle") {
+        winPill.classList.add("is-idle");
+        winDot.classList.add("dot-white");
+        mobDot.classList.add("dot-white");
+        status.textContent = "";
+      } else if (phase === "listening") {
+        winPill.classList.remove("is-idle");
+        winDot.classList.add("dot-red");
+        mobDot.classList.add("dot-red");
+        status.textContent = "Listening…";
+      } else if (phase === "transcribing") {
+        winPill.classList.remove("is-idle");
+        winDot.classList.add("dot-yellow");
+        mobDot.classList.add("dot-yellow");
+        status.textContent = "Transcribing…";
+      } else if (phase === "copied") {
+        winPill.classList.remove("is-idle");
+        winDot.classList.add("dot-green");
+        mobDot.classList.add("dot-green");
+        status.textContent = "Copied";
+      }
+    }
 
     if (reduceMotion) {
       const p = HERO_PHRASES[0];
       rawEl.innerHTML = p.raw.map((w) => `<span class="w in ${w[0] === "~" ? "cut" : ""}">${w.replace("~", "")}</span>`).join("");
       cleanEl.textContent = p.clean;
-      status.textContent = "INSERTED ✓";
-      pill.classList.add("is-done");
+      setHeroState("copied");
       return;
     }
 
@@ -282,11 +310,13 @@
         const p = HERO_PHRASES[idx % HERO_PHRASES.length];
         idx++;
 
-        // 1 — listening
-        pill.classList.remove("is-done");
-        pill.classList.add("is-listening");
-        status.textContent = "LISTENING";
-        wave.set(1, true);
+        // 0 — brief idle circle (White dot)
+        setHeroState("idle");
+        await sleep(550);
+        if (g !== gen) return;
+
+        // 1 — listening (Red dot + "Listening…")
+        setHeroState("listening");
         cleanEl.innerHTML = "";
         rawEl.innerHTML = p.raw.map((w) => `<span class="w${w[0] === "~" ? " x" : ""}">${w.replace("~", "")}</span>`).join("");
         const words = $$(".w", rawEl);
@@ -298,10 +328,8 @@
         await sleep(350);
         if (g !== gen) return;
 
-        // 2 — cleaning
-        pill.classList.remove("is-listening");
-        status.textContent = "CLEANING";
-        wave.set(0.3, false);
+        // 2 — transcribing / cleaning (Yellow dot + "Transcribing…")
+        setHeroState("transcribing");
         const cuts = $$(".w.x", rawEl);
         for (const c of cuts) {
           if (g !== gen) return;
@@ -313,10 +341,8 @@
         await sleep(420);
         if (g !== gen) return;
 
-        // 3 — inserted
-        pill.classList.add("is-done");
-        status.textContent = "INSERTED ✓";
-        wave.set(0.12, false);
+        // 3 — copied / inserted (Green dot + "Copied")
+        setHeroState("copied");
         cleanEl.innerHTML = p.clean.split(/(\s+)/).map((t) => `<span class="cw">${t}</span>`).join("");
         const cws = $$(".cw", cleanEl);
         for (const c of cws) {
@@ -324,15 +350,14 @@
           c.classList.add("in");
           await sleep(38);
         }
-        await sleep(2700);
+        await sleep(2300);
         if (g !== gen) return;
         cws.forEach((c) => c.classList.remove("in"));
         $$(".w", rawEl).forEach((w) => w.classList.remove("in"));
-        await sleep(500);
       }
     }
 
-    pill.addEventListener("click", () => { gen++; run(gen); });
+    pillStack.addEventListener("click", () => { gen++; run(gen); });
     window.addEventListener("keydown", (e) => {
       if (e.code !== "Space" || e.repeat) return;
       const tag = (e.target.tagName || "").toLowerCase();
@@ -479,7 +504,7 @@
     const legend = $("#how-legend");
     const chatSub = $("#chat-sub");
     const inputText = $("#chat-input-text");
-    const wave = makeWave($("#how-wave"), { bars: 10 });
+    const howMobDot = $("#how-mob-dot");
 
     out.style.transition = "opacity .5s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1)";
     legend.style.transition = "opacity .4s";
@@ -509,10 +534,12 @@
       out.style.transform = sent ? "none" : "translateY(18px) scale(.94)";
 
       const listening = p > 0.03 && p < 0.37;
-      wave.set(listening ? 1 : 0.12, listening);
-      chatSub.textContent = listening ? "you’re talking…" : step === 1 ? "Lilt is cleaning up…" : sent ? "online" : "online";
-      inputText.textContent = listening ? "Listening…" : step === 1 ? "Removing filler…" : sent ? "Sent ✓" : "Message";
-      chatSub.style.color = listening ? "var(--red)" : step === 1 ? "var(--amber)" : "";
+      if (howMobDot) {
+        howMobDot.className = "lilt-status-dot " + (listening ? "dot-red" : step === 1 ? "dot-yellow" : sent ? "dot-green" : "dot-white");
+      }
+      chatSub.textContent = listening ? "Listening (red dot)…" : step === 1 ? "Transcribing (amber dot)…" : sent ? "Copied & sent (green dot)" : "online";
+      inputText.textContent = listening ? "Listening…" : step === 1 ? "Transcribing…" : sent ? "Sent ✓" : "Message";
+      chatSub.style.color = listening ? "var(--red)" : step === 1 ? "var(--amber)" : sent ? "var(--green)" : "";
     }
 
     if (!animate) { update(1); return; }
@@ -562,16 +589,18 @@
   }
 
   /* =====================================================================
-     FLOATING PILL — draggable desktop demo
+     FLOATING PILL — draggable Windows Circle->Text Pill & Mobile Circle
      ===================================================================== */
   function initFloatPill() {
     const screen = $("#desk-screen");
     const pill = $("#float-pill");
+    const dot = $("#float-dot");
     const status = $("#float-status");
     const posEl = $("#float-pos");
     const tabs = $$(".desk-tab");
     const views = $$(".app-view");
-    const wave = makeWave($("#float-wave"), { bars: 9 });
+    const modeBtns = $$("#pill-mode-tabs .sit-mode");
+    const stateBtns = $$("#sit-state-btns .sit-chip");
 
     const TEXTS = {
       mail: "The launch is moving to Monday. I’ll share the final deck by 10 AM.",
@@ -582,7 +611,48 @@
     views.forEach((v) => (BASE[v.dataset.view] = $("[data-target]", v).innerHTML));
 
     let app = "mail";
+    let mode = "windows"; // "windows" (circle -> text pill) | "mobile" (circle only)
     let busy = false;
+
+    function applyPillState(phase) {
+      stateBtns.forEach((b) => b.classList.toggle("is-active", b.dataset.state === phase));
+      dot.className = "lilt-status-dot";
+      pill.classList.toggle("is-mobile-circle", mode === "mobile");
+
+      if (phase === "idle") {
+        pill.classList.add("is-idle");
+        dot.classList.add("dot-white");
+        status.textContent = "";
+      } else if (phase === "listening") {
+        pill.classList.toggle("is-idle", mode === "mobile");
+        dot.classList.add("dot-red");
+        status.textContent = mode === "windows" ? "Listening…" : "";
+      } else if (phase === "transcribing") {
+        pill.classList.toggle("is-idle", mode === "mobile");
+        dot.classList.add("dot-yellow");
+        status.textContent = mode === "windows" ? "Transcribing…" : "";
+      } else if (phase === "copied") {
+        pill.classList.toggle("is-idle", mode === "mobile");
+        dot.classList.add("dot-green");
+        status.textContent = mode === "windows" ? "Copied" : "";
+      }
+    }
+
+    modeBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        modeBtns.forEach((b) => b.classList.toggle("is-active", b === btn));
+        mode = btn.dataset.mode;
+        const activeStateBtn = $("#sit-state-btns .sit-chip.is-active");
+        applyPillState(activeStateBtn ? activeStateBtn.dataset.state : "idle");
+      });
+    });
+
+    stateBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        busy = false;
+        applyPillState(btn.dataset.state);
+      });
+    });
 
     function setPos(px, py) {
       const r = screen.getBoundingClientRect();
@@ -591,7 +661,7 @@
       const y = clamp(py, pr.height / 2 + 8, r.height - pr.height / 2 - 8);
       pill.style.left = `${(x / r.width) * 100}%`;
       pill.style.top = `${(y / r.height) * 100}%`;
-      posEl.textContent = `x ${Math.round((x / r.width) * 100)}% · y ${Math.round((y / r.height) * 100)}%`;
+      posEl.textContent = `x ${Math.round((x / r.width) * 100)}% · y ${Math.round((y / r.height) * 100)}% · ${mode === "windows" ? "Windows pill" : "Mobile circle"}`;
     }
 
     let dragging = false, moved = 0, sx = 0, sy = 0, ox = 0, oy = 0;
@@ -602,7 +672,6 @@
       oy = e.clientY - (pr.top + pr.height / 2);
       pill.setPointerCapture(e.pointerId);
       pill.classList.add("is-dragging");
-      pill.style.transition = "opacity .4s, box-shadow .3s, border-color .3s";
     });
     pill.addEventListener("pointermove", (e) => {
       if (!dragging) return;
@@ -626,21 +695,27 @@
       const target = $("[data-target]", view);
       const thisApp = app;
       target.innerHTML = BASE[app] + '<span class="caret"></span>';
-      pill.classList.add("is-listening");
-      status.textContent = "LISTENING";
-      wave.set(1, true);
-      await sleep(1100);
-      pill.classList.remove("is-listening");
-      status.textContent = "TYPING";
-      wave.set(0.25);
+
+      // State B: Red Dot + "Listening…"
+      applyPillState("listening");
+      await sleep(1050);
+
+      // State C: Yellow Dot + "Transcribing…"
+      applyPillState("transcribing");
+      await sleep(650);
+
+      // State D: Green Dot + "Copied" + Typewriter insertion
+      applyPillState("copied");
       const text = TEXTS[thisApp];
       for (let i = 1; i <= text.length; i++) {
         if (app !== thisApp) break;
         target.innerHTML = BASE[thisApp] + `<span class="typed">${text.slice(0, i)}</span><span class="caret"></span>`;
         await sleep(16);
       }
-      status.textContent = "READY";
-      wave.set(0.12);
+      await sleep(950);
+
+      // Return to State A: White Dot Circle
+      applyPillState("idle");
       busy = false;
     }
 
@@ -650,9 +725,7 @@
         app = t.dataset.app;
         views.forEach((v) => v.classList.toggle("is-active", v.dataset.view === app));
         busy = false;
-        status.textContent = "READY";
-        pill.classList.remove("is-listening");
-        wave.set(0.12);
+        applyPillState("idle");
       })
     );
 

@@ -105,12 +105,19 @@
             <p class="demo-raw" id="hero-raw"></p>
           </div>
 
-          <div class="hero-pill" id="hero-pill" data-cursor="Tap">
-            <span class="pill-orb">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-            </span>
-            <canvas class="pill-wave" id="hero-wave" width="120" height="28"></canvas>
-            <span class="pill-status mono" id="hero-pill-status">LISTENING</span>
+          <div class="hero-pill-stack" id="hero-pill" data-cursor="Tap">
+            <!-- Windows Pill: Translucent Circle when Idle -> Expands with Text Label -->
+            <div class="lilt-real-pill is-listening" id="hero-win-pill" title="Windows Overlay: Circle when idle, expands with text">
+              <span class="lilt-status-dot dot-red" id="hero-win-dot"></span>
+              <span class="lilt-status-label" id="hero-pill-status">Listening…</span>
+            </div>
+            <!-- Mobile Circle: Translucent Circle with Color-Coded Status Dot -->
+            <div class="lilt-mobile-row">
+              <div class="lilt-mobile-circle is-listening" id="hero-mob-circle" title="Mobile Overlay: Translucent circle with situation dot">
+                <span class="lilt-status-dot dot-red" id="hero-mob-dot"></span>
+              </div>
+              <span class="mono lilt-mob-tag">MOBILE CIRCLE</span>
+            </div>
           </div>
 
           <div class="demo-card demo-clean-card">
@@ -236,9 +243,8 @@
 
               <div class="chat-input">
                 <span class="chat-input-text" id="chat-input-text">Message</span>
-                <div class="mini-pill" id="how-pill">
-                  <span class="led"></span>
-                  <canvas class="pill-wave" id="how-wave" width="64" height="18"></canvas>
+                <div class="lilt-mobile-circle" id="how-pill" title="Mobile Floating Circle">
+                  <span class="lilt-status-dot dot-white" id="how-mob-dot"></span>
                 </div>
               </div>
             </div>
@@ -356,11 +362,25 @@
         <div class="split-head">
           <div>
             <p class="eyebrow mono">ADAPTIVE LIQUID GLASS</p>
-            <h2 class="section-title reveal">Blurs whatever<br /><em class="serif">is behind it.</em></h2>
+            <h2 class="section-title reveal">Circle or pill.<br /><em class="serif">Blurs everything.</em></h2>
           </div>
           <p class="section-lead reveal">
-            Lilt isn’t locked to a single dark or light theme. Its <b>Liquid Glass</b> surface refracts and blurs your live wallpaper or active app in real time—feeling native on Samsung, Pixel, OnePlus, Xiaomi, Nothing, and Windows. <strong>Drag the pill or switch the wallpaper below.</strong>
+            On <b>Windows</b>, Lilt rests as a translucent circle with a white dot and smoothly expands into a pill with status text (<i>Listening…</i>, <i>Transcribing…</i>, <i>Copied</i>). On <b>Mobile</b>, it stays a pure translucent circle whose inner dot changes color for every situation. <strong>Drag it, click a state, or switch modes below.</strong>
           </p>
+        </div>
+
+        <!-- Interactive 4-State Situation Bar -->
+        <div class="situation-bar reveal" id="situation-bar">
+          <div class="sit-modes" id="pill-mode-tabs" role="tablist">
+            <button type="button" class="sit-mode is-active" data-mode="windows">💻 Windows (Circle → Text Pill)</button>
+            <button type="button" class="sit-mode" data-mode="mobile">📱 Mobile (Translucent Circle + Color Dot)</button>
+          </div>
+          <div class="sit-states" id="sit-state-btns">
+            <button type="button" class="sit-chip is-active" data-state="idle"><i class="s-dot white"></i>Idle / Ready</button>
+            <button type="button" class="sit-chip" data-state="listening"><i class="s-dot red"></i>Listening…</button>
+            <button type="button" class="sit-chip" data-state="transcribing"><i class="s-dot yellow"></i>Transcribing…</button>
+            <button type="button" class="sit-chip" data-state="copied"><i class="s-dot green"></i>Copied ✓</button>
+          </div>
         </div>
 
         <div class="desk reveal wp-aurora" id="desk">
@@ -402,27 +422,28 @@
               <div class="code-line">}</div>
             </div>
 
-            <div class="float-pill liquid-glass" id="float-pill" data-cursor="Drag">
-              <span class="led"></span>
-              <canvas class="pill-wave" id="float-wave" width="70" height="20"></canvas>
-              <span class="mono float-status" id="float-status">READY</span>
+            <!-- Authentic Lilt Floating Pill / Circle -->
+            <div class="float-pill lilt-real-pill is-idle" id="float-pill" data-cursor="Drag / Tap">
+              <span class="lilt-status-dot dot-white" id="float-dot"></span>
+              <span class="lilt-status-label" id="float-status"></span>
+              <span class="lilt-pill-close" aria-hidden="true">✕</span>
             </div>
           </div>
 
           <div class="desk-foot">
-            <span class="mono" id="float-pos">x 72% · y 70% · real-time backdrop blur</span>
+            <span class="mono" id="float-pos">x 72% · y 70% · tap pill to cycle states</span>
             <div class="desk-actions">
-              <button type="button" class="chip" id="btn-ghost">Fade when idle</button>
+              <button type="button" class="chip" id="btn-ghost">Dimmed idle (42%)</button>
               <button type="button" class="chip" id="btn-snap">Snap to edge</button>
             </div>
           </div>
         </div>
 
         <ul class="pill-facts">
-          <li class="reveal"><b>True Liquid Glass</b><span>Blurs and refracts your wallpaper or active window with specular edge highlights.</span></li>
-          <li class="reveal"><b>Never steals focus</b><span>Your cursor stays put. Text goes right where you were typing.</span></li>
-          <li class="reveal"><b>Every Android &amp; PC</b><span>Adapts cleanly to Samsung One UI, Pixel, OnePlus, Xiaomi, Nothing &amp; Windows 11.</span></li>
-          <li class="reveal"><b>Out of the way</b><span>Drag it anywhere, snap it to any screen edge, or let it fade when idle.</span></li>
+          <li class="reveal"><b>⚪ White · Ready</b><span>Rests as a 40px translucent Liquid Glass circle that stays out of your way.</span></li>
+          <li class="reveal"><b>🔴 Red · Listening</b><span>Expands into <i>“Listening…”</i> on Windows, or pulses a ruby-red dot inside the mobile circle.</span></li>
+          <li class="reveal"><b>🟡 Yellow · Transcribing</b><span>Shows <i>“Transcribing…”</i> on Windows or an amber orbiting glow on mobile while cleaning fillers.</span></li>
+          <li class="reveal"><b>🟢 Green · Copied / Inserted</b><span>Flashes emerald green when your polished text is typed or copied to the clipboard.</span></li>
         </ul>
       </div>
     </section>

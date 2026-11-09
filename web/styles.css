@@ -378,46 +378,156 @@ section { position: relative; }
 }
 .demo-clean .cw.in { opacity: 1; filter: blur(0); transform: none; }
 
-/* The pill */
-.hero-pill {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 18px 10px 10px;
-  border-radius: 999px;
-  background: rgba(20, 20, 24, 0.7);
-  border: 1px solid var(--line-2);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 20px 60px -20px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.08);
+/* =========================================================================
+   AUTHENTIC LILT OVERLAY PILL (Windows Circle -> Text Pill & Mobile Circle)
+   ========================================================================= */
+.hero-pill-stack {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
   cursor: pointer;
-  transition: border-color 0.4s, box-shadow 0.4s;
-  position: relative;
 }
-.hero-pill::before {
-  content: ""; position: absolute; inset: -1px; border-radius: inherit;
-  padding: 1px;
-  background: conic-gradient(from var(--ang, 0deg), transparent 0 70%, var(--red) 85%, transparent 100%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor; mask-composite: exclude;
-  opacity: 0; transition: opacity 0.4s;
-  animation: spin 2.4s linear infinite;
+.lilt-mobile-row {
+  display: inline-flex; align-items: center; gap: 8px;
 }
-.hero-pill.is-listening::before { opacity: 1; }
-.hero-pill.is-listening { box-shadow: 0 0 0 6px rgba(255,59,31,0.08), 0 20px 60px -15px rgba(255,59,31,0.45); }
-.hero-pill.is-done { border-color: rgba(91, 228, 155, 0.45); }
-@property --ang { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
-@keyframes spin { to { --ang: 360deg; } }
+.lilt-mob-tag {
+  font-size: 9.5px; letter-spacing: 0.14em; color: var(--dim);
+}
 
-.pill-orb {
-  width: 34px; height: 34px; border-radius: 50%;
-  display: grid; place-items: center;
-  background: var(--red); color: #fff;
-  box-shadow: 0 0 20px rgba(255,59,31,0.55);
-  flex: none;
-  transition: background 0.4s, box-shadow 0.4s;
+/* Windows Translucent Liquid Glass Pill (40px circle when idle, expands with text) */
+.lilt-real-pill {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: flex-start;
+  height: 40px; min-width: 40px;
+  padding: 0 18px 0 15px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    165deg,
+    rgba(50, 52, 64, 0.58) 0%,
+    rgba(24, 25, 33, 0.48) 55%,
+    rgba(12, 13, 18, 0.54) 100%
+  );
+  border: 1.25px solid rgba(255, 255, 255, 0.36);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  box-shadow:
+    inset 0 1.2px 1px rgba(255, 255, 255, 0.44),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.14),
+    inset 0 0 14px rgba(255, 255, 255, 0.08),
+    0 12px 32px rgba(0, 0, 0, 0.45);
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  transition:
+    width 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    padding 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.28s ease,
+    background 0.28s ease,
+    border-color 0.28s ease,
+    box-shadow 0.28s ease;
 }
-.hero-pill.is-done .pill-orb { background: var(--green); color: #052; box-shadow: 0 0 20px rgba(91,228,155,0.5); }
-.pill-wave { display: block; }
-.pill-status { font-size: 10.5px; letter-spacing: 0.14em; color: var(--muted); min-width: 92px; text-align: left; }
+.lilt-real-pill::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.05) 45%,
+    rgba(255, 255, 255, 0) 52%
+  );
+  pointer-events: none;
+}
+
+/* Idle / Ready State: 40x40 Translucent Circle */
+.lilt-real-pill.is-idle,
+.lilt-real-pill.is-mobile-circle {
+  width: 40px;
+  padding: 0 13.75px;
+  justify-content: center;
+}
+.lilt-real-pill.is-idle .lilt-status-label,
+.lilt-real-pill.is-mobile-circle .lilt-status-label,
+.lilt-real-pill.is-idle .lilt-pill-close,
+.lilt-real-pill.is-mobile-circle .lilt-pill-close {
+  display: none;
+}
+
+/* Mobile Translucent Circle (Always 40x40 circle with situation-colored dot) */
+.lilt-mobile-circle {
+  position: relative;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(
+    165deg,
+    rgba(50, 52, 64, 0.58) 0%,
+    rgba(24, 25, 33, 0.48) 55%,
+    rgba(12, 13, 18, 0.54) 100%
+  );
+  border: 1.25px solid rgba(255, 255, 255, 0.36);
+  backdrop-filter: blur(26px) saturate(185%);
+  -webkit-backdrop-filter: blur(26px) saturate(185%);
+  box-shadow:
+    inset 0 1.2px 1px rgba(255, 255, 255, 0.44),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.14),
+    0 8px 22px rgba(0, 0, 0, 0.4);
+  transition: transform 0.28s var(--ease), border-color 0.28s, box-shadow 0.28s;
+}
+.lilt-mobile-circle::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 52%);
+  pointer-events: none;
+}
+
+/* 10px Chromatic Situation Dot */
+.lilt-status-dot {
+  position: relative; z-index: 1;
+  width: 10px; height: 10px; border-radius: 50%;
+  flex: none; display: block;
+  transition: background-color 0.24s ease, box-shadow 0.24s ease, transform 0.18s ease;
+}
+.lilt-status-dot.dot-white {
+  background-color: #FFFFFF;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.55);
+}
+.lilt-status-dot.dot-red {
+  background-color: #FF3B30;
+  box-shadow: 0 0 10px rgba(255, 59, 48, 0.9);
+  animation: dotPulseRed 1.05s ease-in-out infinite;
+}
+.lilt-status-dot.dot-yellow {
+  background-color: #FFCC00;
+  box-shadow: 0 0 10px rgba(255, 204, 0, 0.85);
+  animation: dotPulseYellow 0.9s ease-in-out infinite;
+}
+.lilt-status-dot.dot-green {
+  background-color: #30D158;
+  box-shadow: 0 0 10px rgba(48, 209, 88, 0.9);
+}
+@keyframes dotPulseRed {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.28); }
+}
+@keyframes dotPulseYellow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.65; transform: scale(0.88); }
+}
+
+.lilt-status-label {
+  position: relative; z-index: 1;
+  font-size: 13.5px; font-weight: 600;
+  color: #FFFFFF;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  margin-left: 9px;
+  letter-spacing: 0.15px; line-height: 1;
+}
+.lilt-pill-close {
+  position: relative; z-index: 1;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 9px; display: inline-grid; place-items: center;
+  margin-left: 8px; opacity: 0; transform: scale(0.85);
+  transition: opacity 0.2s, transform 0.2s;
+}
+.lilt-real-pill:hover .lilt-pill-close { opacity: 0.9; transform: scale(1); }
 
 .scroll-cue {
   position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
@@ -614,8 +724,40 @@ section { position: relative; }
    6. FLOATING PILL
    ========================================================================= */
 .pill-section { padding: 160px 0; border-top: 1px solid var(--line); }
-.split-head { display: grid; grid-template-columns: 1.1fr 1fr; gap: 60px; align-items: end; margin-bottom: 60px; }
+.split-head { display: grid; grid-template-columns: 1.1fr 1fr; gap: 60px; align-items: end; margin-bottom: 34px; }
 .split-head .section-lead { margin-top: 0; }
+
+/* Situation & Mode Bar */
+.situation-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  margin-bottom: 22px; padding: 12px 16px;
+  border-radius: 18px; border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+}
+.sit-modes, .sit-states { display: flex; gap: 8px; flex-wrap: wrap; }
+.sit-mode {
+  font-size: 13px; font-weight: 500; padding: 8px 14px; border-radius: 999px;
+  border: 1px solid var(--line-2); color: var(--muted);
+  transition: all 0.25s var(--ease);
+}
+.sit-mode.is-active, .sit-mode:hover { background: var(--text); color: #000; border-color: var(--text); }
+.sit-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 12px;
+  padding: 7px 14px; border-radius: 999px;
+  border: 1px solid var(--line-2); color: var(--muted);
+  background: rgba(255,255,255,0.02);
+  transition: all 0.25s var(--ease);
+}
+.sit-chip:hover, .sit-chip.is-active {
+  color: #fff; border-color: rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.08);
+}
+.s-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.s-dot.white { background: #FFFFFF; box-shadow: 0 0 5px rgba(255,255,255,0.6); }
+.s-dot.red { background: #FF3B30; box-shadow: 0 0 6px rgba(255,59,48,0.8); }
+.s-dot.yellow { background: #FFCC00; box-shadow: 0 0 6px rgba(255,204,0,0.8); }
+.s-dot.green { background: #30D158; box-shadow: 0 0 6px rgba(48,209,88,0.8); }
 
 .desk {
   border-radius: 26px;
@@ -713,26 +855,12 @@ section { position: relative; }
 .float-pill {
   position: absolute; left: 72%; top: 70%;
   transform: translate(-50%, -50%);
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px 18px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04));
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  backdrop-filter: blur(28px) saturate(190%);
-  -webkit-backdrop-filter: blur(28px) saturate(190%);
-  box-shadow:
-    0 24px 54px -12px rgba(0, 0, 0, 0.75),
-    inset 0 1.5px 1px rgba(255, 255, 255, 0.45),
-    inset 0 -1px 1px rgba(255, 255, 255, 0.08);
   cursor: grab;
   user-select: none;
   z-index: 5;
-  transition: opacity 0.4s, box-shadow 0.3s, border-color 0.3s;
 }
-.float-pill.is-dragging { cursor: grabbing; box-shadow: 0 30px 70px -15px rgba(0,0,0,1), 0 0 0 6px rgba(255,255,255,0.04); }
-.float-pill.is-listening { border-color: rgba(255,59,31,0.6); box-shadow: 0 0 0 6px rgba(255,59,31,0.1), 0 20px 50px -15px rgba(255,59,31,0.5); }
-.float-pill.is-ghost:not(:hover):not(.is-listening) { opacity: 0.35; }
-.float-status { font-size: 10.5px; letter-spacing: 0.12em; color: var(--muted); }
+.float-pill.is-dragging { cursor: grabbing; box-shadow: 0 30px 70px -15px rgba(0,0,0,1), 0 0 0 6px rgba(255,255,255,0.06); }
+.float-pill.is-ghost:not(:hover) { opacity: 0.42; }
 
 .desk-foot {
   display: flex; justify-content: space-between; align-items: center;
