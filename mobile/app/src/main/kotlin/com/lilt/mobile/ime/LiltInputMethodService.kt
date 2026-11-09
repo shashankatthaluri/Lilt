@@ -2,22 +2,19 @@ package com.lilt.mobile.ime
 
 import android.content.Context
 import android.inputmethodservice.InputMethodService
-import android.os.Bundle
+import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -43,11 +40,9 @@ import androidx.compose.material.icons.filled.SpaceBar
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,7 +52,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -77,6 +71,17 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.lilt.mobile.data.DiagnosticLogger
 import com.lilt.mobile.data.SettingsManager
 import com.lilt.mobile.engine.SpeechEngine
+import com.lilt.mobile.ui.theme.LiltGlassCardBrush
+import com.lilt.mobile.ui.theme.LiltGlassSpecularBorderBrush
+import com.lilt.mobile.ui.theme.LiltTheme
+import com.lilt.mobile.ui.theme.LiltThemeState
+import com.lilt.mobile.ui.theme.NothingBlack
+import com.lilt.mobile.ui.theme.NothingCard
+import com.lilt.mobile.ui.theme.NothingCardElevated
+import com.lilt.mobile.ui.theme.NothingRed
+import com.lilt.mobile.ui.theme.NothingTextMuted
+import com.lilt.mobile.ui.theme.NothingTextPrimary
+import com.lilt.mobile.ui.theme.NothingTextSecondary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -104,6 +109,7 @@ class LiltInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
 
         settings = SettingsManager.getInstance(this)
+        @Suppress("DEPRECATION")
         vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
         speechEngine = SpeechEngine(this).apply {
             listener = object : SpeechEngine.Listener {
@@ -169,7 +175,7 @@ class LiltInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
             setViewTreeSavedStateRegistryOwner(this@LiltInputMethodService)
 
             setContent {
-                MaterialTheme {
+                LiltTheme {
                     VoiceKeyboardContent(
                         isRecording = isRecordingState.value,
                         statusText = statusTextState.value,
@@ -238,7 +244,12 @@ class LiltInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     private fun triggerHaptic(durationMs: Long) {
         if (!settings.hapticFeedback) return
         try {
-            vibrator?.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(durationMs)
+            }
         } catch (_: Exception) {}
     }
 
@@ -294,11 +305,13 @@ fun VoiceKeyboardContent(
         modifier = Modifier
             .fillMaxWidth()
             .height(270.dp),
-        color = Color(0xFF000000)
+        color = NothingBlack
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(LiltGlassCardBrush)
+                .border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
                 .padding(horizontal = 16.dp, vertical = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
@@ -316,12 +329,12 @@ fun VoiceKeyboardContent(
                         modifier = Modifier
                             .size(7.dp)
                             .clip(CircleShape)
-                            .background(if (isRecording) Color.White else Color(0xFF555555))
+                            .background(if (isRecording) NothingRed else NothingTextMuted)
                     )
                     Spacer(modifier = Modifier.width(7.dp))
                     Text(
                         text = statusText.uppercase(),
-                        color = if (isRecording) Color.White else Color(0xFF888888),
+                        color = if (isRecording) NothingTextPrimary else NothingTextMuted,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.2.sp
@@ -333,9 +346,9 @@ fun VoiceKeyboardContent(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
-                            Box(modifier = Modifier.width(2.dp).height(wBar1.dp).clip(RoundedCornerShape(1.dp)).background(Color.White))
-                            Box(modifier = Modifier.width(2.dp).height(wBar2.dp).clip(RoundedCornerShape(1.dp)).background(Color.White))
-                            Box(modifier = Modifier.width(2.dp).height(wBar3.dp).clip(RoundedCornerShape(1.dp)).background(Color.White))
+                            Box(modifier = Modifier.width(2.dp).height(wBar1.dp).clip(RoundedCornerShape(1.dp)).background(NothingRed))
+                            Box(modifier = Modifier.width(2.dp).height(wBar2.dp).clip(RoundedCornerShape(1.dp)).background(NothingRed))
+                            Box(modifier = Modifier.width(2.dp).height(wBar3.dp).clip(RoundedCornerShape(1.dp)).background(NothingRed))
                         }
                     }
                 }
@@ -344,7 +357,7 @@ fun VoiceKeyboardContent(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = partialText,
-                        color = Color.White,
+                        color = NothingTextPrimary,
                         fontSize = 14.sp,
                         textAlign = TextAlign.Center,
                         maxLines = 2,
@@ -353,7 +366,7 @@ fun VoiceKeyboardContent(
                 }
             }
 
-            // Center: The Hero Voice Dictation Capsule Button (Nothing Red Glow)
+            // Center: The Hero Voice Dictation Capsule Button (Liquid Glass + Red Recording Pulse)
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.size(90.dp)
@@ -364,7 +377,7 @@ fun VoiceKeyboardContent(
                         modifier = Modifier
                             .size((82 * pulseScale).dp)
                             .clip(CircleShape)
-                            .background(Color(0x33D71921))
+                            .background(Color(0x33FF3B1F))
                     )
                 }
 
@@ -376,18 +389,15 @@ fun VoiceKeyboardContent(
                         .clip(CircleShape)
                         .background(
                             if (isRecording) {
-                                Brush.linearGradient(
-                                    listOf(Color.White, Color(0xFFE4E4E7))
-                                )
+                                Brush.linearGradient(listOf(NothingRed, Color(0xFFD71921)))
                             } else {
-                                Brush.linearGradient(
-                                    listOf(Color(0xFF1E1E1E), Color(0xFF141414))
-                                )
+                                LiltGlassCardBrush
                             }
                         )
+                        .background(if (isRecording) Color.Transparent else NothingCardElevated)
                         .border(
                             width = 1.dp,
-                            color = if (isRecording) Color(0xFFFF4D4D) else Color(0xFF2C2C2C),
+                            brush = if (isRecording) Brush.linearGradient(listOf(Color.White, NothingRed)) else LiltGlassSpecularBorderBrush,
                             shape = CircleShape
                         )
                         .clickable { onToggleRecord() }
@@ -395,7 +405,7 @@ fun VoiceKeyboardContent(
                     Icon(
                         imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic,
                         contentDescription = "Voice Dictation",
-                        tint = Color.White,
+                        tint = if (isRecording) Color.White else NothingTextPrimary,
                         modifier = Modifier.size(30.dp)
                     )
                 }
@@ -415,13 +425,13 @@ fun VoiceKeyboardContent(
                     modifier = Modifier
                         .size(44.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(Color(0xFF141414))
-                        .border(1.dp, Color(0xFF242424), RoundedCornerShape(14.dp))
+                        .background(NothingCardElevated)
+                        .border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(14.dp))
                 ) {
                     Icon(
                         imageVector = Icons.Default.Keyboard,
                         contentDescription = "Switch Keyboard",
-                        tint = Color(0xFFAAAAAA)
+                        tint = NothingTextSecondary
                     )
                 }
 
@@ -436,16 +446,11 @@ fun VoiceKeyboardContent(
                         .height(44.dp)
                         .padding(horizontal = 6.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(
-                            if (isRecording || isSpacePressed) {
-                                Brush.horizontalGradient(listOf(Color(0xFF2A1012), Color(0xFF1C0D0E)))
-                            } else {
-                                Brush.horizontalGradient(listOf(Color(0xFF161616), Color(0xFF131313)))
-                            }
-                        )
+                        .background(if (isRecording || isSpacePressed) Color(0x26FF3B1F) else NothingCard)
+                        .background(LiltGlassCardBrush)
                         .border(
                             1.dp,
-                            if (isRecording || isSpacePressed) Color.White else Color(0xFF262626),
+                            if (isRecording || isSpacePressed) Brush.linearGradient(listOf(NothingRed, NothingRed)) else LiltGlassSpecularBorderBrush,
                             RoundedCornerShape(14.dp)
                         )
                         .pointerInput(Unit) {
@@ -454,17 +459,14 @@ fun VoiceKeyboardContent(
                                     isSpacePressed = true
                                     val holdJob = coroutineScope.launch {
                                         delay(220)
-                                        // Hold detected: start listening
                                         onStartHoldRecord()
                                     }
                                     tryAwaitRelease()
                                     isSpacePressed = false
                                     if (holdJob.isActive) {
-                                        // Released before 220ms -> standard Space tap
                                         holdJob.cancel()
                                         onInsertSpace()
                                     } else {
-                                        // Released after holding -> stop listening and commit text
                                         onStopHoldRecord()
                                     }
                                 }
@@ -480,12 +482,12 @@ fun VoiceKeyboardContent(
                                 modifier = Modifier
                                     .size(7.dp)
                                     .clip(CircleShape)
-                                    .background(Color.White)
+                                    .background(NothingRed)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "RELEASE TO INSERT",
-                                color = Color(0xFFFF4D4D),
+                                color = NothingRed,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp
@@ -499,13 +501,13 @@ fun VoiceKeyboardContent(
                             Icon(
                                 imageVector = Icons.Default.SpaceBar,
                                 contentDescription = "Space",
-                                tint = Color(0xFFCCCCCC),
+                                tint = NothingTextSecondary,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Hold to Speak • Space",
-                                color = Color(0xFFCCCCCC),
+                                color = NothingTextSecondary,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -519,30 +521,30 @@ fun VoiceKeyboardContent(
                     modifier = Modifier
                         .size(44.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(Color(0xFF141414))
-                        .border(1.dp, Color(0xFF242424), RoundedCornerShape(14.dp))
+                        .background(NothingCardElevated)
+                        .border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(14.dp))
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Backspace,
                         contentDescription = "Backspace",
-                        tint = Color(0xFFAAAAAA)
+                        tint = NothingTextSecondary
                     )
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                // Enter Key (Nothing Red Accent)
+                // Enter Key (High-Contrast Primary Action)
                 IconButton(
                     onClick = onEnter,
                     modifier = Modifier
                         .size(44.dp)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(Color.White)
+                        .background(NothingTextPrimary)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardReturn,
                         contentDescription = "Enter",
-                        tint = Color.White
+                        tint = if (LiltThemeState.isDark) Color.Black else Color.White
                     )
                 }
             }

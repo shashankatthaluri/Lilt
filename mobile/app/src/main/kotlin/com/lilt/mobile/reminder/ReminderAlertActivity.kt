@@ -33,14 +33,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Snooze
-import androidx.compose.material.icons.filled.VolumeOff
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -61,7 +61,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lilt.mobile.data.SettingsManager
+import com.lilt.mobile.ui.main.LiquidGlassAmbientBackdrop
+import com.lilt.mobile.ui.theme.LiltGlassCardBrush
+import com.lilt.mobile.ui.theme.LiltGlassSpecularBorderBrush
 import com.lilt.mobile.ui.theme.LiltTheme
+import com.lilt.mobile.ui.theme.LiltThemeState
+import com.lilt.mobile.ui.theme.NothingBlack
+import com.lilt.mobile.ui.theme.NothingBorder
+import com.lilt.mobile.ui.theme.NothingCard
+import com.lilt.mobile.ui.theme.NothingCardElevated
+import com.lilt.mobile.ui.theme.NothingRed
+import com.lilt.mobile.ui.theme.NothingTextMuted
+import com.lilt.mobile.ui.theme.NothingTextPrimary
+import com.lilt.mobile.ui.theme.NothingTextSecondary
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -72,7 +84,7 @@ class ReminderAlertActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Turn on screen and show over lock screen
+        // Turn on screen and show over lock screen across all Android versions
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
@@ -99,35 +111,38 @@ class ReminderAlertActivity : ComponentActivity() {
             LiltTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = Color.Black
+                    color = NothingBlack
                 ) {
-                    ReminderAlertScreen(
-                        title = title,
-                        eventEpochMs = eventEpochMs,
-                        leadMinutes = leadMinutes,
-                        isSilent = isSilent,
-                        onAcknowledge = {
-                            ReminderAlarmPlayer.stop()
-                            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                            nm.cancel(reminderId.hashCode())
-                            settings.completeReminder(reminderId)
-                            Toast.makeText(this, "Reminder acknowledged ✓", Toast.LENGTH_SHORT).show()
-                            finish()
-                        },
-                        onSnooze = { minutes ->
-                            ReminderAlarmPlayer.stop()
-                            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                            nm.cancel(reminderId.hashCode())
-                            settings.snoozeReminder(reminderId, snoozeMinutes = minutes)
-                            val snoozed = settings.getReminders().find { it.id == reminderId }
-                            if (snoozed != null) {
-                                ReminderScheduler.schedule(this, snoozed)
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        LiquidGlassAmbientBackdrop(isDark = LiltThemeState.isDark)
+                        ReminderAlertScreen(
+                            title = title,
+                            eventEpochMs = eventEpochMs,
+                            leadMinutes = leadMinutes,
+                            isSilent = isSilent,
+                            onAcknowledge = {
+                                ReminderAlarmPlayer.stop()
+                                val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                                nm.cancel(reminderId.hashCode())
+                                settings.completeReminder(reminderId)
+                                Toast.makeText(this@ReminderAlertActivity, "Reminder acknowledged ✓", Toast.LENGTH_SHORT).show()
+                                finish()
+                            },
+                            onSnooze = { minutes ->
+                                ReminderAlarmPlayer.stop()
+                                val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                                nm.cancel(reminderId.hashCode())
+                                settings.snoozeReminder(reminderId, snoozeMinutes = minutes)
+                                val snoozed = settings.getReminders().find { it.id == reminderId }
+                                if (snoozed != null) {
+                                    ReminderScheduler.schedule(this@ReminderAlertActivity, snoozed)
+                                }
+                                val label = if (minutes >= 60 && minutes % 60 == 0) "${minutes / 60} hour" else "$minutes minutes"
+                                Toast.makeText(this@ReminderAlertActivity, "Snoozed for $label ⏰", Toast.LENGTH_SHORT).show()
+                                finish()
                             }
-                            val label = if (minutes >= 60 && minutes % 60 == 0) "${minutes / 60} hour" else "$minutes minutes"
-                            Toast.makeText(this, "Snoozed for $label ⏰", Toast.LENGTH_SHORT).show()
-                            finish()
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
@@ -190,25 +205,26 @@ fun ReminderAlertScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Mode Badge
+            // Mode Badge (Liquid Glass Pill)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
-                    .background(Color(0xFF18181B))
-                    .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(20.dp))
+                    .background(NothingCard)
+                    .background(LiltGlassCardBrush)
+                    .border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(if (isSilent) Color(0xFFA1A1AA) else Color(0xFFD71921))
+                        .background(if (isSilent) NothingTextMuted else NothingRed)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = if (isSilent) "SILENT ALARM (VISUAL)" else "LILT SMART ALARM",
-                    color = Color.White,
+                    color = NothingTextPrimary,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.2.sp
@@ -221,8 +237,8 @@ fun ReminderAlertScreen(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
-                        .background(if (isAudioSilenced) Color(0xFF27272A) else Color(0xFF1E1E24))
-                        .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(16.dp))
+                        .background(NothingCardElevated)
+                        .border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(16.dp))
                         .clickable {
                             view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                             ReminderAlarmPlayer.silenceAudio()
@@ -232,15 +248,15 @@ fun ReminderAlertScreen(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = if (isAudioSilenced) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                            imageVector = if (isAudioSilenced) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
                             contentDescription = null,
-                            tint = if (isAudioSilenced) Color(0xFFA1A1AA) else Color(0xFFD71921),
+                            tint = if (isAudioSilenced) NothingTextMuted else NothingRed,
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(5.dp))
                         Text(
                             text = if (isAudioSilenced) "Muted" else "Mute Audio",
-                            color = Color.White,
+                            color = NothingTextPrimary,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -258,7 +274,7 @@ fun ReminderAlertScreen(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.size(130.dp)
             ) {
-                val badgeColor = if (isSilent) Color(0xFF52525B) else Color(0xFFD71921)
+                val badgeColor = if (isSilent) Color(0xFF52525B) else NothingRed
                 // Outer pulsing glow ring
                 Box(
                     modifier = Modifier
@@ -296,7 +312,7 @@ fun ReminderAlertScreen(
 
             Text(
                 text = title,
-                color = Color.White,
+                color = NothingTextPrimary,
                 fontSize = 24.sp,
                 lineHeight = 30.sp,
                 fontWeight = FontWeight.Bold,
@@ -309,7 +325,7 @@ fun ReminderAlertScreen(
             if (timeFormatted.isNotEmpty()) {
                 Text(
                     text = "Event at $timeFormatted ($leadStr advance alert)",
-                    color = Color(0xFFA1A1AA),
+                    color = NothingTextSecondary,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     textAlign = TextAlign.Center
@@ -317,7 +333,7 @@ fun ReminderAlertScreen(
             } else {
                 Text(
                     text = "Scheduled proactive reminder",
-                    color = Color(0xFFA1A1AA),
+                    color = NothingTextSecondary,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -329,27 +345,27 @@ fun ReminderAlertScreen(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // 1. Primary Solid White Button: ACKNOWLEDGE
+            // 1. Primary High-Contrast Button: ACKNOWLEDGE
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp)
                     .clip(RoundedCornerShape(27.dp))
-                    .background(Color.White)
+                    .background(NothingTextPrimary)
                     .clickable { onAcknowledge() }
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = null,
-                        tint = Color.Black,
+                        tint = if (LiltThemeState.isDark) Color.Black else Color.White,
                         modifier = Modifier.size(19.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "ACKNOWLEDGE",
-                        color = Color.Black,
+                        color = if (LiltThemeState.isDark) Color.Black else Color.White,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
@@ -367,14 +383,14 @@ fun ReminderAlertScreen(
             ) {
                 Text(
                     text = "SNOOZE DURATION",
-                    color = Color(0xFF71717A),
+                    color = NothingTextMuted,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.2.sp
                 )
                 Text(
                     text = "-5m / +5m",
-                    color = Color(0xFF52525B),
+                    color = NothingTextMuted,
                     fontSize = 10.sp
                 )
             }
@@ -386,8 +402,9 @@ fun ReminderAlertScreen(
                     .fillMaxWidth()
                     .height(50.dp)
                     .clip(RoundedCornerShape(25.dp))
-                    .background(Color(0xFF141417))
-                    .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(25.dp))
+                    .background(NothingCard)
+                    .background(LiltGlassCardBrush)
+                    .border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(25.dp))
                     .padding(horizontal = 5.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -398,7 +415,8 @@ fun ReminderAlertScreen(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF222228))
+                        .background(NothingCardElevated)
+                        .border(1.dp, NothingBorder, CircleShape)
                         .clickable {
                             view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                             if (snoozeMinutes > 5) {
@@ -409,7 +427,7 @@ fun ReminderAlertScreen(
                     Icon(
                         imageVector = Icons.Default.Remove,
                         contentDescription = "Decrease 5 minutes",
-                        tint = Color.White,
+                        tint = NothingTextPrimary,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -424,7 +442,7 @@ fun ReminderAlertScreen(
                     } else {
                         "$snoozeMinutes MINUTES"
                     },
-                    color = Color.White,
+                    color = NothingTextPrimary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
@@ -436,7 +454,8 @@ fun ReminderAlertScreen(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF222228))
+                        .background(NothingCardElevated)
+                        .border(1.dp, NothingBorder, CircleShape)
                         .clickable {
                             view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                             if (snoozeMinutes < 180) {
@@ -447,7 +466,7 @@ fun ReminderAlertScreen(
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Increase 5 minutes",
-                        tint = Color.White,
+                        tint = NothingTextPrimary,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -469,10 +488,10 @@ fun ReminderAlertScreen(
                             .weight(1f)
                             .height(34.dp)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (isSelected) Color(0xFF2E2E35) else Color(0xFF101014))
+                            .background(if (isSelected) Color(0x26FF3B1F) else NothingCard)
                             .border(
                                 width = if (isSelected) 1.2.dp else 1.dp,
-                                color = if (isSelected) Color.White else Color(0x22FFFFFF),
+                                color = if (isSelected) NothingRed else NothingBorder,
                                 shape = RoundedCornerShape(10.dp)
                             )
                             .clickable {
@@ -482,7 +501,7 @@ fun ReminderAlertScreen(
                     ) {
                         Text(
                             text = if (mins == 60) "1h" else "${mins}m",
-                            color = if (isSelected) Color.White else Color(0xFFA1A1AA),
+                            color = if (isSelected) NothingTextPrimary else NothingTextSecondary,
                             fontSize = 11.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                         )
@@ -499,21 +518,22 @@ fun ReminderAlertScreen(
                     .fillMaxWidth()
                     .height(50.dp)
                     .clip(RoundedCornerShape(25.dp))
-                    .background(Color(0xFF1A1A20))
-                    .border(1.2.dp, Color(0x66FFFFFF), RoundedCornerShape(25.dp))
+                    .background(NothingCardElevated)
+                    .background(LiltGlassCardBrush)
+                    .border(1.2.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(25.dp))
                     .clickable { onSnooze(snoozeMinutes) }
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Snooze,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = NothingTextPrimary,
                         modifier = Modifier.size(17.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "SNOOZE FOR ${if (snoozeMinutes >= 60 && snoozeMinutes % 60 == 0) "${snoozeMinutes / 60} HOUR" else "$snoozeMinutes MIN"}",
-                        color = Color.White,
+                        color = NothingTextPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp

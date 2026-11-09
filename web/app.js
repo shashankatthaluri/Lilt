@@ -585,7 +585,7 @@
   }
 
   /* =====================================================================
-     FLOATING PILL — draggable Windows Circle->Text Pill & Mobile Circle
+     FLOATING PILL — live automatic loop + draggable Windows Pill & Mobile Circle
      ===================================================================== */
   function initFloatPill() {
     const screen = $("#desk-screen");
@@ -598,19 +598,22 @@
     const modeBtns = $$("#pill-mode-tabs .sit-mode");
     const stateBtns = $$("#sit-state-btns .sit-chip");
 
+    const APP_ORDER = ["mail", "slack", "code"];
     const TEXTS = {
       mail: "The launch is moving to Monday. I’ll share the final deck by 10 AM.",
-      slack: "Yes — build 1.1 passed QA. Shipping the APK tonight 🚀",
-      code: "// TODO: retry the payment if the bank times out"
+      slack: "Yes — build 1.1 passed QA. Shipping the universal APK tonight 🚀",
+      code: "// TODO: retry the payment request if the gateway times out"
     };
     const BASE = {};
     views.forEach((v) => (BASE[v.dataset.view] = $("[data-target]", v).innerHTML));
 
     let app = "mail";
     let mode = "windows"; // "windows" (circle -> text pill) | "mobile" (circle only)
-    let busy = false;
+    let currentPhase = "idle";
+    let loopGen = 0;
 
     function applyPillState(phase) {
+      currentPhase = phase;
       stateBtns.forEach((b) => b.classList.toggle("is-active", b.dataset.state === phase));
       dot.className = "lilt-status-dot";
       pill.classList.toggle("is-mobile-circle", mode === "mobile");
@@ -634,19 +637,69 @@
       }
     }
 
+    function selectAppTab(nextApp) {
+      app = nextApp;
+      tabs.forEach((x) => x.classList.toggle("is-active", x.dataset.app === app));
+      views.forEach((v) => v.classList.toggle("is-active", v.dataset.view === app));
+    }
+
+    async function runAutoLoop(gen, startWaitMs = 0) {
+      if (startWaitMs > 0) {
+        await sleep(startWaitMs);
+        if (gen !== loopGen) return;
+      }
+      while (gen === loopGen) {
+        const view = views.find((v) => v.dataset.view === app);
+        const target = $("[data-target]", view);
+        const thisApp = app;
+
+        // 1. Idle / Ready (Translucent circle with White dot)
+        applyPillState("idle");
+        target.innerHTML = BASE[thisApp] + '<span class="caret"></span>';
+        await sleep(950);
+        if (gen !== loopGen) return;
+
+        // 2. Listening… (Red dot + expands to "Listening…" on Windows / pulses on Mobile)
+        applyPillState("listening");
+        await sleep(1450);
+        if (gen !== loopGen) return;
+
+        // 3. Transcribing… (Yellow dot + "Transcribing…")
+        applyPillState("transcribing");
+        await sleep(850);
+        if (gen !== loopGen) return;
+
+        // 4. Copied ✓ (Green dot + "Copied" + live typewriter insertion)
+        applyPillState("copied");
+        const text = TEXTS[thisApp];
+        for (let i = 1; i <= text.length; i++) {
+          if (gen !== loopGen || app !== thisApp) return;
+          target.innerHTML = BASE[thisApp] + `<span class="typed">${text.slice(0, i)}</span><span class="caret"></span>`;
+          await sleep(18);
+        }
+        await sleep(1800);
+        if (gen !== loopGen) return;
+
+        // Advance automatically to next app tab (Gmail -> Slack -> VS Code)
+        const nextIdx = (APP_ORDER.indexOf(thisApp) + 1) % APP_ORDER.length;
+        selectAppTab(APP_ORDER[nextIdx]);
+      }
+    }
+
     modeBtns.forEach((btn) => {
       btn.addEventListener("click", () => {
         modeBtns.forEach((b) => b.classList.toggle("is-active", b === btn));
         mode = btn.dataset.mode;
-        const activeStateBtn = $("#sit-state-btns .sit-chip.is-active");
-        applyPillState(activeStateBtn ? activeStateBtn.dataset.state : "idle");
+        applyPillState(currentPhase);
       });
     });
 
     stateBtns.forEach((btn) => {
       btn.addEventListener("click", () => {
-        busy = false;
+        loopGen++;
         applyPillState(btn.dataset.state);
+        // Resume automatic live cycle after 3.2s so it never stays frozen
+        runAutoLoop(loopGen, 3200);
       });
     });
 
@@ -657,7 +710,7 @@
       const y = clamp(py, pr.height / 2 + 8, r.height - pr.height / 2 - 8);
       pill.style.left = `${(x / r.width) * 100}%`;
       pill.style.top = `${(y / r.height) * 100}%`;
-      posEl.textContent = `x ${Math.round((x / r.width) * 100)}% · y ${Math.round((y / r.height) * 100)}% · ${mode === "windows" ? "Windows pill" : "Mobile circle"}`;
+      posEl.textContent = `x ${Math.round((x / r.width) * 100)}% · y ${Math.round((y / r.height) * 100)}% · ${mode === "windows" ? "Windows pill" : "Mobile circle"} (live auto)`;
     }
 
     let dragging = false, moved = 0, sx = 0, sy = 0, ox = 0, oy = 0;
@@ -679,49 +732,19 @@
       if (!dragging) return;
       dragging = false;
       pill.classList.remove("is-dragging");
-      if (moved < 6) dictate();
+      if (moved < 6) {
+        loopGen++;
+        runAutoLoop(loopGen, 0);
+      }
     };
     pill.addEventListener("pointerup", end);
     pill.addEventListener("pointercancel", () => { dragging = false; pill.classList.remove("is-dragging"); });
 
-    async function dictate() {
-      if (busy) return;
-      busy = true;
-      const view = views.find((v) => v.dataset.view === app);
-      const target = $("[data-target]", view);
-      const thisApp = app;
-      target.innerHTML = BASE[app] + '<span class="caret"></span>';
-
-      // State B: Red Dot + "Listening…"
-      applyPillState("listening");
-      await sleep(1050);
-
-      // State C: Yellow Dot + "Transcribing…"
-      applyPillState("transcribing");
-      await sleep(650);
-
-      // State D: Green Dot + "Copied" + Typewriter insertion
-      applyPillState("copied");
-      const text = TEXTS[thisApp];
-      for (let i = 1; i <= text.length; i++) {
-        if (app !== thisApp) break;
-        target.innerHTML = BASE[thisApp] + `<span class="typed">${text.slice(0, i)}</span><span class="caret"></span>`;
-        await sleep(16);
-      }
-      await sleep(950);
-
-      // Return to State A: White Dot Circle
-      applyPillState("idle");
-      busy = false;
-    }
-
     tabs.forEach((t) =>
       t.addEventListener("click", () => {
-        tabs.forEach((x) => x.classList.toggle("is-active", x === t));
-        app = t.dataset.app;
-        views.forEach((v) => v.classList.toggle("is-active", v.dataset.view === app));
-        busy = false;
-        applyPillState("idle");
+        selectAppTab(t.dataset.app);
+        loopGen++;
+        runAutoLoop(loopGen, 0);
       })
     );
 
@@ -735,22 +758,9 @@
       setPos(r.width, parseFloat(pill.style.top || "70") / 100 * r.height);
     });
 
-    // Wallpaper Switcher for Adaptive Liquid Glass demo
-    const desk = $("#desk");
-    const wpBtns = $$("#wp-switcher .wp-dot");
-    wpBtns.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        wpBtns.forEach((b) => b.classList.toggle("is-active", b === btn));
-        const wp = btn.dataset.wp;
-        desk.classList.remove("wp-aurora", "wp-sunset", "wp-ocean", "wp-pearl", "wp-oled");
-        desk.classList.add(`wp-${wp}`);
-      });
-    });
-
-    // Auto-demo once when the desk enters view
-    if (hasGSAP) {
-      ScrollTrigger.create({ trigger: "#desk", start: "top 55%", once: true, onEnter: () => setTimeout(dictate, 400) });
-    }
+    // Start the continuous live automatic loop immediately
+    loopGen++;
+    runAutoLoop(loopGen, 200);
   }
 
   /* =====================================================================

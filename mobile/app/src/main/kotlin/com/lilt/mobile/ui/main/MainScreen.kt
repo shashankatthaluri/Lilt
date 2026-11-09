@@ -748,7 +748,7 @@ fun MainScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, NothingBorder, RoundedCornerShape(24.dp))
+                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(24.dp))
                         .padding(18.dp)
                 ) {
                     Row(
@@ -1096,7 +1096,7 @@ fun MainScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, NothingBorder, RoundedCornerShape(24.dp))
+                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(24.dp))
                         .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -1349,7 +1349,7 @@ fun MainScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, NothingBorder, RoundedCornerShape(18.dp))
+                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(18.dp))
                         .padding(14.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1565,7 +1565,7 @@ fun MainScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
                         .padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
@@ -2606,7 +2606,7 @@ fun MainScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
                         .padding(16.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -2678,7 +2678,7 @@ fun MainScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -2916,7 +2916,7 @@ fun MainScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
                         .padding(16.dp)
                 ) {
                     Row(
@@ -3256,7 +3256,7 @@ fun MainScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
                         .padding(16.dp)
                 ) {
                     // Sub-Tab Navigation Bar: Voice Commands, Dictionary, Snippets
@@ -4069,7 +4069,7 @@ fun MainScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
                         .padding(16.dp)
                 ) {
                     Text(
@@ -4183,7 +4183,7 @@ fun MainScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
                         .padding(16.dp)
                 ) {
                     NothingSettingToggle(
@@ -4334,7 +4334,7 @@ fun MainScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
                         .padding(16.dp)
                 ) {
                     Row(
