@@ -616,7 +616,7 @@ fun MainScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF16161A))
+                        colors = CardDefaults.cardColors(containerColor = NothingCard)
                     ) {
                         Column(
                             modifier = Modifier
@@ -686,13 +686,13 @@ fun MainScreen(
                                         Icon(
                                             imageVector = Icons.AutoMirrored.Filled.Send,
                                             contentDescription = null,
-                                            tint = Color.White,
+                                            tint = NothingTextPrimary,
                                             modifier = Modifier.size(12.dp)
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Text(
                                             text = "1-CLICK REPORT TO DEV",
-                                            color = Color.White,
+                                            color = NothingTextPrimary,
                                             fontSize = 10.sp,
                                             fontWeight = FontWeight.Bold
                                         )
@@ -705,7 +705,7 @@ fun MainScreen(
                                         .weight(1f)
                                         .height(34.dp)
                                         .clip(RoundedCornerShape(8.dp))
-                                        .background(Color(0xFF1E1E1E))
+                                        .background(NothingCardElevated)
                                         .clickable { liveAlertMessage = null }
                                 ) {
                                     Text(
@@ -760,7 +760,7 @@ fun MainScreen(
                             Icon(
                                 imageVector = Icons.Default.FlashOn,
                                 contentDescription = "Speed",
-                                tint = Color.White,
+                                tint = NothingTextPrimary,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(6.dp))
@@ -776,7 +776,7 @@ fun MainScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Color(0xFF16161A))
+                                .background(NothingCard)
                                 .border(1.dp, Color(0xFF282830), RoundedCornerShape(12.dp))
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
@@ -871,7 +871,7 @@ fun MainScreen(
                 ) {
                     Text(
                         text = "+ Choose Languages (${enabledLanguageCodes.size})",
-                        color = Color.White,
+                        color = NothingTextPrimary,
                         fontSize = 10.5.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -1279,7 +1279,7 @@ fun MainScreen(
                                     Text(text = "•", color = Color(0xFF3F3F46), fontSize = 11.sp)
                                     Text(
                                         text = "Copy",
-                                        color = Color.White,
+                                        color = NothingTextPrimary,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
                                         modifier = Modifier.clickable {
@@ -1310,11 +1310,11 @@ fun MainScreen(
                                 .heightIn(min = 120.dp, max = 220.dp),
                             shape = RoundedCornerShape(16.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = Color(0xFF0A0B10),
-                                unfocusedContainerColor = Color(0xFF0A0B10),
+                                focusedContainerColor = NothingCardElevated,
+                                unfocusedContainerColor = NothingCardElevated,
                                 focusedBorderColor = Color(0x80FFFFFF),
-                                unfocusedBorderColor = Color(0xFF22242E),
-                                focusedTextColor = Color.White,
+                                unfocusedBorderColor = NothingBorder,
+                                focusedTextColor = NothingTextPrimary,
                                 unfocusedTextColor = Color(0xFFE4E4E7),
                                 cursorColor = Color(0xFFD71921)
                             ),
@@ -1390,7 +1390,7 @@ fun MainScreen(
                                 .fillMaxWidth()
                                 .padding(vertical = 3.dp)
                                 .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFF141414))
+                                .background(NothingCard)
                                 .padding(horizontal = 8.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -1522,7 +1522,7 @@ fun MainScreen(
                             ) {
                                 Text(
                                     text = "Select",
-                                    color = Color.White,
+                                    color = NothingTextPrimary,
                                     fontSize = 11.5.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -1631,7 +1631,7 @@ fun MainScreen(
                     .fillMaxWidth()
                     .height(48.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFF111116))
+                    .background(NothingCard)
                     .border(
                         1.dp,
                         if (isSearching) Color(0x88FFB800) else Color(0x28FFFFFF),
@@ -1657,7 +1657,7 @@ fun MainScreen(
                         modifier = Modifier.weight(1f),
                         singleLine = true,
                         textStyle = TextStyle(
-                            color = Color.White,
+                            color = NothingTextPrimary,
                             fontSize = 13.5.sp,
                             fontWeight = FontWeight.Normal
                         ),
@@ -1679,7 +1679,7 @@ fun MainScreen(
                             modifier = Modifier
                                 .size(24.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF222228))
+                                .background(NothingCardElevated)
                                 .clickable {
                                     view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                                     historySearchQuery = ""
@@ -1731,7 +1731,7 @@ fun MainScreen(
                     .fillMaxWidth()
                     .height(44.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFF0F0F12))
+                    .background(NothingCard)
                     .border(1.dp, Color(0x24FFFFFF), RoundedCornerShape(12.dp))
                     .padding(3.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -1952,7 +1952,7 @@ fun MainScreen(
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(18.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFF111114))
+                            colors = CardDefaults.cardColors(containerColor = NothingCard)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -1982,7 +1982,7 @@ fun MainScreen(
                                     Column {
                                         Text(
                                             text = if (silentAlarmsEnabled) "Silent Alarm Mode" else "Audible Alarm Mode",
-                                            color = Color.White,
+                                            color = NothingTextPrimary,
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.SemiBold
                                         )
@@ -2004,7 +2004,7 @@ fun MainScreen(
                                         checkedThumbColor = Color.White,
                                         checkedTrackColor = Color(0xFF3F3F46),
                                         uncheckedThumbColor = Color(0xFF71717A),
-                                        uncheckedTrackColor = Color(0xFF1E1E24)
+                                        uncheckedTrackColor = NothingCardElevated
                                     )
                                 )
                             }
@@ -2016,7 +2016,7 @@ fun MainScreen(
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(22.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0D0D10))
+                                    colors = CardDefaults.cardColors(containerColor = NothingCard)
                                 ) {
                                     Box(
                                         contentAlignment = Alignment.Center,
@@ -2034,7 +2034,7 @@ fun MainScreen(
                                                 modifier = Modifier
                                                     .size(52.dp)
                                                     .clip(CircleShape)
-                                                    .background(Color(0xFF18181B))
+                                                    .background(NothingCardElevated)
                                                     .border(1.dp, Color(0x33FFFFFF), CircleShape)
                                             ) {
                                                 Icon(
@@ -2047,7 +2047,7 @@ fun MainScreen(
                                             Spacer(modifier = Modifier.height(14.dp))
                                             Text(
                                                 text = "No alerts match \"${queryClean}\"",
-                                                color = Color.White,
+                                                color = NothingTextPrimary,
                                                 fontSize = 15.sp,
                                                 fontWeight = FontWeight.SemiBold,
                                                 textAlign = TextAlign.Center
@@ -2083,7 +2083,7 @@ fun MainScreen(
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(22.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFF0D0D10))
+                                colors = CardDefaults.cardColors(containerColor = NothingCard)
                             ) {
                                 Box(
                                     contentAlignment = Alignment.Center,
@@ -2101,7 +2101,7 @@ fun MainScreen(
                                             modifier = Modifier
                                                 .size(54.dp)
                                                 .clip(CircleShape)
-                                                .background(Color(0xFF18181D))
+                                                .background(NothingCardElevated)
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Schedule,
@@ -2113,7 +2113,7 @@ fun MainScreen(
                                         Spacer(modifier = Modifier.height(14.dp))
                                         Text(
                                             text = "No scheduled reminders yet",
-                                            color = Color.White,
+                                            color = NothingTextPrimary,
                                             fontSize = 15.sp,
                                             fontWeight = FontWeight.SemiBold
                                         )
@@ -2153,7 +2153,7 @@ fun MainScreen(
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(22.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0D0D10))
+                                    colors = CardDefaults.cardColors(containerColor = NothingCard)
                                 ) {
                                     Box(
                                         contentAlignment = Alignment.Center,
@@ -2171,7 +2171,7 @@ fun MainScreen(
                                                 modifier = Modifier
                                                     .size(52.dp)
                                                     .clip(CircleShape)
-                                                    .background(Color(0xFF18181B))
+                                                    .background(NothingCardElevated)
                                                     .border(1.dp, Color(0x33FFFFFF), CircleShape)
                                             ) {
                                                 Icon(
@@ -2184,7 +2184,7 @@ fun MainScreen(
                                             Spacer(modifier = Modifier.height(14.dp))
                                             Text(
                                                 text = "No dictations match \"${queryClean}\"",
-                                                color = Color.White,
+                                                color = NothingTextPrimary,
                                                 fontSize = 15.sp,
                                                 fontWeight = FontWeight.SemiBold,
                                                 textAlign = TextAlign.Center
@@ -2220,7 +2220,7 @@ fun MainScreen(
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(22.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFF0D0D10))
+                                colors = CardDefaults.cardColors(containerColor = NothingCard)
                             ) {
                                 Box(
                                     contentAlignment = Alignment.Center,
@@ -2238,7 +2238,7 @@ fun MainScreen(
                                             modifier = Modifier
                                                 .size(56.dp)
                                                 .clip(CircleShape)
-                                                .background(Color(0xFF18181B))
+                                                .background(NothingCardElevated)
                                                 .border(1.dp, Color(0x33FFFFFF), CircleShape)
                                         ) {
                                             Icon(
@@ -2251,7 +2251,7 @@ fun MainScreen(
                                         Spacer(modifier = Modifier.height(14.dp))
                                         Text(
                                             text = "No voice dictations yet",
-                                            color = Color.White,
+                                            color = NothingTextPrimary,
                                             fontSize = 15.sp,
                                             fontWeight = FontWeight.SemiBold
                                         )
@@ -2320,7 +2320,7 @@ fun MainScreen(
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(22.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0D0D10))
+                                    colors = CardDefaults.cardColors(containerColor = NothingCard)
                                 ) {
                                     Box(
                                         contentAlignment = Alignment.Center,
@@ -2338,7 +2338,7 @@ fun MainScreen(
                                                 modifier = Modifier
                                                     .size(52.dp)
                                                     .clip(CircleShape)
-                                                    .background(Color(0xFF18181B))
+                                                    .background(NothingCardElevated)
                                                     .border(1.dp, Color(0x33FFFFFF), CircleShape)
                                             ) {
                                                 Icon(
@@ -2351,7 +2351,7 @@ fun MainScreen(
                                             Spacer(modifier = Modifier.height(14.dp))
                                             Text(
                                                 text = "No notes match \"${queryClean}\"",
-                                                color = Color.White,
+                                                color = NothingTextPrimary,
                                                 fontSize = 15.sp,
                                                 fontWeight = FontWeight.SemiBold,
                                                 textAlign = TextAlign.Center
@@ -2387,7 +2387,7 @@ fun MainScreen(
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(22.dp),
-                                colors = CardDefaults.cardColors(containerColor = Color(0xFF0D0D10))
+                                colors = CardDefaults.cardColors(containerColor = NothingCard)
                             ) {
                                 Box(
                                     contentAlignment = Alignment.Center,
@@ -2418,7 +2418,7 @@ fun MainScreen(
                                         Spacer(modifier = Modifier.height(14.dp))
                                         Text(
                                             text = "No structured notes yet",
-                                            color = Color.White,
+                                            color = NothingTextPrimary,
                                             fontSize = 15.sp,
                                             fontWeight = FontWeight.SemiBold
                                         )
@@ -2620,7 +2620,7 @@ fun MainScreen(
                             Icon(
                                 imageVector = Icons.Default.Keyboard,
                                 contentDescription = "Keyboard",
-                                tint = Color.White,
+                                tint = NothingTextPrimary,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
@@ -2650,7 +2650,7 @@ fun MainScreen(
                             .fillMaxWidth()
                             .height(40.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFF1E1E1E))
+                            .background(NothingCardElevated)
                             .border(1.dp, NothingBorder, RoundedCornerShape(12.dp))
                             .clickable {
                                 val intent = Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)
@@ -2692,7 +2692,7 @@ fun MainScreen(
                         Icon(
                             imageVector = Icons.Default.PictureInPicture,
                             contentDescription = "Floating Pill",
-                            tint = Color.White,
+                            tint = NothingTextPrimary,
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -2739,7 +2739,7 @@ fun MainScreen(
                             checkedTrackColor = Color(0xFFD71921),
                             checkedBorderColor = Color(0xFFE50914),
                             uncheckedThumbColor = Color(0xFFA1A1AA),
-                            uncheckedTrackColor = Color(0xFF14151C),
+                            uncheckedTrackColor = NothingCardElevated,
                             uncheckedBorderColor = Color(0xFF282933)
                         )
                     )
@@ -2792,7 +2792,7 @@ fun MainScreen(
                             checkedTrackColor = Color(0xFFD71921),
                             checkedBorderColor = Color(0xFFE50914),
                             uncheckedThumbColor = Color(0xFFA1A1AA),
-                            uncheckedTrackColor = Color(0xFF14151C),
+                            uncheckedTrackColor = NothingCardElevated,
                             uncheckedBorderColor = Color(0xFF282933)
                         )
                             )
@@ -2965,7 +2965,7 @@ fun MainScreen(
                             checkedTrackColor = Color(0xFFD71921),
                             checkedBorderColor = Color(0xFFE50914),
                             uncheckedThumbColor = Color(0xFFA1A1AA),
-                            uncheckedTrackColor = Color(0xFF14151C),
+                            uncheckedTrackColor = NothingCardElevated,
                             uncheckedBorderColor = Color(0xFF282933)
                         )
                         )
@@ -2998,17 +2998,17 @@ fun MainScreen(
                                         .background(
                                             if (isSelected) {
                                                 Brush.verticalGradient(
-                                                    listOf(Color(0xFF2C2F3C), Color(0xFF1B1D25))
+                                                    if (LiltThemeState.isDark) listOf(Color(0xFF2C2F3C), Color(0xFF1B1D25)) else listOf(Color(0xFFFFFFFF), Color(0xFFEBEAE4))
                                                 )
                                             } else {
                                                 Brush.verticalGradient(
-                                                    listOf(Color(0xFF121319), Color(0xFF0C0D12))
+                                                    if (LiltThemeState.isDark) listOf(Color(0xFF121319), Color(0xFF0C0D12)) else listOf(Color(0xFFF7F6F2), Color(0xFFEFECE6))
                                                 )
                                             }
                                         )
                                         .border(
                                             width = 1.2.dp,
-                                            color = if (isSelected) Color(0x99FFFFFF) else Color(0xFF22242D),
+                                            color = if (isSelected) Color(0x99FFFFFF) else NothingBorder,
                                             shape = RoundedCornerShape(10.dp)
                                         )
                                         .clickable {
@@ -3067,17 +3067,17 @@ fun MainScreen(
                                         .background(
                                             if (isSelected) {
                                                 Brush.verticalGradient(
-                                                    listOf(Color(0xFF2C2F3C), Color(0xFF1B1D25))
+                                                    if (LiltThemeState.isDark) listOf(Color(0xFF2C2F3C), Color(0xFF1B1D25)) else listOf(Color(0xFFFFFFFF), Color(0xFFEBEAE4))
                                                 )
                                             } else {
                                                 Brush.verticalGradient(
-                                                    listOf(Color(0xFF121319), Color(0xFF0C0D12))
+                                                    if (LiltThemeState.isDark) listOf(Color(0xFF121319), Color(0xFF0C0D12)) else listOf(Color(0xFFF7F6F2), Color(0xFFEFECE6))
                                                 )
                                             }
                                         )
                                         .border(
                                             width = 1.2.dp,
-                                            color = if (isSelected) Color(0x99FFFFFF) else Color(0xFF22242D),
+                                            color = if (isSelected) Color(0x99FFFFFF) else NothingBorder,
                                             shape = RoundedCornerShape(10.dp)
                                         )
                                         .clickable {
@@ -3109,8 +3109,8 @@ fun MainScreen(
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Color.White,
                                 unfocusedBorderColor = NothingBorder,
-                                focusedContainerColor = Color(0xFF0F0F0F),
-                                unfocusedContainerColor = Color(0xFF0F0F0F)
+                                focusedContainerColor = NothingCardElevated,
+                                unfocusedContainerColor = NothingCardElevated
                             ),
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -3138,8 +3138,8 @@ fun MainScreen(
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Color.White,
                                 unfocusedBorderColor = NothingBorder,
-                                focusedContainerColor = Color(0xFF0F0F0F),
-                                unfocusedContainerColor = Color(0xFF0F0F0F)
+                                focusedContainerColor = NothingCardElevated,
+                                unfocusedContainerColor = NothingCardElevated
                             ),
                             placeholder = { Text("Enter your API key", color = NothingTextMuted, fontSize = 12.sp) },
                             trailingIcon = {
@@ -3167,7 +3167,7 @@ fun MainScreen(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFF222222))
+                                    .background(NothingCardElevated)
                                     .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
                                     .clickable(enabled = !cloudTesting && cloudApiKey.isNotBlank()) {
                                         cloudTesting = true
@@ -3191,7 +3191,7 @@ fun MainScreen(
                             ) {
                                 Text(
                                     text = if (cloudTesting) "TESTING…" else "TEST CONNECTION",
-                                    color = Color.White,
+                                    color = NothingTextPrimary,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     letterSpacing = 0.8.sp
@@ -3279,17 +3279,17 @@ fun MainScreen(
                                     .background(
                                         if (isSelected) {
                                             Brush.verticalGradient(
-                                                listOf(Color(0xFF2C2F3C), Color(0xFF1B1D25))
+                                                if (LiltThemeState.isDark) listOf(Color(0xFF2C2F3C), Color(0xFF1B1D25)) else listOf(Color(0xFFFFFFFF), Color(0xFFEBEAE4))
                                             )
                                         } else {
                                             Brush.verticalGradient(
-                                                listOf(Color(0xFF121319), Color(0xFF0C0D12))
+                                                if (LiltThemeState.isDark) listOf(Color(0xFF121319), Color(0xFF0C0D12)) else listOf(Color(0xFFF7F6F2), Color(0xFFEFECE6))
                                             )
                                         }
                                     )
                                     .border(
                                         width = 1.2.dp,
-                                        color = if (isSelected) Color(0x99FFFFFF) else Color(0xFF22242D),
+                                        color = if (isSelected) Color(0x99FFFFFF) else NothingBorder,
                                         shape = RoundedCornerShape(12.dp)
                                     )
                                     .clickable { activeWritingTab = tabId }
@@ -3340,7 +3340,7 @@ fun MainScreen(
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFF141414))
+                                    .background(NothingCard)
                                     .padding(horizontal = 10.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -3416,8 +3416,8 @@ fun MainScreen(
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = Color.White,
                                     unfocusedBorderColor = NothingBorder,
-                                    focusedContainerColor = Color(0xFF0F0F0F),
-                                    unfocusedContainerColor = Color(0xFF0F0F0F)
+                                    focusedContainerColor = NothingCardElevated,
+                                    unfocusedContainerColor = NothingCardElevated
                                 ),
                                 modifier = Modifier.weight(1f)
                             )
@@ -3430,8 +3430,8 @@ fun MainScreen(
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = Color.White,
                                     unfocusedBorderColor = NothingBorder,
-                                    focusedContainerColor = Color(0xFF0F0F0F),
-                                    unfocusedContainerColor = Color(0xFF0F0F0F)
+                                    focusedContainerColor = NothingCardElevated,
+                                    unfocusedContainerColor = NothingCardElevated
                                 ),
                                 modifier = Modifier.weight(1.5f)
                             )
@@ -3462,8 +3462,8 @@ fun MainScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Color(0xFF101010))
-                                .border(1.dp, Color(0xFF242424), RoundedCornerShape(12.dp))
+                                .background(NothingCard)
+                                .border(1.dp, NothingBorder, RoundedCornerShape(12.dp))
                                 .padding(12.dp)
                         ) {
                             Column {
@@ -3476,7 +3476,7 @@ fun MainScreen(
                                         Icon(
                                             imageVector = Icons.Default.FlashOn,
                                             contentDescription = "Sandbox",
-                                            tint = Color.White,
+                                            tint = NothingTextPrimary,
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
@@ -3516,7 +3516,7 @@ fun MainScreen(
                                                 .weight(1f)
                                                 .height(42.dp)
                                                 .clip(RoundedCornerShape(10.dp))
-                                                .background(Color(0xFF191919))
+                                                .background(NothingCardElevated)
                                                 .border(1.dp, Color(0xFF2C2C2C), RoundedCornerShape(10.dp))
                                                 .clickable {
                                                     sandboxInput = phrase
@@ -3524,9 +3524,9 @@ fun MainScreen(
                                                 }
                                         ) {
                                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Icon(imageVector = icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
+                                                Icon(imageVector = icon, contentDescription = null, tint = NothingTextPrimary, modifier = Modifier.size(13.dp))
                                                 Spacer(modifier = Modifier.width(4.dp))
-                                                Text(text = label, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                                Text(text = label, color = NothingTextPrimary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                                             }
                                         }
                                     }
@@ -3611,8 +3611,8 @@ fun MainScreen(
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedBorderColor = Color.White,
                                         unfocusedBorderColor = NothingBorder,
-                                        focusedContainerColor = Color(0xFF0B0B0B),
-                                        unfocusedContainerColor = Color(0xFF0B0B0B)
+                                        focusedContainerColor = NothingCardElevated,
+                                        unfocusedContainerColor = NothingCardElevated
                                     ),
                                     modifier = Modifier.fillMaxWidth()
                                 )
@@ -3687,7 +3687,7 @@ fun MainScreen(
                                     ) {
                                         Text(
                                             text = if (sandboxLoading) "PROCESSING…" else "TEST FORMATTING",
-                                            color = Color.White,
+                                            color = NothingTextPrimary,
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             letterSpacing = 0.8.sp
@@ -3699,7 +3699,7 @@ fun MainScreen(
                                             contentAlignment = Alignment.Center,
                                             modifier = Modifier
                                                 .clip(RoundedCornerShape(6.dp))
-                                                .background(Color(0xFF1E1E1E))
+                                                .background(NothingCardElevated)
                                                 .clickable {
                                                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
                                                     clipboard?.setPrimaryClip(ClipData.newPlainText("Lilt Sandbox", sandboxOutput))
@@ -3708,9 +3708,9 @@ fun MainScreen(
                                                 .padding(horizontal = 10.dp, vertical = 6.dp)
                                         ) {
                                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Icon(imageVector = Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.White, modifier = Modifier.size(12.dp))
+                                                Icon(imageVector = Icons.Default.ContentCopy, contentDescription = "Copy", tint = NothingTextPrimary, modifier = Modifier.size(12.dp))
                                                 Spacer(modifier = Modifier.width(4.dp))
-                                                Text("Copy Result", color = Color.White, fontSize = 10.sp)
+                                                Text("Copy Result", color = NothingTextPrimary, fontSize = 10.sp)
                                             }
                                         }
                                     }
@@ -3722,7 +3722,7 @@ fun MainScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clip(RoundedCornerShape(10.dp))
-                                            .background(Color(0xFF080808))
+                                            .background(NothingCard)
                                             .border(1.dp, Color(0xFF282828), RoundedCornerShape(10.dp))
                                             .padding(14.dp)
                                     ) {
@@ -3739,7 +3739,7 @@ fun MainScreen(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .clip(RoundedCornerShape(10.dp))
-                                            .background(Color(0xFF0D0D10))
+                                            .background(NothingCard)
                                             .border(1.dp, Color(0x1FFFFFFF), RoundedCornerShape(10.dp))
                                             .padding(vertical = 14.dp, horizontal = 14.dp)
                                     ) {
@@ -3749,7 +3749,7 @@ fun MainScreen(
                                                 modifier = Modifier
                                                     .size(34.dp)
                                                     .clip(CircleShape)
-                                                    .background(Color(0xFF18181B))
+                                                    .background(NothingCardElevated)
                                                     .border(1.dp, Color(0x28FFFFFF), CircleShape)
                                             ) {
                                                 Icon(
@@ -3804,8 +3804,8 @@ fun MainScreen(
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Color.White,
                                 unfocusedBorderColor = NothingBorder,
-                                focusedContainerColor = Color(0xFF0F0F0F),
-                                unfocusedContainerColor = Color(0xFF0F0F0F)
+                                focusedContainerColor = NothingCardElevated,
+                                unfocusedContainerColor = NothingCardElevated
                             ),
                             placeholder = { Text("e.g. Lilt, Groq, Nothing OS, Rust ARM64", color = NothingTextMuted, fontSize = 12.sp) },
                             modifier = Modifier.fillMaxWidth()
@@ -3834,7 +3834,7 @@ fun MainScreen(
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFF141414))
+                                    .background(NothingCard)
                                     .padding(horizontal = 10.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -3847,7 +3847,7 @@ fun MainScreen(
                                     )
                                     Text(
                                         text = " → ",
-                                        color = Color.White,
+                                        color = NothingTextPrimary,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -3889,8 +3889,8 @@ fun MainScreen(
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = Color.White,
                                     unfocusedBorderColor = NothingBorder,
-                                    focusedContainerColor = Color(0xFF0F0F0F),
-                                    unfocusedContainerColor = Color(0xFF0F0F0F)
+                                    focusedContainerColor = NothingCardElevated,
+                                    unfocusedContainerColor = NothingCardElevated
                                 ),
                                 modifier = Modifier.weight(1f)
                             )
@@ -3903,8 +3903,8 @@ fun MainScreen(
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = Color.White,
                                     unfocusedBorderColor = NothingBorder,
-                                    focusedContainerColor = Color(0xFF0F0F0F),
-                                    unfocusedContainerColor = Color(0xFF0F0F0F)
+                                    focusedContainerColor = NothingCardElevated,
+                                    unfocusedContainerColor = NothingCardElevated
                                 ),
                                 modifier = Modifier.weight(1f)
                             )
@@ -3951,7 +3951,7 @@ fun MainScreen(
                                     .fillMaxWidth()
                                     .padding(vertical = 4.dp)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFF141414))
+                                    .background(NothingCard)
                                     .padding(horizontal = 10.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -4000,8 +4000,8 @@ fun MainScreen(
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = Color.White,
                                     unfocusedBorderColor = NothingBorder,
-                                    focusedContainerColor = Color(0xFF0F0F0F),
-                                    unfocusedContainerColor = Color(0xFF0F0F0F)
+                                    focusedContainerColor = NothingCardElevated,
+                                    unfocusedContainerColor = NothingCardElevated
                                 ),
                                 modifier = Modifier.weight(1f)
                             )
@@ -4014,8 +4014,8 @@ fun MainScreen(
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = Color.White,
                                     unfocusedBorderColor = NothingBorder,
-                                    focusedContainerColor = Color(0xFF0F0F0F),
-                                    unfocusedContainerColor = Color(0xFF0F0F0F)
+                                    focusedContainerColor = NothingCardElevated,
+                                    unfocusedContainerColor = NothingCardElevated
                                 ),
                                 modifier = Modifier.weight(1.5f)
                             )
@@ -4403,13 +4403,13 @@ fun MainScreen(
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.Send,
                                     contentDescription = null,
-                                    tint = Color.White,
+                                    tint = NothingTextPrimary,
                                     modifier = Modifier.size(14.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "REPORT ISSUE TO DEV",
-                                    color = Color.White,
+                                    color = NothingTextPrimary,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -4422,7 +4422,7 @@ fun MainScreen(
                                 .weight(1f)
                                 .height(40.dp)
                                 .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFF1E1E1E))
+                                .background(NothingCardElevated)
                                 .border(1.dp, NothingBorder, RoundedCornerShape(10.dp))
                                 .clickable {
                                     val report = DiagnosticLogger.buildDiagnosticReport(context, "Direct diagnostic copy")
@@ -4481,7 +4481,7 @@ fun MainScreen(
         if (showErrorDialog) {
             AlertDialog(
                 onDismissRequest = { showErrorDialog = false },
-                containerColor = Color(0xFF0E0E0E),
+                containerColor = NothingCard,
                 titleContentColor = Color.White,
                 textContentColor = NothingTextSecondary,
                 title = {
@@ -4512,7 +4512,7 @@ fun MainScreen(
                             text = DiagnosticLogger.DEV_EMAIL,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = NothingTextPrimary
                         )
 
                         Spacer(modifier = Modifier.height(10.dp))
@@ -4522,7 +4522,7 @@ fun MainScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFF141414))
+                                .background(NothingCard)
                                 .border(1.dp, Color(0xFF222222), RoundedCornerShape(8.dp))
                                 .padding(10.dp)
                         ) {
@@ -4563,7 +4563,7 @@ fun MainScreen(
                                     Text(
                                         text = "Last Error: ${DiagnosticLogger.lastErrorMessage}",
                                         fontSize = 10.sp,
-                                        color = Color.White
+                                        color = NothingTextPrimary
                                     )
                                 }
                             }
@@ -4575,7 +4575,7 @@ fun MainScreen(
                             value = errorReportUserNote,
                             onValueChange = { errorReportUserNote = it },
                             label = { Text("What happened? (optional description)", color = NothingTextMuted, fontSize = 11.sp) },
-                            textStyle = TextStyle(color = Color.White, fontSize = 12.sp),
+                            textStyle = TextStyle(color = NothingTextPrimary, fontSize = 12.sp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Color.White,
                                 unfocusedBorderColor = Color(0xFF333333),
@@ -4603,7 +4603,7 @@ fun MainScreen(
                     ) {
                         Text(
                             text = "SEND EMAIL TO DEV",
-                            color = Color.White,
+                            color = NothingTextPrimary,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -4614,7 +4614,7 @@ fun MainScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFF1E1E1E))
+                                .background(NothingCardElevated)
                                 .clickable {
                                     val report = DiagnosticLogger.buildDiagnosticReport(context, errorReportUserNote)
                                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
@@ -4623,13 +4623,13 @@ fun MainScreen(
                                 }
                                 .padding(horizontal = 10.dp, vertical = 8.dp)
                         ) {
-                            Text("COPY LOGS", color = Color.White, fontSize = 11.sp)
+                            Text("COPY LOGS", color = NothingTextPrimary, fontSize = 11.sp)
                         }
 
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFF141414))
+                                .background(NothingCard)
                                 .clickable { showErrorDialog = false }
                                 .padding(horizontal = 10.dp, vertical = 8.dp)
                         ) {
@@ -4825,7 +4825,7 @@ fun TonePill(
             .background(
                 if (isActive) {
                     Brush.verticalGradient(
-                        listOf(Color(0xFF282C3A), Color(0xFF141620))
+                        if (LiltThemeState.isDark) listOf(Color(0xFF282C3A), Color(0xFF141620)) else listOf(Color(0xFFFFFFFF), Color(0xFFF2F0EA))
                     )
                 } else if (isDark) {
                     Brush.verticalGradient(
@@ -4995,7 +4995,7 @@ fun ReminderCard(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .clip(RoundedCornerShape(8.dp))
-                            .background(Color(0xFF24242C))
+                            .background(NothingCardElevated)
                             .clickable { onComplete() }
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
@@ -5009,7 +5009,7 @@ fun ReminderCard(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "Mark Done",
-                                color = Color.White,
+                                color = NothingTextPrimary,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -5023,7 +5023,7 @@ fun ReminderCard(
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF24242C))
+                        .background(NothingCardElevated)
                         .clickable { onDelete() }
                 ) {
                     Icon(
@@ -5050,7 +5050,7 @@ fun ContactActionChip(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(Color(0xFF131316))
+            .background(NothingCard)
             .border(1.dp, if (isSaved) Color(0x3310B981) else Color(0x2EFFFFFF), RoundedCornerShape(14.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
@@ -5068,7 +5068,7 @@ fun ContactActionChip(
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(if (isSaved) Color(0x2610B981) else Color(0xFF222228))
+                        .background(if (isSaved) Color(0x2610B981) else NothingCardElevated)
                         .border(1.dp, if (isSaved) Color(0x4D10B981) else Color(0x33FFFFFF), CircleShape)
                 ) {
                     Icon(
@@ -5097,7 +5097,7 @@ fun ContactActionChip(
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = name,
-                            color = Color.White,
+                            color = NothingTextPrimary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -5376,7 +5376,7 @@ fun VoiceNoteCard(
                             Icon(
                                 imageVector = Icons.Default.Share,
                                 contentDescription = "Share",
-                                tint = Color.White,
+                                tint = NothingTextPrimary,
                                 modifier = Modifier.size(13.dp)
                             )
                         }
@@ -5393,7 +5393,7 @@ fun VoiceNoteCard(
                             Icon(
                                 imageVector = Icons.Default.ContentCopy,
                                 contentDescription = "Copy",
-                                tint = Color.White,
+                                tint = NothingTextPrimary,
                                 modifier = Modifier.size(13.dp)
                             )
                         }
@@ -5757,7 +5757,7 @@ fun NoteCard(
                             Icon(
                                 imageVector = Icons.Default.Share,
                                 contentDescription = "Share",
-                                tint = Color.White,
+                                tint = NothingTextPrimary,
                                 modifier = Modifier.size(13.dp)
                             )
                         }
@@ -5774,7 +5774,7 @@ fun NoteCard(
                             Icon(
                                 imageVector = Icons.Default.ContentCopy,
                                 contentDescription = "Copy",
-                                tint = Color.White,
+                                tint = NothingTextPrimary,
                                 modifier = Modifier.size(13.dp)
                             )
                         }
@@ -5805,12 +5805,12 @@ fun NoteCard(
                 OutlinedTextField(
                     value = editedText,
                     onValueChange = { editedText = it },
-                    textStyle = TextStyle(color = Color.White, fontSize = 14.sp, lineHeight = 21.sp),
+                    textStyle = TextStyle(color = NothingTextPrimary, fontSize = 14.sp, lineHeight = 21.sp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFFFFB800),
                         unfocusedBorderColor = Color(0x66FFB800),
-                        focusedContainerColor = Color(0xFF141419),
-                        unfocusedContainerColor = Color(0xFF141419)
+                        focusedContainerColor = NothingCardElevated,
+                        unfocusedContainerColor = NothingCardElevated
                     ),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -5879,7 +5879,7 @@ fun NoteCard(
                                         modifier = Modifier
                                             .size(19.dp)
                                             .clip(CircleShape)
-                                            .background(if (isStruck) Color(0xFFFFB800) else Color(0xFF141419))
+                                            .background(if (isStruck) Color(0xFFFFB800) else NothingCardElevated)
                                             .border(1.5.dp, if (isStruck) Color(0xFFFFB800) else Color(0xFF52525B), CircleShape)
                                     ) {
                                         if (isStruck) {

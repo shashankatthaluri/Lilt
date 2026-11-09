@@ -63,16 +63,18 @@ class LiltAccessibilityService : AccessibilityService() {
         var isKeyboardShown = false
         var keyboardTop = -1
 
-        // Inspect active system windows strictly for the soft keyboard IME window
+        // Universal keyboard detection across Samsung One UI, Pixel Gboard, SwiftKey, Xiaomi HyperOS, OnePlus/Oppo/Vivo, and standard TYPE_INPUT_METHOD
         try {
             val windowList = windows
             val screenHeight = resources.displayMetrics.heightPixels
             for (w in windowList) {
-                if (w.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
+                val pkgName = w.root?.packageName?.toString()?.lowercase() ?: ""
+                val isKnownImePkg = KNOWN_KEYBOARD_PACKAGES.any { pkgName.contains(it) }
+                if (w.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD || isKnownImePkg) {
                     val rect = Rect()
                     w.getBoundsInScreen(rect)
-                    // The soft keyboard must be on-screen with valid height (>120px)
-                    if (rect.height() > 120 && rect.top < screenHeight && rect.bottom >= (screenHeight * 0.6f).toInt()) {
+                    // Supports standard docked keyboards and floating/split keyboards (>100px height)
+                    if (rect.height() > 100 && rect.top < screenHeight && rect.bottom >= (screenHeight * 0.45f).toInt()) {
                         isKeyboardShown = true
                         keyboardTop = rect.top
                         break
@@ -118,6 +120,24 @@ class LiltAccessibilityService : AccessibilityService() {
 
     companion object {
         private const val TAG = "LiltAccessibility"
+
+        private val KNOWN_KEYBOARD_PACKAGES = listOf(
+            "com.google.android.inputmethod",     // Gboard (Pixel, Nothing, Motorola, Xiaomi)
+            "com.samsung.android.honeyboard",     // Samsung Keyboard (One UI)
+            "com.sec.android.inputmethod",        // Legacy Samsung Keyboard
+            "com.touchtype.swiftkey",             // Microsoft SwiftKey (OnePlus, Samsung, Windows Link)
+            "com.miui.securityinputmethod",       // Xiaomi HyperOS / MIUI Security Keyboard
+            "com.facemoji.lite.xiaomi",           // Xiaomi Mint / Facemoji Keyboard
+            "com.baidu.input_mi",                 // Xiaomi IME
+            "com.sohu.inputmethod.sogou.xiaomi",  // Xiaomi Sogou IME
+            "com.oplus.keyboard",                 // OnePlus / Oppo ColorOS Keyboard
+            "com.coloros.oshare",
+            "com.vivo.aiime",                     // Vivo Jovi / FuntouchOS IME
+            "org.futo.inputmethod",               // FUTO Keyboard
+            "dev.patrickgold.florisboard",        // FlorisBoard
+            "rkr.simplekeyboard.inputmethod",     // Simple Keyboard
+            "com.syntellia.fleksy"                // Fleksy
+        )
 
         @Volatile
         var instance: LiltAccessibilityService? = null
