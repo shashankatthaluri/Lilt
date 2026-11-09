@@ -1,0 +1,5613 @@
+package com.lilt.mobile.ui.main
+
+import android.Manifest
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import android.provider.ContactsContract
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Alarm
+import androidx.compose.material.icons.filled.NotificationsOff
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.ui.res.painterResource
+import com.lilt.mobile.R
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.EmojiEmotions
+import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Numbers
+import androidx.compose.material.icons.filled.PictureInPicture
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.SpaceBar
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.TextFields
+import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.navigation3.runtime.NavKey
+import com.lilt.mobile.accessibility.LiltAccessibilityService
+import com.lilt.mobile.core.LiltCore
+import com.lilt.mobile.data.DiagnosticLogger
+import com.lilt.mobile.data.DictationItem
+import com.lilt.mobile.data.ReminderItem
+import com.lilt.mobile.reminder.ReminderScheduler
+import androidx.compose.material.icons.filled.Schedule
+import com.lilt.mobile.data.ReplacementItem
+import com.lilt.mobile.data.SettingsManager
+import com.lilt.mobile.data.SnippetItem
+import com.lilt.mobile.data.VoiceCommandItem
+import com.lilt.mobile.engine.CloudCleanupEngine
+import com.lilt.mobile.engine.SpeechEngine
+import com.lilt.mobile.overlay.LiltOverlayService
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.ui.platform.LocalView
+import android.view.HapticFeedbackConstants
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import kotlinx.coroutines.delay
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.material.icons.filled.Tune
+import kotlinx.coroutines.launch
+import com.lilt.mobile.ui.theme.NothingBlack
+import com.lilt.mobile.ui.theme.NothingBorder
+import com.lilt.mobile.ui.theme.NothingBorderSubtle
+import com.lilt.mobile.ui.theme.NothingCard
+import com.lilt.mobile.ui.theme.NothingGreen
+import com.lilt.mobile.ui.theme.NothingRed
+import com.lilt.mobile.ui.theme.NothingTextMuted
+import com.lilt.mobile.ui.theme.NothingTextPrimary
+import com.lilt.mobile.ui.theme.NothingTextSecondary
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScreen(
+    onItemClick: (NavKey) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val view = LocalView.current
+    val settings = remember { SettingsManager.getInstance(context) }
+
+    var isRecording by remember { mutableStateOf(false) }
+    var testTranscript by remember { mutableStateOf("Tap the red microphone to test live voice cleanup.") }
+    var testCleaned by remember { mutableStateOf("") }
+    var liveStudioText by remember { mutableStateOf("") }
+    var isFloatingPillActive by remember { mutableStateOf(settings.floatingPillEnabled) }
+    var isAlwaysOnActive by remember { mutableStateOf(!settings.floatingCircleContextualOnly) }
+
+    // Engine settings state
+    var activeTone by remember { mutableStateOf(settings.activeTone) }
+    var activeLanguageMode by remember { mutableStateOf(settings.activeLanguageMode) }
+    var spokenNumbers by remember { mutableStateOf(settings.spokenNumbers) }
+    var spokenEmoji by remember { mutableStateOf(settings.spokenEmoji) }
+    var numberSymbols by remember { mutableStateOf(settings.numberSymbols) }
+    var autoCapitalize by remember { mutableStateOf(settings.autoCapitalize) }
+    var trailingSpace by remember { mutableStateOf(settings.trailingSpace) }
+    var hapticFeedback by remember { mutableStateOf(settings.hapticFeedback) }
+    var historyStorageMode by remember { mutableStateOf(settings.historyStorageMode) }
+
+    // Diagnostic & One-Click Support State
+    var showErrorDialog by remember { mutableStateOf(false) }
+    var errorReportUserNote by remember { mutableStateOf("") }
+    var liveAlertMessage by remember { mutableStateOf<String?>(null) }
+
+    // History state
+    var historyItems by remember { mutableStateOf(settings.getHistory()) }
+    var remindersList by remember { mutableStateOf(settings.getReminders()) }
+    var smartRemindersEnabled by remember { mutableStateOf(settings.smartRemindersEnabled) }
+    var silentAlarmsEnabled by remember { mutableStateOf(settings.silentAlarmsEnabled) }
+    var historySearchQuery by remember { mutableStateOf("") }
+    var autoCopyClipboard by remember { mutableStateOf(settings.autoCopyToClipboard) }
+    var historySubTab by remember { mutableStateOf("recent") } // "recent" or "notes"
+    var isMultiSelect by remember { mutableStateOf(false) }
+    var selectedIds by remember { mutableStateOf(setOf<String>()) }
+    var dissolvingIds by remember { mutableStateOf(setOf<String>()) }
+
+    // Stats
+    var wordsProcessed by remember { mutableStateOf(settings.wordsProcessed) }
+    var hesitationsRemoved by remember { mutableStateOf(settings.hesitationsRemoved) }
+
+    val coroutineScope = rememberCoroutineScope()
+
+    // Cloud AI State (Groq / OpenAI)
+    var cloudAiEnabled by remember { mutableStateOf(settings.cloudAiEnabled) }
+    var cloudProvider by remember { mutableStateOf(settings.cloudProvider) }
+    var cloudApiKey by remember { mutableStateOf(settings.cloudApiKey) }
+    var cloudModel by remember { mutableStateOf(settings.cloudModel) }
+    var cloudTesting by remember { mutableStateOf(false) }
+    var cloudTestResult by remember { mutableStateOf("") }
+    var showApiKey by remember { mutableStateOf(false) }
+
+    // Personal Dictionary & Replacements State
+    var customVocabulary by remember { mutableStateOf(settings.customVocabulary) }
+    var replacementsList by remember { mutableStateOf(settings.getReplacements()) }
+    var newHeard by remember { mutableStateOf("") }
+    var newReplacement by remember { mutableStateOf("") }
+
+    // Text Snippets State
+    var snippetsList by remember { mutableStateOf(settings.getSnippets()) }
+    var newTrigger by remember { mutableStateOf("") }
+    var newExpansion by remember { mutableStateOf("") }
+
+    // Writing Rules Hub State (Voice Commands, Dictionary, Snippets)
+    var activeWritingTab by remember { mutableStateOf("commands") } // "commands", "dictionary", "snippets"
+    var voiceCommandsList by remember { mutableStateOf(settings.getVoiceCommands()) }
+    var newCommandTrigger by remember { mutableStateOf("") }
+    var newCommandInstruction by remember { mutableStateOf("") }
+
+    // Interactive Test Sandbox State
+    var sandboxInput by remember { mutableStateOf("Write the email to Alex saying the demo is postponed to Thursday at 2 PM") }
+    var sandboxOutput by remember { mutableStateOf("") }
+    var sandboxLoading by remember { mutableStateOf(false) }
+    var sandboxLangOverride by remember { mutableStateOf<String?>(null) } // null = use global
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (!isGranted) {
+            Toast.makeText(context, "Microphone permission is required for voice dictation", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val speechEngine = remember {
+        SpeechEngine(context).apply {
+            listener = object : SpeechEngine.Listener {
+                override fun onReady() {
+                    isRecording = true
+                    liveStudioText = "Listening… speak naturally."
+                    testTranscript = ""
+                    testCleaned = ""
+                }
+
+                override fun onBeginningOfSpeech() {
+                    liveStudioText = "Listening…"
+                }
+
+                override fun onRmsChanged(rmsdB: Float) {}
+
+                override fun onPartialResult(partialText: String) {
+                    testTranscript = partialText
+                    liveStudioText = partialText
+                }
+
+                override fun onEndOfSpeech() {
+                    liveStudioText = "Transcribing with Whisper & polishing with Qwen…"
+                }
+
+                override fun onFinalResult(cleanedText: String, rawText: String) {
+                    isRecording = false
+                    testTranscript = rawText
+                    testCleaned = cleanedText
+                    liveStudioText = cleanedText
+                    historyItems = settings.getHistory()
+                    wordsProcessed = settings.wordsProcessed
+                    hesitationsRemoved = settings.hesitationsRemoved
+                }
+
+                override fun onNoSpeechDetected() {
+                    isRecording = false
+                    liveStudioText = ""
+                }
+
+                override fun onError(error: String) {
+                    isRecording = false
+                    liveStudioText = error
+                    testTranscript = error
+                    liveAlertMessage = error
+                    DiagnosticLogger.logError("SpeechEngine", error)
+                }
+
+                override fun onStopped() {
+                    isRecording = false
+                }
+            }
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            speechEngine.stopListening()
+        }
+    }
+
+    // Bottom Navigation State & Scroll Management
+    var activeTab by remember { mutableStateOf("dictate") } // "dictate", "history", "rules", "settings"
+    val mainScrollState = rememberScrollState()
+
+    // Apple HIG: Switching tabs or sub-tabs automatically resets view to top and refreshes history
+    LaunchedEffect(activeTab) {
+        mainScrollState.scrollTo(0)
+        if (activeTab == "history") {
+            historyItems = settings.getHistory()
+            remindersList = settings.getReminders()
+            wordsProcessed = settings.wordsProcessed
+            hesitationsRemoved = settings.hesitationsRemoved
+        }
+    }
+
+    // Real-time zero-effort live sync: Whenever history changes or app resumes, automatically update state
+    LaunchedEffect(Unit) {
+        SettingsManager.historyUpdatedFlow.collect {
+            historyItems = settings.getHistory()
+            remindersList = settings.getReminders()
+            wordsProcessed = settings.wordsProcessed
+            hesitationsRemoved = settings.hesitationsRemoved
+        }
+    }
+    LaunchedEffect(historySubTab) {
+        mainScrollState.scrollTo(0)
+    }
+
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = NothingBlack,
+        bottomBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 20.dp, vertical = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(32.dp),
+                    color = Color(0xE6101117),
+                    shadowElevation = 20.dp,
+                    border = BorderStroke(
+                        width = 1.2.dp,
+                        brush = Brush.verticalGradient(
+                            listOf(
+                                Color(0x55FFFFFF),
+                                Color(0x15FFFFFF)
+                            )
+                        )
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(64.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceAround
+                    ) {
+                        listOf(
+                            Triple("dictate", Icons.Default.Mic, "Dictate"),
+                            Triple("history", Icons.Default.History, "History"),
+                            Triple("rules", Icons.Default.Tune, "Rules"),
+                            Triple("settings", Icons.Default.Settings, "Settings")
+                        ).forEach { (tabId, icon, label) ->
+                            val isSelected = activeTab == tabId
+                            val animScale by animateFloatAsState(
+                                targetValue = if (isSelected) 1.05f else 1.0f,
+                                animationSpec = spring(
+                                    dampingRatio = 0.65f,
+                                    stiffness = Spring.StiffnessMediumLow
+                                ),
+                                label = "nav_tab_scale"
+                            )
+
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(50.dp)
+                                    .clip(RoundedCornerShape(25.dp))
+                                    .background(
+                                        if (isSelected) {
+                                            Brush.verticalGradient(
+                                                listOf(Color(0x38FFFFFF), Color(0x18FFFFFF))
+                                            )
+                                        } else {
+                                            SolidColor(Color.Transparent)
+                                        }
+                                    )
+                                    .border(
+                                        width = if (isSelected) 1.dp else 0.dp,
+                                        brush = if (isSelected) {
+                                            Brush.verticalGradient(
+                                                listOf(Color(0x66FFFFFF), Color(0x22FFFFFF))
+                                            )
+                                        } else {
+                                            Brush.verticalGradient(listOf(Color.Transparent, Color.Transparent))
+                                        },
+                                        shape = RoundedCornerShape(25.dp)
+                                    )
+                                    .clickable(
+                                        interactionSource = remember { MutableInteractionSource() },
+                                        indication = null
+                                    ) {
+                                        if (activeTab == tabId) {
+                                            if (tabId == "history") {
+                                                historyItems = settings.getHistory()
+                                                remindersList = settings.getReminders()
+                                            }
+                                            // Apple HIG: Tapping active tab smoothly animates scroll to top
+                                            coroutineScope.launch {
+                                                mainScrollState.animateScrollTo(0)
+                                            }
+                                        } else {
+                                            activeTab = tabId
+                                            coroutineScope.launch {
+                                                mainScrollState.scrollTo(0)
+                                            }
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.graphicsLayer {
+                                        scaleX = animScale
+                                        scaleY = animScale
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = icon,
+                                        contentDescription = label,
+                                        tint = if (isSelected) Color.White else Color(0xFF6B7280),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Text(
+                                        text = label.uppercase(),
+                                        fontSize = 11.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSelected) Color.White else Color(0xFF6B7280),
+                                        letterSpacing = 0.6.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(mainScrollState)
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(6.dp))
+
+            // 1. Header: Nothing OS Minimalist Lockup (Persistent on all tabs)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Image(
+                        painter = painterResource(id = R.drawable.lilt_brand_dots),
+                        contentDescription = "Lilt Logo",
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = "L I L T",
+                            color = Color.White,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 3.sp
+                        )
+                        Text(
+                            text = "Voice Dictation & Cleanup Engine",
+                            color = Color(0xFFA1A1AA),
+                            fontSize = 11.sp,
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // One-Click Report Button (Top Bar)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color(0xFF141418))
+                            .border(1.dp, Color(0xFF282830), RoundedCornerShape(16.dp))
+                            .clickable { showErrorDialog = true }
+                            .padding(horizontal = 9.dp, vertical = 5.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.BugReport,
+                                contentDescription = "Report Issue",
+                                tint = Color(0xFFA1A1AA),
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "REPORT",
+                                color = Color(0xFFA1A1AA),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.8.sp
+                            )
+                        }
+                    }
+
+                }
+            }
+
+            // Live Alert / Error Notification Banner (with 1-Click Dev Email Action)
+            AnimatedVisibility(visible = liveAlertMessage != null) {
+                Column {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF16161A))
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .border(1.dp, Color(0xFF2A2A34), RoundedCornerShape(16.dp))
+                                .padding(14.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Warning,
+                                    contentDescription = "Alert",
+                                    tint = Color(0xFFA1A1AA),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "ENGINE NOTICE",
+                                    color = Color(0xFFA1A1AA),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
+                                )
+                                Spacer(modifier = Modifier.weight(1f))
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Dismiss",
+                                    tint = NothingTextMuted,
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .clickable { liveAlertMessage = null }
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            Text(
+                                text = liveAlertMessage ?: "",
+                                color = NothingTextPrimary,
+                                fontSize = 12.sp,
+                                lineHeight = 16.sp
+                            )
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .weight(1.3f)
+                                        .height(34.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Brush.horizontalGradient(listOf(Color(0xFFD71921), Color(0xFFB51219))))
+                                        .border(1.dp, Color(0x66FFFFFF), RoundedCornerShape(8.dp))
+                                        .clickable {
+                                            DiagnosticLogger.sendErrorReport(
+                                                context,
+                                                "Reported from Live Alert Banner",
+                                                liveAlertMessage
+                                            )
+                                            liveAlertMessage = null
+                                        }
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.AutoMirrored.Filled.Send,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "1-CLICK REPORT TO DEV",
+                                            color = Color.White,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(34.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color(0xFF1E1E1E))
+                                        .clickable { liveAlertMessage = null }
+                                ) {
+                                    Text(
+                                        text = "DISMISS",
+                                        color = NothingTextSecondary,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            AnimatedContent(
+                targetState = activeTab,
+                transitionSpec = {
+                    (fadeIn(animationSpec = tween(280, easing = LinearOutSlowInEasing)) +
+                     scaleIn(initialScale = 0.96f, animationSpec = spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow))
+                    ).togetherWith(
+                     fadeOut(animationSpec = tween(180, easing = FastOutLinearInEasing)) +
+                     scaleOut(targetScale = 0.98f, animationSpec = tween(180))
+                    )
+                },
+                label = "tab_liquid_transition"
+            ) { currentTab ->
+                Column(modifier = Modifier.fillMaxWidth()) {
+            // ── DICTATE TAB ─────────────────────────────────
+            if (currentTab == "dictate") {
+
+            // 2. Speed & Productivity Stats Card (Nothing OS Widget / Wispr Flow Parity)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = NothingCard)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, NothingBorder, RoundedCornerShape(24.dp))
+                        .padding(18.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.FlashOn,
+                                contentDescription = "Speed",
+                                tint = Color.White,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "PRODUCTIVITY SUMMARY",
+                                color = NothingTextSecondary,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.2.sp
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFF16161A))
+                                .border(1.dp, Color(0xFF282830), RoundedCornerShape(12.dp))
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = "GROQ CLOUD",                                color = Color(0xFFA1A1AA),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        // Stat 1: Words Processed
+                        Column(horizontalAlignment = Alignment.Start) {
+                            Text(
+                                text = "$wordsProcessed",
+                                color = NothingTextPrimary,
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Words Spoken",
+                                color = NothingTextMuted,
+                                fontSize = 11.sp
+                            )
+                        }
+
+                        // Stat 2: Time Saved
+                        val timeSavedMin = (wordsProcessed * 0.02).toInt().coerceAtLeast(3)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "${timeSavedMin}m",
+                                color = NothingTextPrimary,
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Time Saved",
+                                color = NothingTextMuted,
+                                fontSize = 11.sp
+                            )
+                        }
+
+                        // Stat 3: Hesitations Filtered
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = "$hesitationsRemoved",
+                                color = NothingGreen,
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Fillers Cleaned",
+                                color = NothingTextMuted,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 2b. Language & Script Selector Strip
+            Text(
+                text = "LANGUAGE & SCRIPT MODE",
+                color = NothingTextMuted,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                TonePill(
+                    label = "Auto",
+                    isActive = activeLanguageMode == "auto",
+                    modifier = Modifier.weight(1.1f),
+                    onClick = {
+                        activeLanguageMode = "auto"
+                        settings.activeLanguageMode = "auto"
+                    }
+                )
+                TonePill(
+                    label = "English",
+                    isActive = activeLanguageMode == "en",
+                    modifier = Modifier.weight(1.1f),
+                    onClick = {
+                        activeLanguageMode = "en"
+                        settings.activeLanguageMode = "en"
+                    }
+                )
+                TonePill(
+                    label = "Tenglish",
+                    isActive = activeLanguageMode == "te_roman",
+                    modifier = Modifier.weight(1.15f),
+                    onClick = {
+                        activeLanguageMode = "te_roman"
+                        settings.activeLanguageMode = "te_roman"
+                    }
+                )
+                TonePill(
+                    label = "Hinglish",
+                    isActive = activeLanguageMode == "hi_roman",
+                    modifier = Modifier.weight(1.1f),
+                    onClick = {
+                        activeLanguageMode = "hi_roman"
+                        settings.activeLanguageMode = "hi_roman"
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // 3. Quick Tone & Style Selector Strip
+            Text(
+                text = "DICTATION TONE PRESET",
+                color = NothingTextMuted,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TonePill(
+                    label = "Natural",
+                    isActive = activeTone == "natural",
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        activeTone = "natural"
+                        settings.activeTone = "natural"
+                    }
+                )
+                TonePill(
+                    label = "Executive",
+                    isActive = activeTone == "pro",
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        activeTone = "pro"
+                        settings.activeTone = "pro"
+                    }
+                )
+                TonePill(
+                    label = "Casual",
+                    isActive = activeTone == "casual",
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        activeTone = "casual"
+                        settings.activeTone = "casual"
+                    }
+                )
+                TonePill(
+                    label = "Bullets",
+                    isActive = activeTone == "bullets",
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        activeTone = "bullets"
+                        settings.activeTone = "bullets"
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+                        // 4. Interactive Live Dictation Studio Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = NothingCard)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, NothingBorder, RoundedCornerShape(24.dp))
+                        .padding(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "LIVE SPEECH STUDIO",
+                        color = NothingTextSecondary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Pulse transition
+                    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+                    val pulseScale by infiniteTransition.animateFloat(
+                        initialValue = 1f,
+                        targetValue = if (isRecording) 1.15f else 1f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(500, easing = FastOutSlowInEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "pulseScale"
+                    )
+
+                    // Waveform bars
+                    val barH1 by infiniteTransition.animateFloat(
+                        initialValue = 8f, targetValue = if (isRecording) 28f else 8f,
+                        animationSpec = infiniteRepeatable(tween(220, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "h1"
+                    )
+                    val barH2 by infiniteTransition.animateFloat(
+                        initialValue = 14f, targetValue = if (isRecording) 38f else 14f,
+                        animationSpec = infiniteRepeatable(tween(310, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "h2"
+                    )
+                    val barH3 by infiniteTransition.animateFloat(
+                        initialValue = 10f, targetValue = if (isRecording) 32f else 10f,
+                        animationSpec = infiniteRepeatable(tween(260, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "h3"
+                    )
+                    val barH4 by infiniteTransition.animateFloat(
+                        initialValue = 18f, targetValue = if (isRecording) 44f else 18f,
+                        animationSpec = infiniteRepeatable(tween(360, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "h4"
+                    )
+                    val barH5 by infiniteTransition.animateFloat(
+                        initialValue = 12f, targetValue = if (isRecording) 30f else 12f,
+                        animationSpec = infiniteRepeatable(tween(290, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "h5"
+                    )
+
+                    val micPulseScale by animateFloatAsState(
+                        targetValue = if (isRecording) 1.08f else 1.0f,
+                        animationSpec = spring(
+                            dampingRatio = 0.65f,
+                            stiffness = Spring.StiffnessMediumLow
+                        ),
+                        label = "mic_pulse"
+                    )
+
+                    // Liquid Glass Siri / VisionOS Orb Container
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .graphicsLayer {
+                                scaleX = micPulseScale
+                                scaleY = micPulseScale
+                            }
+                            .size(82.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isRecording) {
+                                    Brush.radialGradient(listOf(Color(0xFFFF2A2A), Color(0xFFB70E17)))
+                                } else {
+                                    Brush.radialGradient(listOf(Color(0xFF2A2E3D), Color(0xFF12141C)))
+                                }
+                            )
+                            .border(
+                                1.5.dp,
+                                brush = if (isRecording) {
+                                    Brush.linearGradient(listOf(Color(0xFFFF6B6B), Color(0x66FF2A2A)))
+                                } else {
+                                    Brush.verticalGradient(listOf(Color(0x66FFFFFF), Color(0x15FFFFFF)))
+                                },
+                                shape = CircleShape
+                            )
+                            .clickable {
+                                if (ContextCompat.checkSelfPermission(
+                                        context,
+                                        Manifest.permission.RECORD_AUDIO
+                                    ) != PackageManager.PERMISSION_GRANTED
+                                ) {
+                                    permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                } else {
+                                    if (isRecording) {
+                                        speechEngine.stopListening()
+                                    } else {
+                                        speechEngine.startListening()
+                                    }
+                                }
+                            }
+                    ) {
+                        Icon(
+                            imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic,
+                            contentDescription = "Dictate",
+                            tint = Color.White,
+                            modifier = Modifier.size(34.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    if (isRecording) {
+                        // Live Audio Waveform Bars
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp),
+                            modifier = Modifier.height(30.dp)
+                        ) {
+                            Box(modifier = Modifier.width(3.dp).height(barH1.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xFF888888)))
+                            Box(modifier = Modifier.width(3.dp).height(barH2.dp).clip(RoundedCornerShape(2.dp)).background(Color.White))
+                            Box(modifier = Modifier.width(3.dp).height(barH4.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xFF888888)))
+                            Box(modifier = Modifier.width(3.dp).height(barH3.dp).clip(RoundedCornerShape(2.dp)).background(Color.White))
+                            Box(modifier = Modifier.width(3.dp).height(barH5.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xFF888888)))
+                        }
+                    } else {
+                        Text(
+                            text = "Tap red microphone to test live speech cleanup",
+                            color = NothingTextMuted,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Interactive Live Speech Sandbox Text Box
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (isRecording) Color(0xFFFF3B30)
+                                            else if (liveStudioText.isNotBlank()) Color(0xFF00E676)
+                                            else Color(0xFF71717A)
+                                        )
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = if (isRecording) "RECORDING & TRANSCRIBING…"
+                                           else if (testCleaned.isNotBlank()) "POLISHED SPEECH RESULT"
+                                           else "LIVE SPEECH OUTPUT BOX",
+                                    color = if (isRecording) Color(0xFFFF6B6B)
+                                            else if (testCleaned.isNotBlank()) Color(0xFF00E676)
+                                            else NothingTextMuted,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
+                                )
+                            }
+
+                            if (liveStudioText.isNotBlank()) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text(
+                                        text = "Clear",
+                                        color = Color(0xFFA1A1AA),
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.clickable {
+                                            liveStudioText = ""
+                                            testCleaned = ""
+                                            testTranscript = ""
+                                        }
+                                    )
+                                    Text(text = "•", color = Color(0xFF3F3F46), fontSize = 11.sp)
+                                    Text(
+                                        text = "Copy",
+                                        color = Color.White,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.clickable {
+                                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                            clipboard?.setPrimaryClip(ClipData.newPlainText("Lilt Output", liveStudioText))
+                                            Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        OutlinedTextField(
+                            value = liveStudioText,
+                            onValueChange = { liveStudioText = it },
+                            placeholder = {
+                                Text(
+                                    text = "Tap the red microphone above and speak. Your live transcript and polished output will stream right into this text box...",
+                                    color = Color(0xFF52525B),
+                                    fontSize = 13.sp,
+                                    lineHeight = 18.sp
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 120.dp, max = 220.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color(0xFF0A0B10),
+                                unfocusedContainerColor = Color(0xFF0A0B10),
+                                focusedBorderColor = Color(0x80FFFFFF),
+                                unfocusedBorderColor = Color(0xFF22242E),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color(0xFFE4E4E7),
+                                cursorColor = Color(0xFFD71921)
+                            ),
+                            textStyle = LocalTextStyle.current.copy(
+                                fontSize = 14.sp,
+                                lineHeight = 20.sp
+                            )
+                        )
+
+                        if (testTranscript.isNotBlank() && testTranscript != liveStudioText && testCleaned.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Raw spoken: $testTranscript",
+                                color = Color(0xFF71717A),
+                                fontSize = 11.sp,
+                                fontStyle = FontStyle.Italic,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            // Smart Voice Commands Trigger Card
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = NothingCard)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, NothingBorder, RoundedCornerShape(18.dp))
+                        .padding(14.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(Color.White)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "SMART VOICE COMMANDS",
+                            color = NothingTextMuted,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text(
+                        text = "Speak these prefixes to format your speech on the fly:",
+                        color = NothingTextMuted,
+                        fontSize = 11.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    listOf(
+                        "\"Write the email...\"" to "Email format with Subject & [Placeholders]",
+                        "\"Write it raw...\"" to "Exact words verbatim + punctuation (no rephrasing)",
+                        "\"Write it casual...\"" to "Warm, relaxed, or playful joke tone",
+                        "\"Make a list...\"" to "Clean bullet points with '• '"
+                    ).forEach { (trigger, desc) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 3.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0xFF141414))
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = trigger,
+                                color = Color(0xFFA1A1AA),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "→ $desc",
+                                color = NothingTextSecondary,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            } // end dictate tab
+
+            // ── HISTORY TAB ─────────────────────────────────
+            if (currentTab == "history") {
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // History Header (with Apple HIG Multi-Select controls)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = if (isMultiSelect) "${selectedIds.size} SELECTED" else "H I S T O R Y",
+                        color = if (isMultiSelect) Color(0xFFFFB800) else NothingTextPrimary,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = if (isMultiSelect) 1.5.sp else 3.sp
+                    )
+                    Text(
+                        text = if (isMultiSelect) "Select cards to move to notes or delete" else "Your voice dictation & note snippets",
+                        color = NothingTextMuted,
+                        fontSize = 12.sp
+                    )
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (isMultiSelect) {
+                        // "Select All" / "Deselect All" Pill
+                        val isAllSelected = selectedIds.size == historyItems.size && historyItems.isNotEmpty()
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .height(34.dp)
+                                .clip(RoundedCornerShape(17.dp))
+                                .background(if (isAllSelected) Color(0x22FFB800) else Color(0xFF16161C))
+                                .border(
+                                    1.dp,
+                                    if (isAllSelected) Color(0x88FFB800) else Color(0x28FFFFFF),
+                                    RoundedCornerShape(17.dp)
+                                )
+                                .clickable {
+                                    view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                    selectedIds = if (isAllSelected) emptySet() else historyItems.map { it.id }.toSet()
+                                }
+                                .padding(horizontal = 13.dp)
+                        ) {
+                            Text(
+                                text = if (isAllSelected) "Deselect All" else "Select All",
+                                color = if (isAllSelected) Color(0xFFFFB800) else Color(0xFFE4E4E7),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 0.2.sp
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        // "Done" Primary Pill (High-contrast Nothing OS stark white pill)
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .height(34.dp)
+                                .clip(RoundedCornerShape(17.dp))
+                                .background(Color.White)
+                                .clickable {
+                                    view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                                    isMultiSelect = false
+                                    selectedIds = emptySet()
+                                }
+                                .padding(horizontal = 15.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = Color.Black,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Text(
+                                    text = "Done",
+                                    color = Color.Black,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.3.sp
+                                )
+                            }
+                        }
+                    } else {
+                        if (historyItems.isNotEmpty()) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .height(36.dp)
+                                    .clip(RoundedCornerShape(18.dp))
+                                    .background(Color(0x22FFFFFF))
+                                    .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(18.dp))
+                                    .clickable {
+                                        view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                        isMultiSelect = true
+                                        selectedIds = emptySet()
+                                    }
+                                    .padding(horizontal = 12.dp)
+                            ) {
+                                Text(
+                                    text = "Select",
+                                    color = Color.White,
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .height(36.dp)
+                                    .clip(RoundedCornerShape(18.dp))
+                                    .background(Color(0x14FFFFFF))
+                                    .border(1.dp, Color(0x22FFFFFF), RoundedCornerShape(18.dp))
+                                    .clickable {
+                                        view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                        settings.clearHistory()
+                                        historyItems = emptyList()
+                                    }
+                                    .padding(horizontal = 12.dp)
+                            ) {
+                                Text(
+                                    text = "Clear All",
+                                    color = Color(0xFFA1A1AA),
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Stats summary at top of History
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = NothingCard)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceAround
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = "$wordsProcessed", color = NothingTextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "Words", color = NothingTextMuted, fontSize = 11.sp)
+                    }
+                    Box(modifier = Modifier.width(1.dp).height(40.dp).background(NothingBorder))
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = "${historyItems.size}", color = NothingTextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "Sessions", color = NothingTextMuted, fontSize = 11.sp)
+                    }
+                    Box(modifier = Modifier.width(1.dp).height(40.dp).background(NothingBorder))
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        val notesCount = historyItems.count { it.isNote }
+                        Text(text = "$notesCount", color = Color(0xFFFFB800), fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                        Text(text = "Notes", color = NothingTextMuted, fontSize = 11.sp)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Sort pinned items to the very top
+            val recentItems = historyItems.sortedWith(
+                compareByDescending<DictationItem> { it.isPinned }
+                    .thenByDescending { it.timestamp }
+            )
+            val noteItems = historyItems.filter { it.isNote }.sortedWith(
+                compareByDescending<DictationItem> { it.isPinned }
+                    .thenByDescending { it.timestamp }
+            )
+
+            val queryClean = historySearchQuery.trim()
+            val isSearching = queryClean.isNotEmpty()
+
+            val displayRecent = if (isSearching) {
+                recentItems.filter {
+                    it.cleanedText.contains(queryClean, ignoreCase = true) ||
+                    it.rawText.contains(queryClean, ignoreCase = true) ||
+                    (it.contactName?.contains(queryClean, ignoreCase = true) == true)
+                }
+            } else recentItems
+
+            val displayNotes = if (isSearching) {
+                noteItems.filter {
+                    it.cleanedText.contains(queryClean, ignoreCase = true) ||
+                    it.rawText.contains(queryClean, ignoreCase = true) ||
+                    (it.noteTitle?.contains(queryClean, ignoreCase = true) == true)
+                }
+            } else noteItems
+
+            val displayReminders = if (isSearching) {
+                remindersList.filter {
+                    it.title.contains(queryClean, ignoreCase = true) ||
+                    it.originalText.contains(queryClean, ignoreCase = true)
+                }
+            } else remindersList
+
+            // Nothing OS History Search Bar
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0xFF111116))
+                    .border(
+                        1.dp,
+                        if (isSearching) Color(0x88FFB800) else Color(0x28FFFFFF),
+                        RoundedCornerShape(14.dp)
+                    )
+                    .padding(horizontal = 14.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = if (isSearching) Color(0xFFFFB800) else Color(0xFF71717A),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    BasicTextField(
+                        value = historySearchQuery,
+                        onValueChange = { historySearchQuery = it },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            color = Color.White,
+                            fontSize = 13.5.sp,
+                            fontWeight = FontWeight.Normal
+                        ),
+                        cursorBrush = SolidColor(Color(0xFFFFB800)),
+                        decorationBox = { innerTextField ->
+                            if (historySearchQuery.isEmpty()) {
+                                Text(
+                                    text = "Search dictations, notes, alerts...",
+                                    color = Color(0xFF71717A),
+                                    fontSize = 13.sp
+                                )
+                            }
+                            innerTextField()
+                        }
+                    )
+                    if (historySearchQuery.isNotEmpty()) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF222228))
+                                .clickable {
+                                    view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                    historySearchQuery = ""
+                                }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear search",
+                                tint = Color(0xFFA1A1AA),
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (isSearching) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    val totalMatches = displayRecent.size + displayReminders.size
+                    Text(
+                        text = "FOUND $totalMatches MATCH${if (totalMatches == 1) "" else "ES"} FOR \"${queryClean.uppercase()}\"",
+                        color = Color(0xFFFFB800),
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Text(
+                        text = "Clear",
+                        color = Color(0xFFA1A1AA),
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.clickable {
+                            historySearchQuery = ""
+                        }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Liquid Glass Segmented Switcher [ Recent | Alerts | Notes ]
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFF0F0F12))
+                    .border(1.dp, Color(0x24FFFFFF), RoundedCornerShape(12.dp))
+                    .padding(3.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Recent Segment
+                val isRecentSelected = historySubTab == "recent"
+                val recentBgAnim by animateColorAsState(
+                    targetValue = if (isRecentSelected) Color(0xFF26262B) else Color.Transparent,
+                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                    label = "recentBg"
+                )
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(recentBgAnim)
+                        .clickable { historySubTab = "recent" }
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = null,
+                            tint = if (isRecentSelected) Color.White else Color(0xFF71717A),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Recent (${displayRecent.size})",
+                            color = if (isRecentSelected) Color.White else Color(0xFF71717A),
+                            fontSize = 12.sp,
+                            fontWeight = if (isRecentSelected) FontWeight.Bold else FontWeight.Medium
+                        )
+                    }
+                }
+
+                // Reminders Segment
+                val isRemindersSelected = historySubTab == "reminders"
+                val remindersBgAnim by animateColorAsState(
+                    targetValue = if (isRemindersSelected) Color(0xFF26262B) else Color.Transparent,
+                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                    label = "remindersBg"
+                )
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(remindersBgAnim)
+                        .clickable {
+                            historySubTab = "reminders"
+                            remindersList = settings.getReminders()
+                        }
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = null,
+                            tint = if (isRemindersSelected) NothingRed else Color(0xFF71717A),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Alerts (${displayReminders.size})",
+                            color = if (isRemindersSelected) Color.White else Color(0xFF71717A),
+                            fontSize = 12.sp,
+                            fontWeight = if (isRemindersSelected) FontWeight.Bold else FontWeight.Medium
+                        )
+                    }
+                }
+
+                // Notes Segment
+                val isNotesSelected = historySubTab == "notes"
+                val notesBgAnim by animateColorAsState(
+                    targetValue = if (isNotesSelected) Color(0xFF26262B) else Color.Transparent,
+                    animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                    label = "notesBg"
+                )
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(notesBgAnim)
+                        .clickable { historySubTab = "notes" }
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Bookmark,
+                            contentDescription = null,
+                            tint = if (isNotesSelected) Color(0xFFFFB800) else Color(0xFF71717A),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Notes (${displayNotes.size})",
+                            color = if (isNotesSelected) Color.White else Color(0xFF71717A),
+                            fontSize = 12.sp,
+                            fontWeight = if (isNotesSelected) FontWeight.Bold else FontWeight.Medium
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Floating Multi-Select Action Bar (iOS 27 Liquid Glass Pill)
+            AnimatedVisibility(
+                visible = isMultiSelect && selectedIds.isNotEmpty(),
+                enter = slideInVertically { it } + fadeIn(),
+                exit = slideOutVertically { it } + fadeOut()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp)
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(Color(0xF2121216))
+                        .border(1.dp, Color(0x38FFFFFF), RoundedCornerShape(22.dp))
+                        .padding(horizontal = 14.dp, vertical = 9.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Move to Notes
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF221C14))
+                            .border(1.dp, Color(0x66FFB800), RoundedCornerShape(12.dp))
+                            .clickable {
+                                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                settings.setNoteStateMultiple(selectedIds, true)
+                                historyItems = settings.getHistory()
+                                Toast.makeText(context, "Moved ${selectedIds.size} items to Notes", Toast.LENGTH_SHORT).show()
+                                isMultiSelect = false
+                                selectedIds = emptySet()
+                            }
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Bookmark,
+                            contentDescription = null,
+                            tint = Color(0xFFFFB800),
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Move to Notes",
+                            color = Color(0xFFFFB800),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    // Avengers Thanos Snap Dust Delete
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF2E1214))
+                            .border(1.dp, Color(0x88D71921), RoundedCornerShape(12.dp))
+                            .clickable {
+                                coroutineScope.launch {
+                                    dissolvingIds = selectedIds
+                                    view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                    // Disintegration into dust over 600ms
+                                    delay(600)
+                                    settings.deleteMultipleHistory(selectedIds)
+                                    historyItems = settings.getHistory()
+                                    dissolvingIds = emptySet()
+                                    selectedIds = emptySet()
+                                    isMultiSelect = false
+                                    Toast.makeText(context, "Disintegrated selected items into dust", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DeleteOutline,
+                            contentDescription = null,
+                            tint = Color(0xFFD71921),
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Delete (${selectedIds.size})",
+                            color = Color(0xFFD71921),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            // Animated Switch between Recent and Notes with Apple-grade horizontal flow
+            AnimatedContent(
+                targetState = historySubTab,
+                transitionSpec = {
+                    if (targetState == "notes") {
+                        (slideInHorizontally { width -> width / 3 } + fadeIn()).togetherWith(
+                            slideOutHorizontally { width -> -width / 3 } + fadeOut()
+                        )
+                    } else {
+                        (slideInHorizontally { width -> -width / 3 } + fadeIn()).togetherWith(
+                            slideOutHorizontally { width -> width / 3 } + fadeOut()
+                        )
+                    }
+                },
+                label = "HistorySubTabAnimation"
+            ) { subTab ->
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    if (subTab == "reminders") {
+                        // Silent Alarm Mode Toggle Card
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF111114))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .border(1.dp, if (silentAlarmsEnabled) Color(0x44FFFFFF) else Color(0x22FFFFFF), RoundedCornerShape(18.dp))
+                                    .padding(horizontal = 16.dp, vertical = 13.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .background(if (silentAlarmsEnabled) Color(0xFF222228) else Color(0x26D71921))
+                                            .border(1.dp, if (silentAlarmsEnabled) Color(0x44FFFFFF) else Color(0x4DD71921), CircleShape)
+                                    ) {
+                                        Icon(
+                                            imageVector = if (silentAlarmsEnabled) Icons.Default.NotificationsOff else Icons.Default.Alarm,
+                                            contentDescription = null,
+                                            tint = if (silentAlarmsEnabled) Color(0xFFA1A1AA) else Color(0xFFD71921),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            text = if (silentAlarmsEnabled) "Silent Alarm Mode" else "Audible Alarm Mode",
+                                            color = Color.White,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            text = if (silentAlarmsEnabled) "Wakes screen & demands action with zero audio" else "Rings loud alarm stream until actioned",
+                                            color = Color(0xFF71717A),
+                                            fontSize = 11.sp,
+                                            lineHeight = 15.sp
+                                        )
+                                    }
+                                }
+                                Switch(
+                                    checked = silentAlarmsEnabled,
+                                    onCheckedChange = {
+                                        silentAlarmsEnabled = it
+                                        settings.silentAlarmsEnabled = it
+                                    },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = Color(0xFF3F3F46),
+                                        uncheckedThumbColor = Color(0xFF71717A),
+                                        uncheckedTrackColor = Color(0xFF1E1E24)
+                                    )
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        if (displayReminders.isEmpty()) {
+                            if (isSearching) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(22.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0D0D10))
+                                ) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .border(1.dp, Color(0x24FFFFFF), RoundedCornerShape(22.dp))
+                                            .padding(vertical = 40.dp, horizontal = 24.dp)
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Box(
+                                                contentAlignment = Alignment.Center,
+                                                modifier = Modifier
+                                                    .size(52.dp)
+                                                    .clip(CircleShape)
+                                                    .background(Color(0xFF18181B))
+                                                    .border(1.dp, Color(0x33FFFFFF), CircleShape)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.SearchOff,
+                                                    contentDescription = null,
+                                                    tint = Color(0xFFFFB800),
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.height(14.dp))
+                                            Text(
+                                                text = "No alerts match \"${queryClean}\"",
+                                                color = Color.White,
+                                                fontSize = 15.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                textAlign = TextAlign.Center
+                                            )
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            Text(
+                                                text = "Try different keywords or tap clear to view all alerts.",
+                                                color = Color(0xFF71717A),
+                                                fontSize = 12.sp,
+                                                textAlign = TextAlign.Center
+                                            )
+                                            Spacer(modifier = Modifier.height(16.dp))
+                                            Box(
+                                                contentAlignment = Alignment.Center,
+                                                modifier = Modifier
+                                                    .height(34.dp)
+                                                    .clip(RoundedCornerShape(17.dp))
+                                                    .background(Color.White)
+                                                    .clickable { historySearchQuery = "" }
+                                                    .padding(horizontal = 16.dp)
+                                            ) {
+                                                Text(
+                                                    text = "Clear Search",
+                                                    color = Color.Black,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(22.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF0D0D10))
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .border(1.dp, Color(0x24FFFFFF), RoundedCornerShape(22.dp))
+                                        .padding(vertical = 44.dp, horizontal = 24.dp)
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier
+                                                .size(54.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0xFF18181D))
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Schedule,
+                                                contentDescription = null,
+                                                tint = Color(0xFFA1A1AA),
+                                                modifier = Modifier.size(26.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(14.dp))
+                                        Text(
+                                            text = "No scheduled reminders yet",
+                                            color = Color.White,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Text(
+                                            text = "Dictate anything with a time: 'Meeting tomorrow at 3 PM', 'Dentist appointment at 11 AM', or 'Repu 10 AM ki doctor deggariki vellali'. Lilt automatically sets reminder alerts.",
+                                            color = Color(0xFF71717A),
+                                            fontSize = 12.sp,
+                                            textAlign = TextAlign.Center,
+                                            lineHeight = 17.sp
+                                        )
+                                    }
+                                }
+                            }
+                            }
+                        } else {
+                            displayReminders.forEach { rem ->
+                                ReminderCard(
+                                    reminder = rem,
+                                    searchQuery = queryClean,
+                                    onComplete = {
+                                        settings.completeReminder(rem.id)
+                                        remindersList = settings.getReminders()
+                                    },
+                                    onDelete = {
+                                        ReminderScheduler.cancel(context, rem.id)
+                                        settings.deleteReminder(rem.id)
+                                        remindersList = settings.getReminders()
+                                    }
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                            }
+                        }
+                    } else if (subTab == "recent") {
+                        if (displayRecent.isEmpty()) {
+                            if (isSearching) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(22.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0D0D10))
+                                ) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .border(1.dp, Color(0x24FFFFFF), RoundedCornerShape(22.dp))
+                                            .padding(vertical = 40.dp, horizontal = 24.dp)
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Box(
+                                                contentAlignment = Alignment.Center,
+                                                modifier = Modifier
+                                                    .size(52.dp)
+                                                    .clip(CircleShape)
+                                                    .background(Color(0xFF18181B))
+                                                    .border(1.dp, Color(0x33FFFFFF), CircleShape)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.SearchOff,
+                                                    contentDescription = null,
+                                                    tint = Color(0xFFFFB800),
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.height(14.dp))
+                                            Text(
+                                                text = "No dictations match \"${queryClean}\"",
+                                                color = Color.White,
+                                                fontSize = 15.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                textAlign = TextAlign.Center
+                                            )
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            Text(
+                                                text = "Try different keywords or tap clear to view all recordings.",
+                                                color = Color(0xFF71717A),
+                                                fontSize = 12.sp,
+                                                textAlign = TextAlign.Center
+                                            )
+                                            Spacer(modifier = Modifier.height(16.dp))
+                                            Box(
+                                                contentAlignment = Alignment.Center,
+                                                modifier = Modifier
+                                                    .height(34.dp)
+                                                    .clip(RoundedCornerShape(17.dp))
+                                                    .background(Color.White)
+                                                    .clickable { historySearchQuery = "" }
+                                                    .padding(horizontal = 16.dp)
+                                            ) {
+                                                Text(
+                                                    text = "Clear Search",
+                                                    color = Color.Black,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(22.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF0D0D10))
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .border(1.dp, Color(0x24FFFFFF), RoundedCornerShape(22.dp))
+                                        .padding(vertical = 44.dp, horizontal = 24.dp)
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier
+                                                .size(56.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0xFF18181B))
+                                                .border(1.dp, Color(0x33FFFFFF), CircleShape)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.History,
+                                                contentDescription = null,
+                                                tint = Color(0xFFA1A1AA),
+                                                modifier = Modifier.size(26.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(14.dp))
+                                        Text(
+                                            text = "No voice dictations yet",
+                                            color = Color.White,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Text(
+                                            text = "Record speech from the Dictate studio or tap the floating edge pill across any app.",
+                                            color = Color(0xFF71717A),
+                                            fontSize = 12.sp,
+                                            textAlign = TextAlign.Center,
+                                            lineHeight = 17.sp
+                                        )
+                                    }
+                                }
+                            }
+                            }
+                        } else {
+                            displayRecent.forEach { item ->
+                                VoiceNoteCard(
+                                    item = item,
+                                    searchQuery = queryClean,
+                                    isMultiSelect = isMultiSelect,
+                                    isSelected = item.id in selectedIds,
+                                    isDissolving = item.id in dissolvingIds,
+                                    onCopy = {
+                                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                        clipboard?.setPrimaryClip(ClipData.newPlainText("Lilt Dictation", item.cleanedText))
+                                        Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                    },
+                                    onDelete = {
+                                        coroutineScope.launch {
+                                            dissolvingIds = setOf(item.id)
+                                            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                            delay(600)
+                                            settings.deleteHistory(item.id)
+                                            historyItems = settings.getHistory()
+                                            dissolvingIds = emptySet()
+                                        }
+                                    },
+                                    onTogglePin = {
+                                        settings.toggleNote(item.id)
+                                        historyItems = settings.getHistory()
+                                    },
+                                    onTogglePinTop = {
+                                        settings.togglePin(item.id)
+                                        historyItems = settings.getHistory()
+                                    },
+                                    onSelectToggle = {
+                                        selectedIds = if (item.id in selectedIds) selectedIds - item.id else selectedIds + item.id
+                                    },
+                                    onLongClick = {
+                                        isMultiSelect = true
+                                        selectedIds = selectedIds + item.id
+                                    },
+                                    onSaveContact = {
+                                        settings.markContactSaved(item.id)
+                                        historyItems = settings.getHistory()
+                                    }
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                            }
+                        }
+                    } else {
+                        // NOTES SUB-TAB
+                        if (displayNotes.isEmpty()) {
+                            if (isSearching) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(22.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF0D0D10))
+                                ) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .border(1.dp, Color(0x24FFFFFF), RoundedCornerShape(22.dp))
+                                            .padding(vertical = 40.dp, horizontal = 24.dp)
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Box(
+                                                contentAlignment = Alignment.Center,
+                                                modifier = Modifier
+                                                    .size(52.dp)
+                                                    .clip(CircleShape)
+                                                    .background(Color(0xFF18181B))
+                                                    .border(1.dp, Color(0x33FFFFFF), CircleShape)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.SearchOff,
+                                                    contentDescription = null,
+                                                    tint = Color(0xFFFFB800),
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.height(14.dp))
+                                            Text(
+                                                text = "No notes match \"${queryClean}\"",
+                                                color = Color.White,
+                                                fontSize = 15.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                textAlign = TextAlign.Center
+                                            )
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            Text(
+                                                text = "Try different keywords or tap clear to view all notes.",
+                                                color = Color(0xFF71717A),
+                                                fontSize = 12.sp,
+                                                textAlign = TextAlign.Center
+                                            )
+                                            Spacer(modifier = Modifier.height(16.dp))
+                                            Box(
+                                                contentAlignment = Alignment.Center,
+                                                modifier = Modifier
+                                                    .height(34.dp)
+                                                    .clip(RoundedCornerShape(17.dp))
+                                                    .background(Color.White)
+                                                    .clickable { historySearchQuery = "" }
+                                                    .padding(horizontal = 16.dp)
+                                            ) {
+                                                Text(
+                                                    text = "Clear Search",
+                                                    color = Color.Black,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(22.dp),
+                                colors = CardDefaults.cardColors(containerColor = Color(0xFF0D0D10))
+                            ) {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .border(1.dp, Color(0x24FFFFFF), RoundedCornerShape(22.dp))
+                                        .padding(vertical = 44.dp, horizontal = 24.dp)
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier
+                                                .size(56.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0xFF1E1A14))
+                                                .border(1.dp, Color(0x4DFFB800), CircleShape)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.BookmarkBorder,
+                                                contentDescription = null,
+                                                tint = Color(0xFFFFB800),
+                                                modifier = Modifier.size(26.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(14.dp))
+                                        Text(
+                                            text = "No structured notes yet",
+                                            color = Color.White,
+                                            fontSize = 15.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Text(
+                                            text = "Say \"Take a note…\" during dictation to auto-structure notes, or tap the bookmark icon on any recent voice card.",
+                                            color = Color(0xFF71717A),
+                                            fontSize = 12.sp,
+                                            textAlign = TextAlign.Center,
+                                            lineHeight = 17.sp
+                                        )
+                                    }
+                                }
+                            }
+                            }
+                        } else {
+                            displayNotes.forEach { item ->
+                                NoteCard(
+                                    item = item,
+                                    searchQuery = queryClean,
+                                    isMultiSelect = isMultiSelect,
+                                    isSelected = item.id in selectedIds,
+                                    isDissolving = item.id in dissolvingIds,
+                                    onCopy = {
+                                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                        clipboard?.setPrimaryClip(ClipData.newPlainText("Lilt Note", item.cleanedText.replace("~", "")))
+                                        Toast.makeText(context, "Copied note to clipboard!", Toast.LENGTH_SHORT).show()
+                                    },
+                                    onDelete = {
+                                        coroutineScope.launch {
+                                            dissolvingIds = setOf(item.id)
+                                            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                            delay(600)
+                                            settings.deleteHistory(item.id)
+                                            historyItems = settings.getHistory()
+                                            dissolvingIds = emptySet()
+                                        }
+                                    },
+                                    onTogglePin = {
+                                        settings.toggleNote(item.id)
+                                        historyItems = settings.getHistory()
+                                    },
+                                    onTogglePinTop = {
+                                        settings.togglePin(item.id)
+                                        historyItems = settings.getHistory()
+                                    },
+                                    onUpdateText = { newText ->
+                                        settings.updateHistoryItem(item.id, newText)
+                                        historyItems = settings.getHistory()
+                                    },
+                                    onSelectToggle = {
+                                        selectedIds = if (item.id in selectedIds) selectedIds - item.id else selectedIds + item.id
+                                    },
+                                    onLongClick = {
+                                        isMultiSelect = true
+                                        selectedIds = selectedIds + item.id
+                                    },
+                                    onSaveContact = {
+                                        settings.markContactSaved(item.id)
+                                        historyItems = settings.getHistory()
+                                    }
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                            }
+                        }
+                    }
+                }
+            }
+
+            } // end history tab
+            // ── SETTINGS TAB ─────────────────────────────────
+            if (currentTab == "settings") {
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "S E T T I N G S",
+                color = NothingTextPrimary,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 3.sp,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Text(
+                text = "Engine, integrations & privacy",
+                color = NothingTextMuted,
+                fontSize = 12.sp,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 6. System Integration Surfaces
+            Text(
+                text = "SYSTEM INTEGRATION",
+                color = NothingTextMuted,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+            )
+
+            // Voice Keyboard IME
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = NothingCard)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+                        .padding(16.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFF1C1C1C))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Keyboard,
+                                contentDescription = "Keyboard",
+                                tint = Color.White,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column {
+                            Text(
+                                text = "Lilt Voice Keyboard",
+                                color = NothingTextPrimary,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "Hold Space to Speak (Push-to-Talk) or tap mic. Directly inserts text.",
+                                color = NothingTextMuted,
+                                fontSize = 12.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(40.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF1E1E1E))
+                            .border(1.dp, NothingBorder, RoundedCornerShape(12.dp))
+                            .clickable {
+                                val intent = Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)
+                                context.startActivity(intent)
+                            }
+                    ) {
+                        Text(
+                            text = "Open Keyboard Settings",
+                            color = NothingTextPrimary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Floating Glass Pill Overlay
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = NothingCard)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF1C1C1C))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PictureInPicture,
+                            contentDescription = "Floating Pill",
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(14.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Floating Glass Circle",
+                            color = NothingTextPrimary,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Liquid glass circle. Pops up when clicking any text box. White: idle, Red: listening, Amber: transcribing, Green: copied.",
+                            color = NothingTextMuted,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                    Switch(
+                        checked = isFloatingPillActive,
+                        onCheckedChange = { checked ->
+                            if (checked) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {
+                                    val intent = Intent(
+                                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                        Uri.parse("package:${context.packageName}")
+                                    )
+                                    context.startActivity(intent)
+                                } else {
+                                    settings.floatingPillEnabled = true
+                                    isFloatingPillActive = true
+                                    LiltOverlayService.start(context)
+                                }
+                            } else {
+                                settings.floatingPillEnabled = false
+                                isFloatingPillActive = false
+                                LiltOverlayService.stop(context)
+                            }
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFFD71921),
+                            checkedBorderColor = Color(0xFFE50914),
+                            uncheckedThumbColor = Color(0xFFA1A1AA),
+                            uncheckedTrackColor = Color(0xFF14151C),
+                            uncheckedBorderColor = Color(0xFF282933)
+                        )
+                    )
+                }
+            }
+
+            // Sub-option: Always-On Floating Circle
+            AnimatedVisibility(visible = isFloatingPillActive) {
+                Column {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, Color(0xFF222228), RoundedCornerShape(16.dp)),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF141418))
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Always-On Floating Circle",
+                                    color = NothingTextPrimary,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = if (isAlwaysOnActive)
+                                        "Keep circle visible everywhere. Dictate anytime to clipboard."
+                                    else
+                                        "Only appears when the keyboard is open on screen.",
+                                    color = NothingTextMuted,
+                                    fontSize = 12.sp
+                                )
+                            }
+
+                            Switch(
+                                checked = isAlwaysOnActive,
+                                onCheckedChange = { checked ->
+                                    isAlwaysOnActive = checked
+                                    settings.floatingCircleContextualOnly = !checked
+                                    LiltOverlayService.setAlwaysOn(checked)
+                                },
+                                colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFFD71921),
+                            checkedBorderColor = Color(0xFFE50914),
+                            uncheckedThumbColor = Color(0xFFA1A1AA),
+                            uncheckedTrackColor = Color(0xFF14151C),
+                            uncheckedBorderColor = Color(0xFF282933)
+                        )
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Accessibility & Auto-Paste Card
+            val isAccessibilityActive = LiltAccessibilityService.isServiceRunning()
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = NothingCard)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, if (isAccessibilityActive) Color(0x3334C759) else Color(0x33FFA000), RoundedCornerShape(20.dp))
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isAccessibilityActive) Color(0xFF0F2916) else Color(0xFF2A1F0C))
+                        ) {
+                            Icon(
+                                imageVector = if (isAccessibilityActive) Icons.Default.CheckCircle else Icons.Default.Settings,
+                                contentDescription = "Accessibility",
+                                tint = if (isAccessibilityActive) Color(0xFF34C759) else Color(0xFFFFA000),
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Accessibility & Auto-Paste",
+                                    color = NothingTextPrimary,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isAccessibilityActive) Color(0xFF0F2916) else Color(0xFF2A1F0C))
+                                        .border(1.dp, if (isAccessibilityActive) Color(0x6634C759) else Color(0x66FFA000), RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = if (isAccessibilityActive) "ACTIVE" else "NOT ENABLED",
+                                        color = if (isAccessibilityActive) Color(0xFF34C759) else Color(0xFFFFA000),
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            Text(
+                                text = "Detects keyboard typing so the floating circle appears only when typing, and auto-pastes directly at the cursor.",
+                                color = NothingTextMuted,
+                                fontSize = 12.sp,
+                                lineHeight = 16.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isAccessibilityActive) Color(0xFF1E1F27) else Color(0xFFD71921))
+                            .clickable {
+                                LiltAccessibilityService.openAccessibilitySettings(context)
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (isAccessibilityActive) "OPEN ACCESSIBILITY SETTINGS" else "ENABLE IN ACCESSIBILITY",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.8.sp
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 7. Cloud AI Engine (Groq / OpenAI Feature Parity)
+            Text(
+                text = "CLOUD AI ENGINE (GROQ / OPENAI)",
+                color = NothingTextMuted,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = NothingCard)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFF181818))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Cloud,
+                                contentDescription = "Cloud AI",
+                                tint = if (cloudAiEnabled) Color.White else NothingTextMuted,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Ultra-Fast Cloud Polish",
+                                color = NothingTextPrimary,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                text = if (cloudAiEnabled) "Active • ~150ms latency via Groq Qwen 3.8" else "Disabled • Using on-device engine",
+                                color = if (cloudAiEnabled) NothingGreen else NothingTextMuted,
+                                fontSize = 11.sp
+                            )
+                        }
+
+                        Switch(
+                            checked = cloudAiEnabled,
+                            onCheckedChange = {
+                                cloudAiEnabled = it
+                                settings.cloudAiEnabled = it
+                            },
+                            colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFFD71921),
+                            checkedBorderColor = Color(0xFFE50914),
+                            uncheckedThumbColor = Color(0xFFA1A1AA),
+                            uncheckedTrackColor = Color(0xFF14151C),
+                            uncheckedBorderColor = Color(0xFF282933)
+                        )
+                        )
+                    }
+
+                    if (cloudAiEnabled) {
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Provider Selector
+                        Text(
+                            text = "PROVIDER",
+                            color = NothingTextMuted,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf("groq" to "GROQ (ULTRA FAST)", "openai" to "OPENAI").forEach { (id, label) ->
+                                val isSelected = cloudProvider.lowercase() == id
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(36.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(
+                                            if (isSelected) {
+                                                Brush.verticalGradient(
+                                                    listOf(Color(0xFF2C2F3C), Color(0xFF1B1D25))
+                                                )
+                                            } else {
+                                                Brush.verticalGradient(
+                                                    listOf(Color(0xFF121319), Color(0xFF0C0D12))
+                                                )
+                                            }
+                                        )
+                                        .border(
+                                            width = 1.2.dp,
+                                            color = if (isSelected) Color(0x99FFFFFF) else Color(0xFF22242D),
+                                            shape = RoundedCornerShape(10.dp)
+                                        )
+                                        .clickable {
+                                            cloudProvider = id
+                                            settings.cloudProvider = id
+                                            if (id == "groq" && cloudModel.contains("gpt")) {
+                                                cloudModel = "qwen/qwen3.8-27b"
+                                                settings.cloudModel = cloudModel
+                                            } else if (id == "openai" && !cloudModel.contains("gpt")) {
+                                                cloudModel = "gpt-4o-mini"
+                                                settings.cloudModel = cloudModel
+                                            }
+                                        }
+                                ) {
+                                    Text(
+                                        text = label,
+                                        color = if (isSelected) Color.White else Color(0xFFA1A1AA),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Model Selector
+                        Text(
+                            text = "MODEL PRESETS & CUSTOM ID",
+                            color = NothingTextMuted,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        val models = if (cloudProvider.lowercase() == "openai") {
+                            listOf("gpt-4o-mini" to "GPT-4o Mini", "gpt-4o" to "GPT-4o")
+                        } else {
+                            listOf(
+                                "qwen/qwen3.8-27b" to "Qwen 3.8 27B (Ultra Fast)"
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            models.forEach { (m, label) ->
+                                val isSelected = cloudModel == m
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(34.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(
+                                            if (isSelected) {
+                                                Brush.verticalGradient(
+                                                    listOf(Color(0xFF2C2F3C), Color(0xFF1B1D25))
+                                                )
+                                            } else {
+                                                Brush.verticalGradient(
+                                                    listOf(Color(0xFF121319), Color(0xFF0C0D12))
+                                                )
+                                            }
+                                        )
+                                        .border(
+                                            width = 1.2.dp,
+                                            color = if (isSelected) Color(0x99FFFFFF) else Color(0xFF22242D),
+                                            shape = RoundedCornerShape(10.dp)
+                                        )
+                                        .clickable {
+                                            cloudModel = m
+                                            settings.cloudModel = m
+                                        }
+                                ) {
+                                    Text(
+                                        text = label,
+                                        color = if (isSelected) Color.Black else Color(0xFFA1A1AA),
+                                        fontSize = 9.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        OutlinedTextField(
+                            value = cloudModel,
+                            onValueChange = {
+                                cloudModel = it
+                                settings.cloudModel = it
+                            },
+                            singleLine = true,
+                            label = { Text("Active Model ID", color = NothingTextMuted, fontSize = 10.sp) },
+                            textStyle = TextStyle(color = NothingTextPrimary, fontSize = 11.sp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color.White,
+                                unfocusedBorderColor = NothingBorder,
+                                focusedContainerColor = Color(0xFF0F0F0F),
+                                unfocusedContainerColor = Color(0xFF0F0F0F)
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // API Key Input
+                        Text(
+                            text = "API KEY",
+                            color = NothingTextMuted,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        OutlinedTextField(
+                            value = cloudApiKey,
+                            onValueChange = {
+                                cloudApiKey = it
+                                settings.cloudApiKey = it
+                            },
+                            singleLine = true,
+                            visualTransformation = if (showApiKey) VisualTransformation.None else PasswordVisualTransformation('●'),
+                            textStyle = TextStyle(color = NothingTextPrimary, fontSize = 12.sp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color.White,
+                                unfocusedBorderColor = NothingBorder,
+                                focusedContainerColor = Color(0xFF0F0F0F),
+                                unfocusedContainerColor = Color(0xFF0F0F0F)
+                            ),
+                            placeholder = { Text("Enter your API key", color = NothingTextMuted, fontSize = 12.sp) },
+                            trailingIcon = {
+                                IconButton(onClick = { showApiKey = !showApiKey }) {
+                                    Icon(
+                                        imageVector = if (showApiKey) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                        contentDescription = if (showApiKey) "Hide key" else "Show key",
+                                        tint = NothingTextMuted,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Test Connection Button & Result Badge
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFF222222))
+                                    .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
+                                    .clickable(enabled = !cloudTesting && cloudApiKey.isNotBlank()) {
+                                        cloudTesting = true
+                                        cloudTestResult = "Testing connection…"
+                                        coroutineScope.launch {
+                                            val res = CloudCleanupEngine.testConnection(
+                                                provider = cloudProvider,
+                                                apiKey = cloudApiKey,
+                                                model = cloudModel
+                                            )
+                                            cloudTesting = false
+                                            cloudTestResult = if (res.isSuccess) {
+                                                val (latency, _) = res.getOrThrow()
+                                                "✓ Connected (${latency}ms)"
+                                            } else {
+                                                "✕ ${res.exceptionOrNull()?.message ?: "Failed"}"
+                                            }
+                                        }
+                                    }
+                                    .padding(horizontal = 14.dp, vertical = 8.dp)
+                            ) {
+                                Text(
+                                    text = if (cloudTesting) "TESTING…" else "TEST CONNECTION",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.8.sp
+                                )
+                            }
+
+                            if (cloudTestResult.isNotBlank()) {
+                                Text(
+                                    text = cloudTestResult,
+                                    color = if (cloudTestResult.startsWith("✓")) NothingGreen else Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            } // end settings tab (part 1 - system integration + cloud AI)
+
+            // ── RULES TAB ─────────────────────────────────
+            if (currentTab == "rules") {
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "R U L E S",
+                color = NothingTextPrimary,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 3.sp,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Text(
+                text = "Voice commands, dictionary & snippets",
+                color = NothingTextMuted,
+                fontSize = 12.sp,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 8. Unified Writing Rules & Smart Commands Hub
+            Text(
+                text = "WRITING RULES & SMART COMMANDS",
+                color = NothingTextMuted,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = NothingCard)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+                        .padding(16.dp)
+                ) {
+                    // Sub-Tab Navigation Bar: Voice Commands, Dictionary, Snippets
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf(
+                            Triple("commands", Icons.Default.Mic, "Commands (${voiceCommandsList.size})"),
+                            Triple("dictionary", Icons.Default.Book, "Dictionary (${replacementsList.size})"),
+                            Triple("snippets", Icons.Default.Edit, "Snippets (${snippetsList.size})")
+                        ).forEach { (tabId, tabIcon, tabLabel) ->
+                            val isSelected = activeWritingTab == tabId
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(36.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(
+                                        if (isSelected) {
+                                            Brush.verticalGradient(
+                                                listOf(Color(0xFF2C2F3C), Color(0xFF1B1D25))
+                                            )
+                                        } else {
+                                            Brush.verticalGradient(
+                                                listOf(Color(0xFF121319), Color(0xFF0C0D12))
+                                            )
+                                        }
+                                    )
+                                    .border(
+                                        width = 1.2.dp,
+                                        color = if (isSelected) Color(0x99FFFFFF) else Color(0xFF22242D),
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+                                    .clickable { activeWritingTab = tabId }
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(
+                                        imageVector = tabIcon,
+                                        contentDescription = tabLabel,
+                                        tint = if (isSelected) Color.White else Color(0xFFA1A1AA),
+                                        modifier = Modifier.size(13.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = tabLabel,
+                                        color = if (isSelected) Color.White else Color(0xFFA1A1AA),
+                                        fontSize = 10.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // TAB 1: SMART VOICE COMMANDS & TEST SANDBOX
+                    if (activeWritingTab == "commands") {
+                        Text(
+                            text = "Active Voice Commands",
+                            color = NothingTextPrimary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Begin speaking with these triggers to format on the fly:",
+                            color = NothingTextMuted,
+                            fontSize = 11.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        voiceCommandsList.forEach { cmd ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFF141414))
+                                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "\"${cmd.trigger}\"",
+                                            color = Color(0xFFA1A1AA),
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(4.dp))
+                                                .background(if (cmd.isBuiltIn) Color(0xFF1F1F1F) else Color(0xFF2B1214))
+                                                .padding(horizontal = 5.dp, vertical = 1.dp)
+                                        ) {
+                                            Text(
+                                                text = if (cmd.isBuiltIn) "SYSTEM" else "CUSTOM",
+                                                color = if (cmd.isBuiltIn) NothingTextMuted else Color.White,
+                                                fontSize = 8.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = cmd.instruction,
+                                        color = NothingTextSecondary,
+                                        fontSize = 11.sp
+                                    )
+                                }
+
+                                if (!cmd.isBuiltIn) {
+                                    Icon(
+                                        imageVector = Icons.Default.DeleteOutline,
+                                        contentDescription = "Delete",
+                                        tint = Color(0xFF777777),
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .clickable {
+                                                settings.deleteVoiceCommand(cmd.id)
+                                                voiceCommandsList = settings.getVoiceCommands()
+                                            }
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Add Custom Voice Command Form
+                        Text(
+                            text = "+ Add Custom Voice Command",
+                            color = NothingTextPrimary,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedTextField(
+                                value = newCommandTrigger,
+                                onValueChange = { newCommandTrigger = it },
+                                placeholder = { Text("Trigger (e.g. Bug report)", color = NothingTextMuted, fontSize = 11.sp) },
+                                singleLine = true,
+                                textStyle = TextStyle(color = NothingTextPrimary, fontSize = 11.sp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color.White,
+                                    unfocusedBorderColor = NothingBorder,
+                                    focusedContainerColor = Color(0xFF0F0F0F),
+                                    unfocusedContainerColor = Color(0xFF0F0F0F)
+                                ),
+                                modifier = Modifier.weight(1f)
+                            )
+                            OutlinedTextField(
+                                value = newCommandInstruction,
+                                onValueChange = { newCommandInstruction = it },
+                                placeholder = { Text("Instruction (e.g. Format as: **Steps**, **Actual**)", color = NothingTextMuted, fontSize = 11.sp) },
+                                singleLine = true,
+                                textStyle = TextStyle(color = NothingTextPrimary, fontSize = 11.sp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color.White,
+                                    unfocusedBorderColor = NothingBorder,
+                                    focusedContainerColor = Color(0xFF0F0F0F),
+                                    unfocusedContainerColor = Color(0xFF0F0F0F)
+                                ),
+                                modifier = Modifier.weight(1.5f)
+                            )
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(
+                                        Brush.horizontalGradient(listOf(Color(0xFF2A2D3A), Color(0xFF1E202A)))
+                                    )
+                                    .border(1.dp, Color(0x55FFFFFF), RoundedCornerShape(10.dp))
+                                    .clickable(enabled = newCommandTrigger.isNotBlank() && newCommandInstruction.isNotBlank()) {
+                                        settings.addVoiceCommand(newCommandTrigger.trim(), newCommandInstruction.trim())
+                                        voiceCommandsList = settings.getVoiceCommands()
+                                        newCommandTrigger = ""
+                                        newCommandInstruction = ""
+                                    }
+                            ) {
+                                Icon(imageVector = Icons.Default.Add, contentDescription = "Add", tint = Color.White, modifier = Modifier.size(18.dp))
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(18.dp))
+
+                        // ⚡ INTERACTIVE TEST SANDBOX
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFF101010))
+                                .border(1.dp, Color(0xFF242424), RoundedCornerShape(12.dp))
+                                .padding(12.dp)
+                        ) {
+                            Column {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.FlashOn,
+                                            contentDescription = "Sandbox",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "INTERACTIVE TEST SANDBOX",
+                                            color = NothingTextPrimary,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = 0.8.sp
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Tap a preset or type to test voice commands in real-time:",
+                                    color = NothingTextMuted,
+                                    fontSize = 10.sp
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // Quick Preset Chips
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    listOf(
+                                        Triple(Icons.AutoMirrored.Filled.Send, "Email", "Write the email to Alex saying the demo is postponed to Thursday at 2 PM"),
+                                        Triple(Icons.Default.Edit, "Raw", "Write it raw honestly the server was bugging out yesterday but we fixed it"),
+                                        Triple(Icons.Default.CheckCircle, "List", "Make a list buy organic milk finish mobile build deploy to prod"),
+                                        Triple(Icons.Default.AutoAwesome, "Notes", "Meeting notes team aligned on Q4 goals Shiva is leading Android launch by Friday")
+                                    ).forEach { (icon, label, phrase) ->
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(42.dp)
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(Color(0xFF191919))
+                                                .border(1.dp, Color(0xFF2C2C2C), RoundedCornerShape(10.dp))
+                                                .clickable {
+                                                    sandboxInput = phrase
+                                                    sandboxOutput = ""
+                                                }
+                                        ) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(imageVector = icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(text = label, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // Auto / Bilingual Preset Chips
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    listOf(
+                                        Pair("Auto: Tenglish", "Write the email to Rahul repu morning 10 AM ki quick sprint catchup undi please be on time"),
+                                        Pair("Auto: English", "Write the email to Sarah regarding the quarterly product roadmap review next Tuesday")
+                                    ).forEach { (label, phrase) ->
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(42.dp)
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(Color(0xFF1E1A14))
+                                                .border(1.dp, Color(0xFF4D3F22), RoundedCornerShape(10.dp))
+                                                .clickable {
+                                                    sandboxLangOverride = "auto"
+                                                    sandboxInput = phrase
+                                                    sandboxOutput = ""
+                                                }
+                                        ) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(imageVector = Icons.Default.FlashOn, contentDescription = null, tint = Color(0xFFFFCC66), modifier = Modifier.size(12.dp))
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(text = label, color = Color(0xFFFFCC66), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // Telugu / Tenglish Preset Chips
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    listOf(
+                                        Pair("Telugu Email", "Write the email to Suresh repu 11 AM ki client demo undi prepare avvamani cheppu"),
+                                        Pair("Telugu Raw", "Write it raw nenu ippude office ki reach ayyanu repu morning call matladam"),
+                                        Pair("Telugu Casual", "Write it casual bhojanam chesara inkenti visheshalu weekend plan enti")
+                                    ).forEach { (label, phrase) ->
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(42.dp)
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(Color(0xFF221618))
+                                                .border(1.dp, Color(0xFF3D1F23), RoundedCornerShape(10.dp))
+                                                .clickable {
+                                                    sandboxLangOverride = "te_roman"
+                                                    sandboxInput = phrase
+                                                    sandboxOutput = ""
+                                                }
+                                        ) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(Color(0xFFD71921)))
+                                                Spacer(modifier = Modifier.width(5.dp))
+                                                Text(text = label, color = Color(0xFFA1A1AA), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                OutlinedTextField(
+                                    value = sandboxInput,
+                                    onValueChange = { sandboxInput = it },
+                                    label = { Text("Input speech to test", color = NothingTextMuted, fontSize = 11.sp) },
+                                    textStyle = TextStyle(color = NothingTextPrimary, fontSize = 12.sp),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = Color.White,
+                                        unfocusedBorderColor = NothingBorder,
+                                        focusedContainerColor = Color(0xFF0B0B0B),
+                                        unfocusedContainerColor = Color(0xFF0B0B0B)
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(if (sandboxLoading) SolidColor(Color(0xFF222222)) else Brush.horizontalGradient(listOf(Color(0xFFD71921), Color(0xFFB51219))))
+                                            .border(1.dp, if (sandboxLoading) Color(0xFF333333) else Color(0x66FFFFFF), RoundedCornerShape(8.dp))
+                                            .clickable(enabled = !sandboxLoading && sandboxInput.isNotBlank()) {
+                                                sandboxLoading = true
+                                                sandboxOutput = "Processing with AI…"
+                                                coroutineScope.launch {
+                                                    val customVocab = settings.customVocabulary
+                                                        .split(",")
+                                                        .map { it.trim() }
+                                                        .filter { it.isNotEmpty() }
+                                                    val reps = settings.getReplacements().associate { it.heard to it.replacement }
+
+                                                    var result = ""
+                                                    if (settings.cloudAiEnabled && settings.cloudApiKey.isNotBlank()) {
+                                                        val cloudRes = CloudCleanupEngine.polish(
+                                                            rawText = sandboxInput,
+                                                            provider = settings.cloudProvider,
+                                                            apiKey = settings.cloudApiKey,
+                                                            model = settings.cloudModel,
+                                                            tone = settings.activeTone,
+                                                            customVocabulary = customVocab,
+                                                            replacements = reps,
+                                                            voiceCommands = settings.getVoiceCommands(),
+                                                            languageMode = sandboxLangOverride ?: activeLanguageMode
+                                                        )
+                                                        if (cloudRes.isSuccess) {
+                                                            result = cloudRes.getOrThrow()
+                                                        }
+                                                    }
+
+                                                    if (result.isBlank()) {
+                                                        result = LiltCore.processText(
+                                                            raw = sandboxInput,
+                                                            cleanupLevel = settings.cleanupLevel,
+                                                            numbersAsDigits = settings.spokenNumbers,
+                                                            numberSymbols = settings.numberSymbols,
+                                                            spokenEmoji = settings.spokenEmoji,
+                                                            autoCapitalize = settings.autoCapitalize,
+                                                            trailingSpace = settings.trailingSpace,
+                                                            tone = settings.activeTone
+                                                        )
+                                                    }
+
+                                                    result = settings.applyReplacementsAndSnippets(result)
+                                                    sandboxOutput = result
+                                                    sandboxLoading = false
+                                                    sandboxLangOverride = null
+                                                }
+                                            }
+                                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                                    ) {
+                                        Text(
+                                            text = if (sandboxLoading) "PROCESSING…" else "TEST FORMATTING",
+                                            color = Color.White,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = 0.8.sp
+                                        )
+                                    }
+
+                                    if (sandboxOutput.isNotBlank() && !sandboxLoading) {
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .background(Color(0xFF1E1E1E))
+                                                .clickable {
+                                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                                    clipboard?.setPrimaryClip(ClipData.newPlainText("Lilt Sandbox", sandboxOutput))
+                                                    Toast.makeText(context, "Copied sandbox result!", Toast.LENGTH_SHORT).show()
+                                                }
+                                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                        ) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Icon(imageVector = Icons.Default.ContentCopy, contentDescription = "Copy", tint = Color.White, modifier = Modifier.size(12.dp))
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text("Copy Result", color = Color.White, fontSize = 10.sp)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (sandboxOutput.isNotBlank()) {
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(Color(0xFF080808))
+                                            .border(1.dp, Color(0xFF282828), RoundedCornerShape(10.dp))
+                                            .padding(14.dp)
+                                    ) {
+                                        Text(
+                                            text = sandboxOutput,
+                                            color = NothingTextPrimary,
+                                            fontSize = 12.sp,
+                                            lineHeight = 18.sp
+                                        )
+                                    }
+                                } else {
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(Color(0xFF0D0D10))
+                                            .border(1.dp, Color(0x1FFFFFFF), RoundedCornerShape(10.dp))
+                                            .padding(vertical = 14.dp, horizontal = 14.dp)
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Box(
+                                                contentAlignment = Alignment.Center,
+                                                modifier = Modifier
+                                                    .size(34.dp)
+                                                    .clip(CircleShape)
+                                                    .background(Color(0xFF18181B))
+                                                    .border(1.dp, Color(0x28FFFFFF), CircleShape)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.AutoAwesome,
+                                                    contentDescription = null,
+                                                    tint = Color(0xFF71717A),
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Column {
+                                                Text(
+                                                    text = "Sandbox Output Ready",
+                                                    color = Color(0xFFA1A1AA),
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                                Text(
+                                                    text = "Tap a preset chip above and press TEST FORMATTING to preview cleanup",
+                                                    color = Color(0xFF71717A),
+                                                    fontSize = 11.sp
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // TAB 2: PERSONAL DICTIONARY & REPLACEMENTS
+                    if (activeWritingTab == "dictionary") {
+                        Text(
+                            text = "Vocabulary Context Hints",
+                            color = NothingTextPrimary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Comma-separated terms fed into the recognition engine and LLM.",
+                            color = NothingTextMuted,
+                            fontSize = 11.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = customVocabulary,
+                            onValueChange = {
+                                customVocabulary = it
+                                settings.customVocabulary = it
+                            },
+                            textStyle = TextStyle(color = NothingTextPrimary, fontSize = 12.sp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color.White,
+                                unfocusedBorderColor = NothingBorder,
+                                focusedContainerColor = Color(0xFF0F0F0F),
+                                unfocusedContainerColor = Color(0xFF0F0F0F)
+                            ),
+                            placeholder = { Text("e.g. Lilt, Groq, Nothing OS, Rust ARM64", color = NothingTextMuted, fontSize = 12.sp) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "Word Replacements (${replacementsList.size})",
+                            color = NothingTextPrimary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Replaces misrecognized words automatically.",
+                            color = NothingTextMuted,
+                            fontSize = 11.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Existing replacements list
+                        replacementsList.forEach { rep ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFF141414))
+                                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = rep.heard,
+                                        color = NothingTextMuted,
+                                        fontSize = 12.sp
+                                    )
+                                    Text(
+                                        text = " → ",
+                                        color = Color.White,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = rep.replacement,
+                                        color = NothingTextPrimary,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                                Icon(
+                                    imageVector = Icons.Default.DeleteOutline,
+                                    contentDescription = "Delete",
+                                    tint = Color(0xFF777777),
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .clickable {
+                                            settings.deleteReplacement(rep.id)
+                                            replacementsList = settings.getReplacements()
+                                        }
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Add new replacement row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedTextField(
+                                value = newHeard,
+                                onValueChange = { newHeard = it },
+                                placeholder = { Text("Heard", color = NothingTextMuted, fontSize = 11.sp) },
+                                singleLine = true,
+                                textStyle = TextStyle(color = NothingTextPrimary, fontSize = 11.sp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color.White,
+                                    unfocusedBorderColor = NothingBorder,
+                                    focusedContainerColor = Color(0xFF0F0F0F),
+                                    unfocusedContainerColor = Color(0xFF0F0F0F)
+                                ),
+                                modifier = Modifier.weight(1f)
+                            )
+                            OutlinedTextField(
+                                value = newReplacement,
+                                onValueChange = { newReplacement = it },
+                                placeholder = { Text("Replace with", color = NothingTextMuted, fontSize = 11.sp) },
+                                singleLine = true,
+                                textStyle = TextStyle(color = NothingTextPrimary, fontSize = 11.sp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color.White,
+                                    unfocusedBorderColor = NothingBorder,
+                                    focusedContainerColor = Color(0xFF0F0F0F),
+                                    unfocusedContainerColor = Color(0xFF0F0F0F)
+                                ),
+                                modifier = Modifier.weight(1f)
+                            )
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(
+                                        Brush.horizontalGradient(listOf(Color(0xFF2A2D3A), Color(0xFF1E202A)))
+                                    )
+                                    .border(1.dp, Color(0x55FFFFFF), RoundedCornerShape(10.dp))
+                                    .clickable(enabled = newHeard.isNotBlank() && newReplacement.isNotBlank()) {
+                                        settings.addReplacement(newHeard.trim(), newReplacement.trim())
+                                        replacementsList = settings.getReplacements()
+                                        newHeard = ""
+                                        newReplacement = ""
+                                    }
+                            ) {
+                                Icon(imageVector = Icons.Default.Add, contentDescription = "Add", tint = Color.White, modifier = Modifier.size(18.dp))
+                            }
+                        }
+                    }
+
+                    // TAB 3: TEXT SNIPPETS & MACROS
+                    if (activeWritingTab == "snippets") {
+                        Text(
+                            text = "Trigger Snippets (${snippetsList.size})",
+                            color = NothingTextPrimary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Saying or typing triggers auto-expands into full templates.",
+                            color = NothingTextMuted,
+                            fontSize = 11.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        snippetsList.forEach { snippet ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFF141414))
+                                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = snippet.trigger,
+                                        color = Color(0xFFA1A1AA),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = snippet.expansion,
+                                        color = NothingTextPrimary,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                                Icon(
+                                    imageVector = Icons.Default.DeleteOutline,
+                                    contentDescription = "Delete",
+                                    tint = Color(0xFF777777),
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .clickable {
+                                            settings.deleteSnippet(snippet.id)
+                                            snippetsList = settings.getSnippets()
+                                        }
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // Add new snippet row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedTextField(
+                                value = newTrigger,
+                                onValueChange = { newTrigger = it },
+                                placeholder = { Text("Trigger (;email)", color = NothingTextMuted, fontSize = 11.sp) },
+                                singleLine = true,
+                                textStyle = TextStyle(color = NothingTextPrimary, fontSize = 11.sp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color.White,
+                                    unfocusedBorderColor = NothingBorder,
+                                    focusedContainerColor = Color(0xFF0F0F0F),
+                                    unfocusedContainerColor = Color(0xFF0F0F0F)
+                                ),
+                                modifier = Modifier.weight(1f)
+                            )
+                            OutlinedTextField(
+                                value = newExpansion,
+                                onValueChange = { newExpansion = it },
+                                placeholder = { Text("Expansion", color = NothingTextMuted, fontSize = 11.sp) },
+                                singleLine = true,
+                                textStyle = TextStyle(color = NothingTextPrimary, fontSize = 11.sp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color.White,
+                                    unfocusedBorderColor = NothingBorder,
+                                    focusedContainerColor = Color(0xFF0F0F0F),
+                                    unfocusedContainerColor = Color(0xFF0F0F0F)
+                                ),
+                                modifier = Modifier.weight(1.5f)
+                            )
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(
+                                        Brush.horizontalGradient(listOf(Color(0xFF2A2D3A), Color(0xFF1E202A)))
+                                    )
+                                    .border(1.dp, Color(0x55FFFFFF), RoundedCornerShape(10.dp))
+                                    .clickable(enabled = newTrigger.isNotBlank() && newExpansion.isNotBlank()) {
+                                        settings.addSnippet(newTrigger.trim(), newExpansion.trim())
+                                        snippetsList = settings.getSnippets()
+                                        newTrigger = ""
+                                        newExpansion = ""
+                                    }
+                            ) {
+                                Icon(imageVector = Icons.Default.Add, contentDescription = "Add", tint = Color.White, modifier = Modifier.size(18.dp))
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            } // end rules tab
+
+            // ── SETTINGS TAB (Part 2: Privacy, Preferences & Diagnostics) ──────────
+            if (currentTab == "settings") {
+
+            // 10. Storage & Privacy Controls
+            Text(
+                text = "AUDIO PRIVACY & STORAGE",
+                color = NothingTextMuted,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = NothingCard)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Zero Cloud Audio Policy",
+                        color = NothingTextPrimary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "Choose whether audio is stored locally for replay or discarded entirely.",
+                        color = NothingTextMuted,
+                        fontSize = 12.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        val isAudioMode = historyStorageMode == "audio_and_text"
+
+                        // Option 1: Audio & Text
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (isAudioMode) Color(0xFF221111) else Color(0xFF141414))
+                                .border(
+                                    1.dp,
+                                    if (isAudioMode) Color.White else NothingBorder,
+                                    RoundedCornerShape(12.dp)
+                                )
+                                .clickable {
+                                    historyStorageMode = "audio_and_text"
+                                    settings.historyStorageMode = "audio_and_text"
+                                }
+                                .padding(vertical = 12.dp, horizontal = 10.dp)
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "Audio & Text",
+                                    color = if (isAudioMode) Color.White else NothingTextPrimary,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Save for replay",
+                                    color = NothingTextMuted,
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
+
+                        // Option 2: Text Only
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(if (!isAudioMode) Color(0xFF14241B) else Color(0xFF141414))
+                                .border(
+                                    1.dp,
+                                    if (!isAudioMode) NothingGreen else NothingBorder,
+                                    RoundedCornerShape(12.dp)
+                                )
+                                .clickable {
+                                    historyStorageMode = "text_only"
+                                    settings.historyStorageMode = "text_only"
+                                }
+                                .padding(vertical = 12.dp, horizontal = 10.dp)
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "Text Only",
+                                    color = if (!isAudioMode) NothingGreen else NothingTextPrimary,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "0 MB Audio / Private",
+                                    color = NothingTextMuted,
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 8. Cleanup & Formatting Preferences
+            Text(
+                text = "CLEANUP PREFERENCES",
+                color = NothingTextMuted,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = NothingCard)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+                        .padding(16.dp)
+                ) {
+                    NothingSettingToggle(
+                        icon = Icons.Default.Schedule,
+                        title = "Smart Reminders & Scheduling",
+                        subtitle = "Detects meetings, calls & deadlines in speech and automatically schedules alert notifications.",
+                        checked = smartRemindersEnabled,
+                        onCheckedChange = { checked ->
+                            smartRemindersEnabled = checked
+                            settings.smartRemindersEnabled = checked
+                        }
+                    )
+
+                    if (smartRemindersEnabled) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        NothingSettingToggle(
+                            icon = if (silentAlarmsEnabled) Icons.Default.NotificationsOff else Icons.Default.Alarm,
+                            title = "Silent Alarm Mode",
+                            subtitle = "Wakes screen and presents alarm overlay persistently with zero sound.",
+                            checked = silentAlarmsEnabled,
+                            onCheckedChange = { checked ->
+                                silentAlarmsEnabled = checked
+                                settings.silentAlarmsEnabled = checked
+                            }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    NothingSettingToggle(
+                        icon = Icons.Default.ContentCopy,
+                        title = "Auto-Copy to Clipboard",
+                        subtitle = "Automatically copies dictation results to clipboard when you stop speaking.",
+                        checked = autoCopyClipboard,
+                        onCheckedChange = { checked ->
+                            autoCopyClipboard = checked
+                            settings.autoCopyToClipboard = checked
+                        }
+                    )
+
+                    NothingSettingToggle(
+                        icon = Icons.Default.AutoAwesome,
+                        title = "Stutter & Disfluency Collapse",
+                        subtitle = "Deletes repetitive hesitations and false starts.",
+                        checked = true,
+                        onCheckedChange = {}
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    NothingSettingToggle(
+                        icon = Icons.Default.Numbers,
+                        title = "Spoken Numbers to Digits",
+                        subtitle = "Converts 'three hundred' to '300'.",
+                        checked = spokenNumbers,
+                        onCheckedChange = {
+                            spokenNumbers = it
+                            settings.spokenNumbers = it
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    NothingSettingToggle(
+                        icon = Icons.Default.EmojiEmotions,
+                        title = "Spoken Emoji",
+                        subtitle = "Replaces 'laughing emoji' with '😂'.",
+                        checked = spokenEmoji,
+                        onCheckedChange = {
+                            spokenEmoji = it
+                            settings.spokenEmoji = it
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    NothingSettingToggle(
+                        icon = Icons.Default.CheckCircle,
+                        title = "Auto Capitalize Sentences",
+                        subtitle = "Capitalizes sentence starts automatically.",
+                        checked = autoCapitalize,
+                        onCheckedChange = {
+                            autoCapitalize = it
+                            settings.autoCapitalize = it
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    NothingSettingToggle(
+                        icon = Icons.Default.AttachMoney,
+                        title = "Currency & Percent Symbols ($ / %)",
+                        subtitle = "Converts spoken 'fifty dollars' to '$50' and 'percent' to '%'.",
+                        checked = numberSymbols,
+                        onCheckedChange = {
+                            numberSymbols = it
+                            settings.numberSymbols = it
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    NothingSettingToggle(
+                        icon = Icons.Default.SpaceBar,
+                        title = "Automatic Trailing Space",
+                        subtitle = "Appends a space after auto-pasting so you can continue typing.",
+                        checked = trailingSpace,
+                        onCheckedChange = {
+                            trailingSpace = it
+                            settings.trailingSpace = it
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    NothingSettingToggle(
+                        icon = Icons.Default.Vibration,
+                        title = "Tactile Haptic Feedback",
+                        subtitle = "Subtle vibration pulse on mic start, stop, and text paste.",
+                        checked = hapticFeedback,
+                        onCheckedChange = {
+                            hapticFeedback = it
+                            settings.hapticFeedback = it
+                        }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // 9. One-Click Support & Error Reporting Hub
+            Text(
+                text = "SUPPORT & DIAGNOSTICS",
+                color = NothingTextMuted,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = NothingCard)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, NothingBorder, RoundedCornerShape(20.dp))
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFF261012))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.BugReport,
+                                contentDescription = null,
+                                tint = Color(0xFFA1A1AA),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column {
+                            Text(
+                                text = "ONE-CLICK ISSUE REPORTING",
+                                color = NothingTextPrimary,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            )
+                            Text(
+                                text = "Direct dispatch to shashankatthaluri@gmail.com",
+                                color = NothingTextMuted,
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = "Encountering any speech recognition hiccup, formatting bug, or keyboard issue? Tap below to generate and send a complete diagnostic trace with full logs.",
+                        color = NothingTextSecondary,
+                        fontSize = 11.sp,
+                        lineHeight = 16.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .weight(1.3f)
+                                .height(40.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Brush.horizontalGradient(listOf(Color(0xFFD71921), Color(0xFFB51219))))
+                                .border(1.dp, Color(0x66FFFFFF), RoundedCornerShape(10.dp))
+                                .clickable { showErrorDialog = true }
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.Send,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "REPORT ISSUE TO DEV",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFF1E1E1E))
+                                .border(1.dp, NothingBorder, RoundedCornerShape(10.dp))
+                                .clickable {
+                                    val report = DiagnosticLogger.buildDiagnosticReport(context, "Direct diagnostic copy")
+                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                    clipboard?.setPrimaryClip(ClipData.newPlainText("Lilt Diagnostics", report))
+                                    Toast.makeText(context, "Copied diagnostic logs to clipboard!", Toast.LENGTH_SHORT).show()
+                                }
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.ContentCopy,
+                                    contentDescription = null,
+                                    tint = NothingTextSecondary,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "COPY LOGS",
+                                    color = NothingTextPrimary,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            } // end settings tab (part 2)
+                }
+            }
+
+            // Footer
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "L I L T   •   N O T H I N G   O S",
+                    color = NothingTextMuted,
+                    fontSize = 11.sp,
+                    letterSpacing = 2.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Built for Nothing Phone (4a)  •  Voice Engine v1.0  •  Nothing OS",
+                    color = Color(0xFF444444),
+                    fontSize = 10.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(36.dp))
+        }
+
+        // Diagnostic & Error Report Dialog
+        if (showErrorDialog) {
+            AlertDialog(
+                onDismissRequest = { showErrorDialog = false },
+                containerColor = Color(0xFF0E0E0E),
+                titleContentColor = Color.White,
+                textContentColor = NothingTextSecondary,
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.BugReport,
+                            contentDescription = null,
+                            tint = Color(0xFFA1A1AA),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "SYSTEM REPORT & SUPPORT",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                    }
+                },
+                text = {
+                    Column {
+                        Text(
+                            text = "Diagnostic reports are directly addressed to:",
+                            fontSize = 11.sp,
+                            color = NothingTextMuted
+                        )
+                        Text(
+                            text = DiagnosticLogger.DEV_EMAIL,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Diagnostic Quick Status Box
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFF141414))
+                                .border(1.dp, Color(0xFF222222), RoundedCornerShape(8.dp))
+                                .padding(10.dp)
+                        ) {
+                            Column {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Speech Recognizer", fontSize = 10.sp, color = NothingTextMuted)
+                                    Text("Ready (${settings.getRecognitionLanguageTag()})", fontSize = 10.sp, color = NothingGreen, fontWeight = FontWeight.Bold)
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Direct Auto-Paste", fontSize = 10.sp, color = NothingTextMuted)
+                                    Text(
+                                        if (LiltAccessibilityService.isServiceRunning()) "Running" else "Not Enabled",
+                                        fontSize = 10.sp,
+                                        color = if (LiltAccessibilityService.isServiceRunning()) NothingGreen else Color(0xFFFFA000),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Cloud Polish AI", fontSize = 10.sp, color = NothingTextMuted)
+                                    Text(
+                                        if (settings.cloudAiEnabled && settings.cloudApiKey.isNotBlank()) "Groq Ready" else "Off",
+                                        fontSize = 10.sp,
+                                        color = if (settings.cloudAiEnabled) NothingGreen else NothingTextMuted,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                if (DiagnosticLogger.lastErrorMessage != null) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "Last Error: ${DiagnosticLogger.lastErrorMessage}",
+                                        fontSize = 10.sp,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        OutlinedTextField(
+                            value = errorReportUserNote,
+                            onValueChange = { errorReportUserNote = it },
+                            label = { Text("What happened? (optional description)", color = NothingTextMuted, fontSize = 11.sp) },
+                            textStyle = TextStyle(color = Color.White, fontSize = 12.sp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color.White,
+                                unfocusedBorderColor = Color(0xFF333333),
+                                focusedContainerColor = Color(0xFF080808),
+                                unfocusedContainerColor = Color(0xFF080808)
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(90.dp)
+                        )
+                    }
+                },
+                confirmButton = {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Brush.horizontalGradient(listOf(Color(0xFFD71921), Color(0xFFB51219))))
+                            .border(1.dp, Color(0x66FFFFFF), RoundedCornerShape(8.dp))
+                            .clickable {
+                                DiagnosticLogger.sendErrorReport(context, errorReportUserNote)
+                                showErrorDialog = false
+                                errorReportUserNote = ""
+                            }
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = "SEND EMAIL TO DEV",
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                dismissButton = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFF1E1E1E))
+                                .clickable {
+                                    val report = DiagnosticLogger.buildDiagnosticReport(context, errorReportUserNote)
+                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                    clipboard?.setPrimaryClip(ClipData.newPlainText("Lilt Diagnostics", report))
+                                    Toast.makeText(context, "Full diagnostic log copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                }
+                                .padding(horizontal = 10.dp, vertical = 8.dp)
+                        ) {
+                            Text("COPY LOGS", color = Color.White, fontSize = 11.sp)
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFF141414))
+                                .clickable { showErrorDialog = false }
+                                .padding(horizontal = 10.dp, vertical = 8.dp)
+                        ) {
+                            Text("CANCEL", color = NothingTextMuted, fontSize = 11.sp)
+                        }
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun NothingSettingToggle(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0xFF1E1E1E)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = title,
+                    tint = Color(0xFFD71921),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(14.dp))
+            Column {
+                Text(
+                    text = title,
+                    color = NothingTextPrimary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = subtitle,
+                    color = NothingTextMuted,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = Color(0xFFD71921),
+                uncheckedThumbColor = Color.Gray,
+                uncheckedTrackColor = Color(0xFF2C2C2E)
+            )
+        )
+    }
+}
+
+@Composable
+fun TonePill(
+    label: String,
+    isActive: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val scaleAnim by animateFloatAsState(
+        targetValue = if (isActive) 1.04f else 1.0f,
+        animationSpec = spring(
+            dampingRatio = 0.72f,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "tone_pill_scale"
+    )
+
+    val textColorAnim by animateColorAsState(
+        targetValue = if (isActive) Color.White else Color(0xFFA1A1AA),
+        animationSpec = tween(220),
+        label = "tone_pill_text_color"
+    )
+
+    val borderAlpha by animateFloatAsState(
+        targetValue = if (isActive) 0.65f else 0.15f,
+        animationSpec = tween(220),
+        label = "tone_pill_border_alpha"
+    )
+
+    val dotScale by animateFloatAsState(
+        targetValue = if (isActive) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = 0.68f,
+            stiffness = Spring.StiffnessMediumLow
+        ),
+        label = "tone_pill_dot"
+    )
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .graphicsLayer {
+                scaleX = scaleAnim
+                scaleY = scaleAnim
+            }
+            .height(38.dp)
+            .clip(RoundedCornerShape(19.dp))
+            .background(
+                if (isActive) {
+                    Brush.verticalGradient(
+                        listOf(Color(0xFF2E3240), Color(0xFF1A1C24))
+                    )
+                } else {
+                    Brush.verticalGradient(
+                        listOf(Color(0xFF13141A), Color(0xFF0C0D11))
+                    )
+                }
+            )
+            .border(
+                width = 1.2.dp,
+                brush = Brush.verticalGradient(
+                    listOf(
+                        Color.White.copy(alpha = borderAlpha),
+                        Color.White.copy(alpha = borderAlpha * 0.3f)
+                    )
+                ),
+                shape = RoundedCornerShape(19.dp)
+            )
+            .clickable { onClick() }
+            .padding(horizontal = 10.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            if (dotScale > 0.05f) {
+                Box(
+                    modifier = Modifier
+                        .graphicsLayer {
+                            scaleX = dotScale
+                            scaleY = dotScale
+                            alpha = dotScale
+                        }
+                        .size(5.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFD71921))
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+            }
+            Text(
+                text = label,
+                color = textColorAnim,
+                fontSize = 11.5.sp,
+                fontWeight = if (isActive) FontWeight.Bold else FontWeight.Medium,
+                letterSpacing = 0.3.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun ReminderCard(
+    reminder: com.lilt.mobile.data.ReminderItem,
+    searchQuery: String = "",
+    onComplete: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val isPast = reminder.eventEpochMs <= System.currentTimeMillis()
+    val isCompleted = reminder.isCompleted
+    val timeFormat = java.text.SimpleDateFormat("EEE, d MMM • h:mm a", java.util.Locale.getDefault())
+    val formattedTime = timeFormat.format(java.util.Date(reminder.eventEpochMs))
+    val leadStr = if (reminder.leadMinutes >= 60) "${reminder.leadMinutes / 60}h" else "${reminder.leadMinutes}m"
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isCompleted) Color(0xFF111114) else Color(0xFF16161C)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(
+                    1.dp,
+                    if (isCompleted) Color(0x15FFFFFF) else Color(0x28FFFFFF),
+                    RoundedCornerShape(18.dp)
+                )
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isCompleted) Color(0x2234C759)
+                                else if (isPast) Color(0x22FF9500)
+                                else Color(0x22D71921)
+                            )
+                    ) {
+                        Icon(
+                            imageVector = if (isCompleted) Icons.Default.Check else Icons.Default.Schedule,
+                            contentDescription = null,
+                            tint = if (isCompleted) Color(0xFF34C759)
+                            else if (isPast) Color(0xFFFF9500)
+                            else Color(0xFFD71921),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column {
+                        val highlightedTitle = rememberHighlightedText(reminder.title, searchQuery)
+                        Text(
+                            text = highlightedTitle,
+                            color = if (isCompleted) Color(0xFF8E8E93) else Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = formattedTime,
+                            color = if (isCompleted) Color(0xFF636366) else Color(0xFFA1A1AA),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = if (isCompleted) Color(0x2234C759)
+                    else if (isPast) Color(0x22FF9500)
+                    else Color(0x22D71921)
+                ) {
+                    Text(
+                        text = if (isCompleted) "DONE" else if (isPast) "PAST" else "${leadStr} ALERT",
+                        color = if (isCompleted) Color(0xFF34C759)
+                        else if (isPast) Color(0xFFFF9500)
+                        else Color(0xFFE50914),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (!isCompleted) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF24242C))
+                            .clickable { onComplete() }
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Complete",
+                                tint = Color(0xFF34C759),
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Mark Done",
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF24242C))
+                        .clickable { onDelete() }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DeleteOutline,
+                        contentDescription = "Delete",
+                        tint = Color(0xFF8E8E93),
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ContactActionChip(
+    name: String,
+    phone: String,
+    isSaved: Boolean,
+    onSaveClick: () -> Unit
+) {
+    val view = LocalView.current
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color(0xFF131316))
+            .border(1.dp, if (isSaved) Color(0x3310B981) else Color(0x2EFFFFFF), RoundedCornerShape(14.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f, fill = false)
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(if (isSaved) Color(0x2610B981) else Color(0xFF222228))
+                        .border(1.dp, if (isSaved) Color(0x4D10B981) else Color(0x33FFFFFF), CircleShape)
+                ) {
+                    Icon(
+                        imageVector = if (isSaved) Icons.Default.Check else Icons.Default.Person,
+                        contentDescription = null,
+                        tint = if (isSaved) Color(0xFF10B981) else Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "CONTACT",
+                            color = if (isSaved) Color(0xFF10B981) else Color(0xFF71717A),
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "•",
+                            color = Color(0xFF52525B),
+                            fontSize = 9.sp
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = name,
+                            color = Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = phone,
+                        color = Color(0xFFA1A1AA),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            if (!isSaved) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(Color.White)
+                        .clickable {
+                            view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                            onSaveClick()
+                        }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Save",
+                            color = Color.Black,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+                }
+            } else {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(Color(0x1A10B981))
+                        .border(1.dp, Color(0x4D10B981), RoundedCornerShape(18.dp))
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = Color(0xFF10B981),
+                            modifier = Modifier.size(11.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Saved",
+                            color = Color(0xFF10B981),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun VoiceNoteCard(
+    item: DictationItem,
+    searchQuery: String = "",
+    isMultiSelect: Boolean = false,
+    isSelected: Boolean = false,
+    isDissolving: Boolean = false,
+    onCopy: () -> Unit,
+    onDelete: () -> Unit,
+    onTogglePin: () -> Unit,
+    onTogglePinTop: () -> Unit = {},
+    onSelectToggle: () -> Unit = {},
+    onLongClick: () -> Unit = {},
+    onSaveContact: (() -> Unit)? = null
+) {
+    val context = LocalContext.current
+    val view = LocalView.current
+
+    val dustAnim by animateFloatAsState(
+        targetValue = if (isDissolving) 1f else 0f,
+        animationSpec = tween(durationMillis = 600, easing = LinearOutSlowInEasing),
+        label = "dustDisintegrationVN"
+    )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                if (isDissolving) {
+                    alpha = ((1f - dustAnim) * (1f - dustAnim)).coerceIn(0f, 1f)
+                    scaleX = 1f + dustAnim * 0.16f // bursting outwards into dust particles
+                    scaleY = (1f - dustAnim * 0.85f).coerceAtLeast(0.05f) // collapsing atom structure
+                    translationX = dustAnim * 90f // wind blowing particles away
+                    translationY = -dustAnim * 30f // ash lifting into air
+                    rotationZ = dustAnim * 6f // flutter
+                }
+            }
+            .pointerInput(isMultiSelect) {
+                detectTapGestures(
+                    onLongPress = {
+                        view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                        onLongClick()
+                    },
+                    onTap = {
+                        if (isMultiSelect) {
+                            view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                            onSelectToggle()
+                        }
+                    }
+                )
+            },
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = if (isSelected) Color(0xFF14141A) else NothingCard)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, if (isSelected) Color(0x99FFB800) else if (item.isPinned) Color(0x88FFB800) else if (item.isNote) Color(0x33FFB800) else NothingBorder, RoundedCornerShape(18.dp))
+                .padding(14.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Apple-style selection check circle
+                    if (isMultiSelect) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(22.dp)
+                                .clip(CircleShape)
+                                .background(if (isSelected) Color(0xFFFFB800) else Color.Transparent)
+                                .border(1.5.dp, if (isSelected) Color(0xFFFFB800) else Color(0xFF52525B), CircleShape)
+                                .clickable {
+                                    view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                    onSelectToggle()
+                                }
+                        ) {
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Selected",
+                                    tint = Color.Black,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                    }
+
+                    if (item.isPinned) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0x33FFB800))
+                                .border(1.dp, Color(0x88FFB800), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.PushPin,
+                                    contentDescription = "Pinned",
+                                    tint = Color(0xFFFFB800),
+                                    modifier = Modifier.size(10.dp)
+                                )
+                                Spacer(modifier = Modifier.width(3.dp))
+                                Text(
+                                    text = "PINNED",
+                                    color = Color(0xFFFFB800),
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.5.sp
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(7.dp))
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(if (item.isNote) Color(0xFFFFB800) else Color.White)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = (if (item.isNote) "NOTE • " else "") + item.tone.uppercase(),
+                        color = if (item.isNote) Color(0xFFFFB800) else NothingTextMuted,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    val wordCount = item.cleanedText.split("\\s+".toRegex()).filter { it.isNotBlank() }.size
+                    Text(
+                        text = "• $wordCount words",
+                        color = NothingTextMuted,
+                        fontSize = 10.sp
+                    )
+                }
+
+                if (!isMultiSelect) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Pin to top button
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(if (item.isPinned) Color(0x33FFB800) else Color(0xFF1C1C1C))
+                                .border(1.dp, if (item.isPinned) Color(0x88FFB800) else Color.Transparent, CircleShape)
+                                .clickable {
+                                    view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                    onTogglePinTop()
+                                }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PushPin,
+                                contentDescription = if (item.isPinned) "Unpin from top" else "Pin to top",
+                                tint = if (item.isPinned) Color(0xFFFFB800) else Color(0xFFA1A1AA),
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        // Bookmark / Pin icon
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF1C1C1C))
+                                .clickable { onTogglePin() }
+                        ) {
+                            Icon(
+                                imageVector = if (item.isNote) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                                contentDescription = if (item.isNote) "Unpin note" else "Pin as note",
+                                tint = if (item.isNote) Color(0xFFFFB800) else Color(0xFFA1A1AA),
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        // Share icon
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF1C1C1C))
+                                .clickable {
+                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, item.cleanedText)
+                                    }
+                                    context.startActivity(Intent.createChooser(shareIntent, "Share Voice Note").apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    })
+                                }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "Share",
+                                tint = Color.White,
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        // Copy icon
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF1C1C1C))
+                                .clickable { onCopy() }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "Copy",
+                                tint = Color.White,
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        // Delete icon
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF1C1C1C))
+                                .clickable { onDelete() }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteOutline,
+                                contentDescription = "Delete",
+                                tint = Color(0xFF888888),
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val highlightedVNText = rememberHighlightedText(item.cleanedText, searchQuery)
+            Text(
+                text = highlightedVNText,
+                color = NothingTextPrimary,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+                fontWeight = FontWeight.Normal
+            )
+
+            if (!item.contactPhone.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(10.dp))
+                ContactActionChip(
+                    name = item.contactName ?: "Contact",
+                    phone = item.contactPhone,
+                    isSaved = item.isContactSaved,
+                    onSaveClick = {
+                        val intent = Intent(Intent.ACTION_INSERT).apply {
+                            type = ContactsContract.RawContacts.CONTENT_TYPE
+                            putExtra(ContactsContract.Intents.Insert.NAME, item.contactName ?: "")
+                            putExtra(ContactsContract.Intents.Insert.PHONE, item.contactPhone)
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                        try {
+                            context.startActivity(intent)
+                            onSaveContact?.invoke()
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Unable to open contacts app", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun rememberHighlightedText(text: String, query: String): androidx.compose.ui.text.AnnotatedString {
+    val q = query.trim()
+    return remember(text, q) {
+        if (q.isEmpty() || !text.contains(q, ignoreCase = true)) {
+            androidx.compose.ui.text.AnnotatedString(text)
+        } else {
+            buildAnnotatedString {
+                var start = 0
+                while (start < text.length) {
+                    val idx = text.indexOf(q, start, ignoreCase = true)
+                    if (idx < 0) {
+                        append(text.substring(start))
+                        break
+                    }
+                    if (idx > start) {
+                        append(text.substring(start, idx))
+                    }
+                    val end = idx + q.length
+                    withStyle(
+                        SpanStyle(
+                            background = Color(0x77FFB800),
+                            color = Color(0xFFFFE082),
+                            fontWeight = FontWeight.Bold
+                        )
+                    ) {
+                        append(text.substring(idx, end))
+                    }
+                    start = end
+                }
+            }
+        }
+    }
+}
+
+fun isBulletLine(line: String): Boolean {
+    val trimmed = line.trim()
+    return trimmed.startsWith("• ") || trimmed.startsWith("- ") || trimmed.startsWith("* ") ||
+           trimmed.startsWith("• ~") || trimmed.startsWith("- ~") || trimmed.startsWith("* ~")
+}
+
+@Composable
+fun NoteCard(
+    item: DictationItem,
+    searchQuery: String = "",
+    isMultiSelect: Boolean = false,
+    isSelected: Boolean = false,
+    isDissolving: Boolean = false,
+    onCopy: () -> Unit,
+    onDelete: () -> Unit,
+    onTogglePin: () -> Unit,
+    onTogglePinTop: () -> Unit = {},
+    onUpdateText: (String) -> Unit,
+    onSelectToggle: () -> Unit = {},
+    onLongClick: () -> Unit = {},
+    onSaveContact: (() -> Unit)? = null
+) {
+    val context = LocalContext.current
+    val view = LocalView.current
+    var isEditing by remember { mutableStateOf(false) }
+    var editedText by remember(item.cleanedText) { mutableStateOf(item.cleanedText) }
+
+    val dustAnim by animateFloatAsState(
+        targetValue = if (isDissolving) 1f else 0f,
+        animationSpec = tween(durationMillis = 600, easing = LinearOutSlowInEasing),
+        label = "dustDisintegrationNote"
+    )
+
+    val timeFormatted = remember(item.timestamp) {
+        val now = System.currentTimeMillis()
+        val diff = now - item.timestamp
+        if (diff < 60_000) "Just now"
+        else if (diff < 3600_000) "${diff / 60_000}m ago"
+        else if (diff < 86400_000) "Today, " + java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()).format(java.util.Date(item.timestamp))
+        else java.text.SimpleDateFormat("d MMM, h:mm a", java.util.Locale.getDefault()).format(java.util.Date(item.timestamp))
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                if (isDissolving) {
+                    alpha = ((1f - dustAnim) * (1f - dustAnim)).coerceIn(0f, 1f)
+                    scaleX = 1f + dustAnim * 0.16f // bursting outwards into dust particles
+                    scaleY = (1f - dustAnim * 0.85f).coerceAtLeast(0.05f) // collapsing atom structure
+                    translationX = dustAnim * 90f // wind blowing particles away
+                    translationY = -dustAnim * 30f // ash lifting into air
+                    rotationZ = dustAnim * 6f // flutter
+                }
+            }
+            .pointerInput(isMultiSelect) {
+                detectTapGestures(
+                    onLongPress = {
+                        view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                        onLongClick()
+                    },
+                    onTap = {
+                        if (isMultiSelect) {
+                            view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                            onSelectToggle()
+                        }
+                    }
+                )
+            },
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = if (isSelected) Color(0xFF14141A) else Color(0xFF0D0D12))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, if (isSelected) Color(0x99FFB800) else Color(0x33FFB800), RoundedCornerShape(18.dp))
+                .padding(14.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (isMultiSelect) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(22.dp)
+                                .clip(CircleShape)
+                                .background(if (isSelected) Color(0xFFFFB800) else Color.Transparent)
+                                .border(1.5.dp, if (isSelected) Color(0xFFFFB800) else Color(0xFF52525B), CircleShape)
+                                .clickable {
+                                    view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                    onSelectToggle()
+                                }
+                        ) {
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Selected",
+                                    tint = Color.Black,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                    }
+
+                    if (item.isPinned) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0x33FFB800))
+                                .border(1.dp, Color(0x88FFB800), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.PushPin,
+                                    contentDescription = "Pinned",
+                                    tint = Color(0xFFFFB800),
+                                    modifier = Modifier.size(10.dp)
+                                )
+                                Spacer(modifier = Modifier.width(3.dp))
+                                Text(
+                                    text = "PINNED",
+                                    color = Color(0xFFFFB800),
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.5.sp
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(7.dp))
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFFFB800))
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "NOTE",
+                        color = Color(0xFFFFB800),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "• $timeFormatted",
+                        color = Color(0xFFA1A1AA),
+                        fontSize = 11.sp
+                    )
+                }
+
+                if (!isMultiSelect) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Pin to top button
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(if (item.isPinned) Color(0x33FFB800) else Color(0xFF1C1C1C))
+                                .border(1.dp, if (item.isPinned) Color(0x88FFB800) else Color.Transparent, CircleShape)
+                                .clickable {
+                                    view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                    onTogglePinTop()
+                                }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PushPin,
+                                contentDescription = if (item.isPinned) "Unpin from top" else "Pin to top",
+                                tint = if (item.isPinned) Color(0xFFFFB800) else Color(0xFFA1A1AA),
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        // Edit / Done toggle icon
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(if (isEditing) Color(0xFF262010) else Color(0xFF1C1C1C))
+                                .border(1.dp, if (isEditing) Color(0xFFFFB800) else Color.Transparent, CircleShape)
+                            .clickable {
+                                if (isEditing) {
+                                    onUpdateText(editedText)
+                                    isEditing = false
+                                } else {
+                                    editedText = item.cleanedText
+                                    isEditing = true
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (isEditing) Icons.Default.Check else Icons.Default.Edit,
+                                contentDescription = if (isEditing) "Save note" else "Edit note",
+                                tint = if (isEditing) Color(0xFFFFB800) else Color.White,
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
+                        if (isEditing) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF1C1C1C))
+                                    .clickable {
+                                        editedText = item.cleanedText
+                                        isEditing = false
+                                    }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Cancel edit",
+                                    tint = Color(0xFFA1A1AA),
+                                    modifier = Modifier.size(13.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        // Unpin / Bookmark icon
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF1E1A14))
+                                .border(1.dp, Color(0x4DFFB800), CircleShape)
+                                .clickable { onTogglePin() }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Bookmark,
+                                contentDescription = "Unpin note",
+                                tint = Color(0xFFFFB800),
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        // Share icon
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF1C1C1C))
+                                .clickable {
+                                    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, item.cleanedText.replace("~", ""))
+                                    }
+                                    context.startActivity(Intent.createChooser(shareIntent, "Share Note").apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    })
+                                }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "Share",
+                                tint = Color.White,
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        // Copy icon
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF1C1C1C))
+                                .clickable { onCopy() }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = "Copy",
+                                tint = Color.White,
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                        // Delete icon
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF1C1C1C))
+                                .clickable { onDelete() }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteOutline,
+                                contentDescription = "Delete",
+                                tint = Color(0xFF888888),
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            if (isEditing) {
+                OutlinedTextField(
+                    value = editedText,
+                    onValueChange = { editedText = it },
+                    textStyle = TextStyle(color = Color.White, fontSize = 14.sp, lineHeight = 21.sp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xFFFFB800),
+                        unfocusedBorderColor = Color(0x66FFB800),
+                        focusedContainerColor = Color(0xFF141419),
+                        unfocusedContainerColor = Color(0xFF141419)
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFFFFB800))
+                            .clickable {
+                                onUpdateText(editedText)
+                                isEditing = false
+                            }
+                            .padding(horizontal = 14.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "SAVE",
+                            color = Color.Black,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            } else {
+                val lines = item.cleanedText.split("\\n")
+                val hasBullets = lines.any { isBulletLine(it) }
+
+                if (hasBullets) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        lines.forEachIndexed { lineIndex, line ->
+                            if (isBulletLine(line)) {
+                                val isStruck = line.contains("~")
+                                val rawContent = line.replace("~", "").trim()
+                                val bulletSymbol = if (rawContent.startsWith("• ")) "• "
+                                    else if (rawContent.startsWith("- ")) "- "
+                                    else if (rawContent.startsWith("* ")) "* "
+                                    else ""
+                                val itemText = if (bulletSymbol.isNotEmpty()) rawContent.removePrefix(bulletSymbol).trim() else rawContent
+
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable {
+                                            view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                            val newLines = lines.toMutableList()
+                                            if (isStruck) {
+                                                newLines[lineIndex] = line.replace("~", "")
+                                            } else {
+                                                val prefix = if (line.startsWith("• ")) "• " else if (line.startsWith("- ")) "- " else if (line.startsWith("* ")) "* " else ""
+                                                val contentOnly = line.removePrefix(prefix).trim()
+                                                newLines[lineIndex] = "${prefix}~${contentOnly}~"
+                                            }
+                                            onUpdateText(newLines.joinToString("\\n"))
+                                        }
+                                        .padding(vertical = 3.dp, horizontal = 2.dp)
+                                ) {
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier
+                                            .size(19.dp)
+                                            .clip(CircleShape)
+                                            .background(if (isStruck) Color(0xFFFFB800) else Color(0xFF141419))
+                                            .border(1.5.dp, if (isStruck) Color(0xFFFFB800) else Color(0xFF52525B), CircleShape)
+                                    ) {
+                                        if (isStruck) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = "Completed",
+                                                tint = Color.Black,
+                                                modifier = Modifier.size(12.dp)
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    val highlightedItemText = rememberHighlightedText(itemText, searchQuery)
+                                    Text(
+                                        text = highlightedItemText,
+                                        color = if (isStruck) Color(0xFF71717A) else Color.White,
+                                        fontSize = 14.sp,
+                                        lineHeight = 20.sp,
+                                        textDecoration = if (isStruck) TextDecoration.LineThrough else TextDecoration.None
+                                    )
+                                }
+                            } else if (line.isNotBlank()) {
+                                Text(
+                                    text = line,
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    lineHeight = 20.sp
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    val highlightedNoteText = rememberHighlightedText(item.cleanedText, searchQuery)
+                    Text(
+                        text = highlightedNoteText,
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        lineHeight = 21.sp,
+                        fontWeight = FontWeight.Normal
+                    )
+                }
+            }
+
+            if (!item.contactPhone.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(10.dp))
+                ContactActionChip(
+                    name = item.contactName ?: "Contact",
+                    phone = item.contactPhone,
+                    isSaved = item.isContactSaved,
+                    onSaveClick = {
+                        val intent = Intent(Intent.ACTION_INSERT).apply {
+                            type = ContactsContract.RawContacts.CONTENT_TYPE
+                            putExtra(ContactsContract.Intents.Insert.NAME, item.contactName ?: "")
+                            putExtra(ContactsContract.Intents.Insert.PHONE, item.contactPhone)
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                        try {
+                            context.startActivity(intent)
+                            onSaveContact?.invoke()
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Unable to open contacts app", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                )
+            }
+        }
+    }
+}

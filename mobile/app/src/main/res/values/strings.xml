@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Lilt</string>
+    <string name="ime_name">Lilt Voice Typing</string>
+    <string name="overlay_channel_name">Lilt Floating Pill</string>
+    <string name="overlay_channel_desc">Shows the floating voice dictation pill over other apps</string>
+    <string name="accessibility_service_name">Lilt Voice Assistant</string>
+    <string name="accessibility_service_desc">Enables Lilt to automatically paste cleaned voice dictation into active text fields across any app.</string>
+</resources>

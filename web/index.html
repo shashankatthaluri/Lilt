@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lilt • Talk at the Speed of Thought</title>
+  <meta name="description" content="Next-generation open-source voice dictation with zero-latency floating pill, smart disfluency backtracking, persistent silent alarms, and automated note structuring for Windows & Android." />
+  
+  <meta property="og:title" content="Lilt • Talk at the Speed of Thought" />
+  <meta property="og:description" content="High-precision voice typing with transparent floating pill, smart disfluency correction, and persistent silent alarms for Windows & Android." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://shashankatthaluri.github.io/Lilt/" />
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/svg+xml" href="assets/brand/voca-app-icon.svg" />
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="#" class="brand-lockup">
+        <span class="brand-dot"></span>
+        <span class="brand-name">L I L T</span>
+        <span class="brand-badge">v1.1 OSS</span>
+      </a>
+
+      <nav class="nav-links">
+        <a href="#floating-pill" class="nav-link">Floating Pill</a>
+        <a href="#alerts" class="nav-link">Silent Alarms</a>
+        <a href="#notes" class="nav-link">Auto Notes</a>
+        <a href="#intelligence" class="nav-link">Intelligence</a>
+        <a href="#downloads" class="nav-link">Downloads</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="https://github.com/shashankatthaluri/Lilt" target="_blank" rel="noopener noreferrer" class="btn-github">
+          <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+          </svg>
+          <span>GitHub</span>
+        </a>
+        <a href="#downloads" class="btn-primary">Get Lilt</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main>
+    <section class="hero">
+      <div class="container">
+        <div class="hero-pill-badge">
+          <span class="dot-live"></span>
+          <span>NOTHING OS LUXURY • 100% OPEN SOURCE</span>
+        </div>
+
+        <h1 class="hero-title">
+          Talk at the speed<br />
+          <span class="accent-gradient">of thought.</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          Voice dictation built for real humans. Self-corrects mid-sentence backtracking, extracts Indian names with zero distortion, structures instant checklist notes, and floats unobtrusively over any app.
+        </p>
+
+        <!-- Dynamic Device-Adaptive Download Card -->
+        <div class="download-hero-card">
+          <div class="detected-platform-bar">
+            <span class="detected-badge">
+              <span class="icon-sparkle">✦</span>
+              <span id="detected-os-name">Detecting Device...</span>
+            </span>
+            <span>DIRECT BINARY DOWNLOAD</span>
+          </div>
+
+          <a id="hero-download-btn" href="https://github.com/shashankatthaluri/Lilt/releases" class="main-download-button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <div>
+              <div id="hero-btn-text">Download Lilt</div>
+            </div>
+          </a>
+
+          <!-- QR Code for Desktop Visitors -->
+          <div id="qr-section" class="qr-companion-box" style="display: none;">
+            <div id="qr-canvas-container"></div>
+            <div class="qr-info">
+              <h4>Get Lilt on your Android Phone</h4>
+              <p>Scan with your camera to download the APK directly. Companion sync & edge pill ready.</p>
+            </div>
+          </div>
+
+          <!-- Quick Tip for Mobile Visitors -->
+          <div id="android-tip-section" style="display: none; margin-top: 16px; font-size: 12px; color: #71717A;">
+            💡 Tap Download to save the .apk file, then tap to install directly on your Android phone.
+          </div>
+
+          <div class="platform-alternatives">
+            <span>Also available for:</span>
+            <a href="https://github.com/shashankatthaluri/Lilt/releases/latest/download/Lilt-Setup-x64.exe" class="platform-link">Windows 10/11 (.exe)</a>
+            <span>•</span>
+            <a href="https://github.com/shashankatthaluri/Lilt/releases/latest/download/Lilt-v1.1-Release.apk" class="platform-link">Android (.apk)</a>
+          </div>
+        </div>
+
+        <!-- Interactive Floating Pill Mockup Stage -->
+        <div class="mockup-stage" id="floating-pill">
+          <div class="mockup-header">
+            <span class="window-dot"></span>
+            <span class="window-dot"></span>
+            <span class="window-dot"></span>
+            <span class="window-title">lilt-overlay-preview.sys</span>
+          </div>
+
+          <div class="mockup-viewport">
+            <!-- The Interactive Floating Pill -->
+            <div id="interactive-pill" class="floating-pill-demo" title="Click to test voice simulation!">
+              <div class="pill-status-dot"></div>
+              <div class="pill-waveform">
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+              <div id="pill-live-text" class="pill-text">TAP PILL TO SIMULATE VOICE</div>
+            </div>
+
+            <div class="mockup-result-box">
+              <div class="tag-cleaned">Real-time Stream Output</div>
+              <div id="mockup-cleaned-output">Click the floating pill above to test mid-sentence correction & auto note generation.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Core Features Grid -->
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-tag">ENGINEERED FOR POWER USERS</div>
+        <h2 class="section-title">Built different. Nothing less.</h2>
+        <p class="section-desc">Traditional voice typing expects you to speak like an audio script. Lilt adapts to natural human speech patterns.</p>
+
+        <div class="grid-3">
+          <!-- Card 1 -->
+          <div class="card">
+            <div class="card-icon">🪟</div>
+            <h3>Transparent Floating Pill</h3>
+            <p>Floats over WhatsApp, Slack, Gmail, or your code editor. Tap or hold hotkey anywhere to dictate without switching active windows.</p>
+            <span class="card-badge">ALWAYS ON TOP • DRAGGABLE</span>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="card" id="alerts">
+            <div class="card-icon">🔕</div>
+            <h3>Persistent Silent Alarms</h3>
+            <p>Schedules meetings & calls automatically. Wakes screen persistently with zero sound in Silent Alarm Mode, featuring tactile 5m snooze steppers.</p>
+            <span class="card-badge">[-/+] SNOOZE STEPPER • ZERO SOUND</span>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="card" id="notes">
+            <div class="card-icon">📝</div>
+            <h3>Auto Note Taker & Checklists</h3>
+            <p>Say <em>"Take a note..."</em> to automatically generate interactive markdown checklists with strikethrough toggles and Pin to Top (📌).</p>
+            <span class="card-badge">PIN TO TOP • REAL-TIME SEARCH</span>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="card">
+            <div class="card-icon">⚡</div>
+            <h3>Disfluency Backtracking</h3>
+            <p>Say <em>"Meeting at 4... no wait, make it 5:30"</em>. Lilt removes the hesitation and cleanly outputs <em>"Meeting at 5:30"</em>.</p>
+            <span class="card-badge">TELUGU • HINGLISH • ENGLISH</span>
+          </div>
+
+          <!-- Card 5 -->
+          <div class="card">
+            <div class="card-icon">🇮🇳</div>
+            <h3>Indian Vocabulary & Contacts</h3>
+            <p>Device contacts and regional areas (<em>"Venkatesh"</em>, <em>"Gachibowli"</em>, <em>"Banjara Hills"</em>) transcribe with 100% precision without distortions.</p>
+            <span class="card-badge">ZERO PHONETIC DISTORTION</span>
+          </div>
+
+          <!-- Card 6 -->
+          <div class="card">
+            <div class="card-icon">🦀</div>
+            <h3>High-Performance Rust Core</h3>
+            <p>Powered by <code>lilt-core</code>. Shared Rust logic provides blazing fast VAD, text cleaning, and privacy with local-first processing.</p>
+            <span class="card-badge">RUST • ARM64 • ZERO TELEMETRY</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Disfluency & Indian Context Demo Section -->
+    <section class="section" id="intelligence">
+      <div class="container">
+        <div class="section-tag">NATURAL SPEECH INTELLIGENCE</div>
+        <h2 class="section-title">See disfluency correction in action</h2>
+        <p class="section-desc">Select an example below to see how Lilt eliminates human speech hesitations in real time.</p>
+
+        <div class="demo-selector-pills">
+          <div class="demo-chip active" data-demo-id="1">Mid-Sentence Backtracking</div>
+          <div class="demo-chip" data-demo-id="2">Tenglish Negation ("Kaadu Kaadu")</div>
+          <div class="demo-chip" data-demo-id="3">Rupee & Bank Formatting</div>
+          <div class="demo-chip" data-demo-id="4">Auto Note Structuring</div>
+        </div>
+
+        <div class="demo-split-box">
+          <div>
+            <div style="font-family: var(--font-mono); font-size: 11px; color: #F87171; margin-bottom: 8px;">WHAT YOU ACTUALLY SAID (RAW):</div>
+            <div id="demo-bubble-before" class="demo-bubble before">
+              "Send the quarterly report by Friday... no wait, scratch that, Monday morning."
+            </div>
+          </div>
+          <div>
+            <div style="font-family: var(--font-mono); font-size: 11px; color: #4ADE80; margin-bottom: 8px;">WHAT LILT OUTPUTS (CLEANED):</div>
+            <div id="demo-bubble-after" class="demo-bubble after">
+              "Send the quarterly report by Monday morning."
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Downloads Matrix Section -->
+    <section class="section" id="downloads">
+      <div class="container">
+        <div class="section-tag">CROSS-PLATFORM SUITE</div>
+        <h2 class="section-title">Get Lilt for all your devices</h2>
+        <p class="section-desc">Free and open source forever. Download standalone packages or inspect the code on GitHub.</p>
+
+        <div class="matrix-grid">
+          <!-- Windows Card -->
+          <div class="matrix-card">
+            <div>
+              <div class="matrix-header">
+                <span class="matrix-tag">DESKTOP CLIENT</span>
+                <span class="brand-badge">v1.0 x64</span>
+              </div>
+              <h3 class="matrix-title">Windows Desktop</h3>
+              <p class="matrix-meta">Tauri v2 + Rust • Ultra-lightweight ~24MB footprint.</p>
+              <ul class="matrix-specs">
+                <li>Global hotkey trigger (Ctrl+Space or custom)</li>
+                <li>Transparent floating pill overlay across all apps</li>
+                <li>Instant cursor injection into active document</li>
+                <li>Offline-capable Rust core speech engine</li>
+              </ul>
+            </div>
+            <a href="https://github.com/shashankatthaluri/Lilt/releases/latest/download/Lilt-Setup-x64.exe" class="main-download-button">
+              Download for Windows (.exe)
+            </a>
+          </div>
+
+          <!-- Android Card -->
+          <div class="matrix-card">
+            <div>
+              <div class="matrix-header">
+                <span class="matrix-tag">MOBILE CLIENT</span>
+                <span class="brand-badge">v1.1 Release</span>
+              </div>
+              <h3 class="matrix-title">Android Mobile</h3>
+              <p class="matrix-meta">Kotlin + Jetpack Compose • Pure Nothing OS AMOLED aesthetic.</p>
+              <ul class="matrix-specs">
+                <li>System-wide floating edge pill across apps</li>
+                <li>Persistent Silent Alarms with 5m snooze stepper</li>
+                <li>Full-text search in History with amber match highlighting</li>
+                <li>Contact injection & auto checklist note taker</li>
+              </ul>
+            </div>
+            <a href="https://github.com/shashankatthaluri/Lilt/releases/latest/download/Lilt-v1.1-Release.apk" class="main-download-button">
+              Download for Android (.apk)
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-inner">
+      <div>
+        <p><strong>L I L T</strong> • Released under the Apache 2.0 Open Source License.</p>
+        <p style="margin-top: 4px; font-size: 11.5px;">Crafted with Nothing OS design philosophy by Shashank Atthaluri.</p>
+      </div>
+
+      <div class="footer-links">
+        <a href="https://github.com/shashankatthaluri/Lilt" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
+        <a href="https://github.com/shashankatthaluri/Lilt/releases" target="_blank" rel="noopener noreferrer">Releases</a>
+        <a href="https://github.com/shashankatthaluri/Lilt/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">Contributing</a>
+        <a href="https://github.com/shashankatthaluri/Lilt/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">License</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

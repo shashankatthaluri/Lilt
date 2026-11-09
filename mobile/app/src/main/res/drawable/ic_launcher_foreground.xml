@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Lilt Desktop Signature Four Overlapping Lenses -->
+    <!-- 1. White Dot -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.95"
+        android:pathData="M 32,54 m -13,0 a 13,13 0 1,0 26,0 a 13,13 0 1,0 -26,0" />
+
+    <!-- 2. Ruby Red Dot -->
+    <path
+        android:fillColor="#E11D48"
+        android:fillAlpha="0.88"
+        android:pathData="M 47,54 m -13,0 a 13,13 0 1,0 26,0 a 13,13 0 1,0 -26,0" />
+
+    <!-- 3. Amber Gold Dot -->
+    <path
+        android:fillColor="#F59E0B"
+        android:fillAlpha="0.88"
+        android:pathData="M 62,54 m -13,0 a 13,13 0 1,0 26,0 a 13,13 0 1,0 -26,0" />
+
+    <!-- 4. Emerald Green Dot -->
+    <path
+        android:fillColor="#10B981"
+        android:fillAlpha="0.95"
+        android:pathData="M 77,54 m -13,0 a 13,13 0 1,0 26,0 a 13,13 0 1,0 -26,0" />
+</vector>

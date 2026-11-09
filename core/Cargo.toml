@@ -1,0 +1,23 @@
+[package]
+name = "lilt-core"
+version = "0.1.0"
+edition = "2021"
+description = "High-performance text cleaning and disfluency engine for Lilt (Desktop & Mobile)"
+
+[lib]
+name = "lilt_core"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+regex = "1"
+fancy-regex = "0.14"
+whatlang = "0.16"
+jni = { version = "0.21", default-features = false }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

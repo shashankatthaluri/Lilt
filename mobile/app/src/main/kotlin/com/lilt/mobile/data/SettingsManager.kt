@@ -1,0 +1,670 @@
+package com.lilt.mobile.data
+
+import android.content.Context
+import android.content.SharedPreferences
+import org.json.JSONArray
+import org.json.JSONObject
+import java.util.UUID
+
+data class ReplacementItem(
+    val id: String = UUID.randomUUID().toString(),
+    val heard: String,
+    val replacement: String
+) {
+    fun toJson(): JSONObject = JSONObject().apply {
+        put("id", id)
+        put("heard", heard)
+        put("replacement", replacement)
+    }
+
+    companion object {
+        fun fromJson(json: JSONObject): ReplacementItem = ReplacementItem(
+            id = json.optString("id", UUID.randomUUID().toString()),
+            heard = json.optString("heard", ""),
+            replacement = json.optString("replacement", "")
+        )
+    }
+}
+
+data class SnippetItem(
+    val id: String = UUID.randomUUID().toString(),
+    val trigger: String,
+    val expansion: String
+) {
+    fun toJson(): JSONObject = JSONObject().apply {
+        put("id", id)
+        put("trigger", trigger)
+        put("expansion", expansion)
+    }
+
+    companion object {
+        fun fromJson(json: JSONObject): SnippetItem = SnippetItem(
+            id = json.optString("id", UUID.randomUUID().toString()),
+            trigger = json.optString("trigger", ""),
+            expansion = json.optString("expansion", "")
+        )
+    }
+}
+
+data class VoiceCommandItem(
+    val id: String = UUID.randomUUID().toString(),
+    val trigger: String,
+    val instruction: String,
+    val isBuiltIn: Boolean = false
+) {
+    fun toJson(): JSONObject = JSONObject().apply {
+        put("id", id)
+        put("trigger", trigger)
+        put("instruction", instruction)
+        put("isBuiltIn", isBuiltIn)
+    }
+
+    companion object {
+        fun fromJson(json: JSONObject): VoiceCommandItem = VoiceCommandItem(
+            id = json.optString("id", UUID.randomUUID().toString()),
+            trigger = json.optString("trigger", ""),
+            instruction = json.optString("instruction", ""),
+            isBuiltIn = json.optBoolean("isBuiltIn", false)
+        )
+    }
+}
+
+data class DictationItem(
+    val id: String = UUID.randomUUID().toString(),
+    val timestamp: Long = System.currentTimeMillis(),
+    val cleanedText: String,
+    val rawText: String,
+    val durationSeconds: Int = 3,
+    val tone: String = "natural",
+    val isNote: Boolean = false,
+    val noteTitle: String? = null,
+    val contactName: String? = null,
+    val contactPhone: String? = null,
+    val isContactSaved: Boolean = false,
+    val isPinned: Boolean = false
+) {
+    fun toJson(): JSONObject = JSONObject().apply {
+        put("id", id)
+        put("timestamp", timestamp)
+        put("cleanedText", cleanedText)
+        put("rawText", rawText)
+        put("durationSeconds", durationSeconds)
+        put("tone", tone)
+        put("isNote", isNote)
+        if (noteTitle != null) put("noteTitle", noteTitle)
+        if (contactName != null) put("contactName", contactName)
+        if (contactPhone != null) put("contactPhone", contactPhone)
+        put("isContactSaved", isContactSaved)
+        put("isPinned", isPinned)
+    }
+
+    companion object {
+        fun fromJson(json: JSONObject): DictationItem = DictationItem(
+            id = json.optString("id", UUID.randomUUID().toString()),
+            timestamp = json.optLong("timestamp", System.currentTimeMillis()),
+            cleanedText = json.optString("cleanedText", ""),
+            rawText = json.optString("rawText", ""),
+            durationSeconds = json.optInt("durationSeconds", 3),
+            tone = json.optString("tone", "natural"),
+            isNote = json.optBoolean("isNote", false),
+            noteTitle = if (json.has("noteTitle") && !json.isNull("noteTitle")) json.getString("noteTitle") else null,
+            contactName = if (json.has("contactName") && !json.isNull("contactName")) json.getString("contactName") else null,
+            contactPhone = if (json.has("contactPhone") && !json.isNull("contactPhone")) json.getString("contactPhone") else null,
+            isContactSaved = json.optBoolean("isContactSaved", false),
+            isPinned = json.optBoolean("isPinned", false)
+        )
+    }
+}
+
+data class ReminderItem(
+    val id: String = UUID.randomUUID().toString(),
+    val title: String,
+    val originalText: String,
+    val eventEpochMs: Long,
+    val triggerEpochMs: Long,
+    val leadMinutes: Int = 30,
+    val createdAt: Long = System.currentTimeMillis(),
+    val isCompleted: Boolean = false,
+    val isDismissed: Boolean = false
+) {
+    fun toJson(): JSONObject = JSONObject().apply {
+        put("id", id)
+        put("title", title)
+        put("originalText", originalText)
+        put("eventEpochMs", eventEpochMs)
+        put("triggerEpochMs", triggerEpochMs)
+        put("leadMinutes", leadMinutes)
+        put("createdAt", createdAt)
+        put("isCompleted", isCompleted)
+        put("isDismissed", isDismissed)
+    }
+
+    companion object {
+        fun fromJson(json: JSONObject): ReminderItem = ReminderItem(
+            id = json.optString("id", UUID.randomUUID().toString()),
+            title = json.optString("title", ""),
+            originalText = json.optString("originalText", ""),
+            eventEpochMs = json.optLong("eventEpochMs", 0L),
+            triggerEpochMs = json.optLong("triggerEpochMs", 0L),
+            leadMinutes = json.optInt("leadMinutes", 30),
+            createdAt = json.optLong("createdAt", System.currentTimeMillis()),
+            isCompleted = json.optBoolean("isCompleted", false),
+            isDismissed = json.optBoolean("isDismissed", false)
+        )
+    }
+}
+
+
+
+class SettingsManager(context: Context) {
+    private val prefs: SharedPreferences =
+        context.getSharedPreferences("lilt_settings", Context.MODE_PRIVATE)
+
+    private val prefChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == KEY_HISTORY_JSON || key == KEY_REMINDERS_JSON) {
+            historyUpdatedFlow.tryEmit(Unit)
+        }
+    }
+
+    init {
+        prefs.registerOnSharedPreferenceChangeListener(prefChangeListener)
+    }
+
+    var cleanupLevel: String
+        get() = prefs.getString(KEY_CLEANUP_LEVEL, "medium") ?: "medium"
+        set(value) = prefs.edit().putString(KEY_CLEANUP_LEVEL, value).apply()
+
+    var activeTone: String
+        get() = prefs.getString(KEY_ACTIVE_TONE, "natural") ?: "natural"
+        set(value) = prefs.edit().putString(KEY_ACTIVE_TONE, value).apply()
+
+    var activeLanguageMode: String
+        get() = prefs.getString(KEY_LANGUAGE_MODE, "auto") ?: "auto"
+        set(value) = prefs.edit().putString(KEY_LANGUAGE_MODE, value).apply()
+
+    fun getRecognitionLanguageTag(): String = when (activeLanguageMode) {
+        "te_roman" -> "te-IN"
+        "hi_roman" -> "hi-IN"
+        "en" -> "en-US"
+        else -> "te-IN" // Captures Telugu/Tenglish & English loanwords natively without mutilating into English homophones
+    }
+
+    var spokenNumbers: Boolean
+        get() = prefs.getBoolean(KEY_SPOKEN_NUMBERS, true)
+        set(value) = prefs.edit().putBoolean(KEY_SPOKEN_NUMBERS, value).apply()
+
+    var spokenEmoji: Boolean
+        get() = prefs.getBoolean(KEY_SPOKEN_EMOJI, true)
+        set(value) = prefs.edit().putBoolean(KEY_SPOKEN_EMOJI, value).apply()
+
+    var numberSymbols: Boolean
+        get() = prefs.getBoolean(KEY_NUMBER_SYMBOLS, true)
+        set(value) = prefs.edit().putBoolean(KEY_NUMBER_SYMBOLS, value).apply()
+
+    var autoCapitalize: Boolean
+        get() = prefs.getBoolean(KEY_AUTO_CAPITALIZE, true)
+        set(value) = prefs.edit().putBoolean(KEY_AUTO_CAPITALIZE, value).apply()
+
+    var trailingSpace: Boolean
+        get() = prefs.getBoolean(KEY_TRAILING_SPACE, true)
+        set(value) = prefs.edit().putBoolean(KEY_TRAILING_SPACE, value).apply()
+
+    var floatingPillEnabled: Boolean
+        get() = prefs.getBoolean(KEY_FLOATING_PILL, true)
+        set(value) = prefs.edit().putBoolean(KEY_FLOATING_PILL, value).apply()
+
+    var floatingCircleContextualOnly: Boolean
+        get() = prefs.getBoolean(KEY_FLOATING_CONTEXTUAL_ONLY, true)
+        set(value) = prefs.edit().putBoolean(KEY_FLOATING_CONTEXTUAL_ONLY, value).apply()
+
+    var floatingCircleY: Int
+        get() = prefs.getInt(KEY_FLOATING_CIRCLE_Y, -1)
+        set(value) = prefs.edit().putInt(KEY_FLOATING_CIRCLE_Y, value).apply()
+
+    var floatingCircleDockLeft: Boolean
+        get() = prefs.getBoolean(KEY_FLOATING_CIRCLE_DOCK_LEFT, false)
+        set(value) = prefs.edit().putBoolean(KEY_FLOATING_CIRCLE_DOCK_LEFT, value).apply()
+
+    var hapticFeedback: Boolean
+        get() = prefs.getBoolean(KEY_HAPTIC, true)
+        set(value) = prefs.edit().putBoolean(KEY_HAPTIC, value).apply()
+
+    var autoStopSilenceSeconds: Float
+        get() = prefs.getFloat(KEY_SILENCE_SECONDS, 1.5f)
+        set(value) = prefs.edit().putFloat(KEY_SILENCE_SECONDS, value).apply()
+
+    var historyStorageMode: String
+        get() = prefs.getString(KEY_HISTORY_STORAGE_MODE, "text_only") ?: "text_only"
+        set(value) = prefs.edit().putString(KEY_HISTORY_STORAGE_MODE, value).apply()
+
+    val isAudioStored: Boolean
+        get() = historyStorageMode == "audio_and_text"
+
+    var wordsProcessed: Long
+        get() = prefs.getLong(KEY_WORDS_PROCESSED, 342L)
+        set(value) = prefs.edit().putLong(KEY_WORDS_PROCESSED, value).apply()
+
+    val hesitationsRemoved: Long
+        get() = prefs.getLong(KEY_HESITATIONS_REMOVED, 48L)
+
+    val stuttersCollapsed: Long
+        get() = prefs.getLong(KEY_STUTTERS_COLLAPSED, 26L)
+
+    fun recordStats(words: Int, hesitations: Int, stutters: Int) {
+        prefs.edit()
+            .putLong(KEY_WORDS_PROCESSED, wordsProcessed + words)
+            .putLong(KEY_HESITATIONS_REMOVED, hesitationsRemoved + hesitations)
+            .putLong(KEY_STUTTERS_COLLAPSED, stuttersCollapsed + stutters)
+            .apply()
+    }
+
+    fun getHistory(): List<DictationItem> {
+        val raw = prefs.getString(KEY_HISTORY_JSON, null)
+        if (raw.isNullOrBlank()) {
+            val defaults = listOf(
+                DictationItem(
+                    cleanedText = "Hey team, just finishing up the mobile engine integration. Everything runs on-device in under 5 milliseconds.",
+                    rawText = "um hey team uh just finishing up the mobile engine integration you know everything runs on device in under 5 milliseconds",
+                    durationSeconds = 6,
+                    tone = "pro"
+                ),
+                DictationItem(
+                    cleanedText = "Meeting moved to 3 PM tomorrow. Bring your Nothing Phone 4a for testing.",
+                    rawText = "meeting moved to three p m tomorrow bring your nothing phone 4a for testing",
+                    durationSeconds = 4,
+                    tone = "natural"
+                )
+            )
+            saveHistory(defaults)
+            return defaults
+        }
+
+        val items = mutableListOf<DictationItem>()
+        try {
+            val array = JSONArray(raw)
+            for (i in 0 until array.length()) {
+                items.add(DictationItem.fromJson(array.getJSONObject(i)))
+            }
+        } catch (_: Exception) {}
+        return items
+    }
+
+    fun addHistory(item: DictationItem) {
+        val current = getHistory().toMutableList()
+        current.add(0, item)
+        // Keep latest 50 dictations
+        if (current.size > 50) {
+            current.removeAt(current.size - 1)
+        }
+        saveHistory(current)
+    }
+
+    fun deleteHistory(id: String) {
+        val current = getHistory().filter { it.id != id }
+        saveHistory(current)
+    }
+
+    fun markContactSaved(id: String) {
+        val current = getHistory().map {
+            if (it.id == id) it.copy(isContactSaved = true) else it
+        }
+        saveHistory(current)
+    }
+
+    fun togglePin(id: String) {
+        val current = getHistory().map {
+            if (it.id == id) it.copy(isPinned = !it.isPinned) else it
+        }
+        saveHistory(current)
+    }
+
+    fun toggleNote(id: String) {
+        val current = getHistory().map {
+            if (it.id == id) it.copy(isNote = !it.isNote) else it
+        }
+        saveHistory(current)
+    }
+
+    fun updateHistoryItem(id: String, newCleanedText: String) {
+        val current = getHistory().map {
+            if (it.id == id) it.copy(cleanedText = newCleanedText) else it
+        }
+        saveHistory(current)
+    }
+
+    fun setNoteStateMultiple(ids: Set<String>, isNote: Boolean) {
+        val current = getHistory().map {
+            if (it.id in ids) it.copy(isNote = isNote) else it
+        }
+        saveHistory(current)
+    }
+
+    fun deleteMultipleHistory(ids: Set<String>) {
+        val current = getHistory().filter { it.id !in ids }
+        saveHistory(current)
+    }
+
+    fun clearHistory() {
+        saveHistory(emptyList())
+    }
+
+    private fun saveHistory(items: List<DictationItem>) {
+        val array = JSONArray()
+        items.forEach { array.put(it.toJson()) }
+        prefs.edit().putString(KEY_HISTORY_JSON, array.toString()).apply()
+        historyUpdatedFlow.tryEmit(Unit)
+    }
+
+    // --- Cloud AI Settings (Groq / OpenAI) ---
+    var cloudAiEnabled: Boolean
+        get() = prefs.getBoolean(KEY_CLOUD_AI_ENABLED, true)
+        set(value) = prefs.edit().putBoolean(KEY_CLOUD_AI_ENABLED, value).apply()
+
+    var cloudProvider: String
+        get() = prefs.getString(KEY_CLOUD_PROVIDER, "groq") ?: "groq"
+        set(value) = prefs.edit().putString(KEY_CLOUD_PROVIDER, value).apply()
+
+    var cloudApiKey: String
+        get() = prefs.getString(KEY_CLOUD_API_KEY, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_CLOUD_API_KEY, value).apply()
+
+    var cloudModel: String
+        get() {
+            val saved = prefs.getString(KEY_CLOUD_MODEL, "qwen/qwen3.8-27b") ?: "qwen/qwen3.8-27b"
+            return if (saved.contains("whisper") || saved.contains("llama") || saved.isBlank()) {
+                "qwen/qwen3.8-27b".also { prefs.edit().putString(KEY_CLOUD_MODEL, it).apply() }
+            } else saved
+        }
+        set(value) = prefs.edit().putString(KEY_CLOUD_MODEL, value).apply()
+
+    // --- Personal Vocabulary ---
+    var customVocabulary: String
+        get() = prefs.getString(KEY_CUSTOM_VOCABULARY, "Lilt, Groq, Nothing OS, Rust ARM64, Jetpack Compose, Antigravity") ?: ""
+        set(value) = prefs.edit().putString(KEY_CUSTOM_VOCABULARY, value).apply()
+
+    // --- Replacements (Heard -> Replacement) ---
+    var smartRemindersEnabled: Boolean
+        get() = prefs.getBoolean(KEY_SMART_REMINDERS, true)
+        set(value) = prefs.edit().putBoolean(KEY_SMART_REMINDERS, value).apply()
+
+    var defaultReminderLeadMinutes: Int
+        get() = prefs.getInt(KEY_REMINDER_LEAD_MINUTES, 30)
+        set(value) = prefs.edit().putInt(KEY_REMINDER_LEAD_MINUTES, value).apply()
+
+    var silentAlarmsEnabled: Boolean
+        get() = prefs.getBoolean(KEY_SILENT_ALARMS_ENABLED, false)
+        set(value) = prefs.edit().putBoolean(KEY_SILENT_ALARMS_ENABLED, value).apply()
+
+    var autoCopyToClipboard: Boolean
+        get() = prefs.getBoolean(KEY_AUTO_COPY_CLIPBOARD, false)
+        set(value) = prefs.edit().putBoolean(KEY_AUTO_COPY_CLIPBOARD, value).apply()
+
+    fun getReminders(): List<ReminderItem> {
+        val raw = prefs.getString(KEY_REMINDERS_JSON, null)
+        if (raw.isNullOrBlank()) return emptyList()
+        val items = mutableListOf<ReminderItem>()
+        try {
+            val array = JSONArray(raw)
+            for (i in 0 until array.length()) {
+                items.add(ReminderItem.fromJson(array.getJSONObject(i)))
+            }
+        } catch (_: Exception) {}
+        return items
+    }
+
+    fun addReminder(item: ReminderItem) {
+        val current = getReminders().toMutableList()
+        current.add(0, item)
+        saveReminders(current)
+    }
+
+    fun updateReminder(item: ReminderItem) {
+        val current = getReminders().map { if (it.id == item.id) item else it }
+        saveReminders(current)
+    }
+
+    fun completeReminder(id: String) {
+        val current = getReminders().map { if (it.id == id) it.copy(isCompleted = true) else it }
+        saveReminders(current)
+    }
+
+    fun snoozeReminder(id: String, snoozeMinutes: Int = 10) {
+        val now = System.currentTimeMillis()
+        val current = getReminders().map {
+            if (it.id == id) {
+                it.copy(
+                    triggerEpochMs = now + (snoozeMinutes * 60 * 1000L),
+                    isDismissed = false
+                )
+            } else it
+        }
+        saveReminders(current)
+    }
+
+    fun deleteReminder(id: String) {
+        val current = getReminders().filter { it.id != id }
+        saveReminders(current)
+    }
+
+    private fun saveReminders(items: List<ReminderItem>) {
+        val array = JSONArray()
+        items.forEach { array.put(it.toJson()) }
+        prefs.edit().putString(KEY_REMINDERS_JSON, array.toString()).apply()
+        historyUpdatedFlow.tryEmit(Unit)
+    }
+
+    fun getReplacements(): List<ReplacementItem> {
+        val raw = prefs.getString(KEY_REPLACEMENTS_JSON, null)
+        if (raw.isNullOrBlank()) {
+            val defaults = listOf(
+                ReplacementItem(heard = "lilt, little, wilt", replacement = "Lilt"),
+                ReplacementItem(heard = "nothing o s", replacement = "Nothing OS"),
+                ReplacementItem(heard = "git hub", replacement = "GitHub")
+            )
+            saveReplacements(defaults)
+            return defaults
+        }
+        val items = mutableListOf<ReplacementItem>()
+        try {
+            val arr = JSONArray(raw)
+            for (i in 0 until arr.length()) {
+                items.add(ReplacementItem.fromJson(arr.getJSONObject(i)))
+            }
+        } catch (_: Exception) {}
+        return items
+    }
+
+    fun saveReplacements(items: List<ReplacementItem>) {
+        val arr = JSONArray()
+        items.forEach { arr.put(it.toJson()) }
+        prefs.edit().putString(KEY_REPLACEMENTS_JSON, arr.toString()).apply()
+    }
+
+    fun addReplacement(heard: String, replacement: String) {
+        val list = getReplacements().toMutableList()
+        list.add(ReplacementItem(heard = heard, replacement = replacement))
+        saveReplacements(list)
+    }
+
+    fun deleteReplacement(id: String) {
+        val list = getReplacements().filter { it.id != id }
+        saveReplacements(list)
+    }
+
+    // --- Snippets (Trigger -> Expansion) ---
+    fun getSnippets(): List<SnippetItem> {
+        val raw = prefs.getString(KEY_SNIPPETS_JSON, null)
+        if (raw.isNullOrBlank()) {
+            val defaults = listOf(
+                SnippetItem(trigger = ";email", expansion = "hello@lilt.ai"),
+                SnippetItem(trigger = ";brb", expansion = "Be right back!"),
+                SnippetItem(trigger = ";meet", expansion = "Let's sync up on Google Meet tomorrow.")
+            )
+            saveSnippets(defaults)
+            return defaults
+        }
+        val items = mutableListOf<SnippetItem>()
+        try {
+            val arr = JSONArray(raw)
+            for (i in 0 until arr.length()) {
+                items.add(SnippetItem.fromJson(arr.getJSONObject(i)))
+            }
+        } catch (_: Exception) {}
+        return items
+    }
+
+    fun saveSnippets(items: List<SnippetItem>) {
+        val arr = JSONArray()
+        items.forEach { arr.put(it.toJson()) }
+        prefs.edit().putString(KEY_SNIPPETS_JSON, arr.toString()).apply()
+    }
+
+    fun addSnippet(trigger: String, expansion: String) {
+        val list = getSnippets().toMutableList()
+        list.add(SnippetItem(trigger = trigger, expansion = expansion))
+        saveSnippets(list)
+    }
+
+    fun deleteSnippet(id: String) {
+        val list = getSnippets().filter { it.id != id }
+        saveSnippets(list)
+    }
+
+    // --- Voice Commands (Smart Intent Formats) ---
+    fun getVoiceCommands(): List<VoiceCommandItem> {
+        val raw = prefs.getString(KEY_VOICE_COMMANDS_JSON, null)
+        if (raw.isNullOrBlank()) {
+            val defaults = listOf(
+                VoiceCommandItem(
+                    trigger = "Write the email",
+                    instruction = "Email format with Subject, Greeting, Body, Sign-off and [Placeholders]",
+                    isBuiltIn = true
+                ),
+                VoiceCommandItem(
+                    trigger = "Write it raw",
+                    instruction = "Verbatim words & phrasing + commas and punctuation only (zero rephrasing)",
+                    isBuiltIn = true
+                ),
+                VoiceCommandItem(
+                    trigger = "Write it casual",
+                    instruction = "Warm, relaxed, friendly or playful joke tone",
+                    isBuiltIn = true
+                ),
+                VoiceCommandItem(
+                    trigger = "Take a note",
+                    instruction = "Structured note with clean markdown bullet points '• ', concise key takeaways, and strip 'take a note' command words.",
+                    isBuiltIn = true
+                ),
+                VoiceCommandItem(
+                    trigger = "Make a list",
+                    instruction = "Clean markdown bullet points with '• '",
+                    isBuiltIn = true
+                ),
+                VoiceCommandItem(
+                    trigger = "Meeting notes",
+                    instruction = "Structured notes with ## Agenda, ## Key Decisions, ## Action Items [Assignee]",
+                    isBuiltIn = true
+                )
+            )
+            saveVoiceCommands(defaults)
+            return defaults
+        }
+        val items = mutableListOf<VoiceCommandItem>()
+        try {
+            val arr = JSONArray(raw)
+            for (i in 0 until arr.length()) {
+                items.add(VoiceCommandItem.fromJson(arr.getJSONObject(i)))
+            }
+        } catch (_: Exception) {}
+        return items
+    }
+
+    fun saveVoiceCommands(items: List<VoiceCommandItem>) {
+        val arr = JSONArray()
+        items.forEach { arr.put(it.toJson()) }
+        prefs.edit().putString(KEY_VOICE_COMMANDS_JSON, arr.toString()).apply()
+    }
+
+    fun addVoiceCommand(trigger: String, instruction: String) {
+        val list = getVoiceCommands().toMutableList()
+        list.add(VoiceCommandItem(trigger = trigger, instruction = instruction, isBuiltIn = false))
+        saveVoiceCommands(list)
+    }
+
+    fun deleteVoiceCommand(id: String) {
+        val list = getVoiceCommands().filter { it.id != id }
+        saveVoiceCommands(list)
+    }
+
+    // Process replacements & snippets onto raw/cleaned text
+    fun applyReplacementsAndSnippets(input: String): String {
+        var text = input
+
+        // 1. Snippets expansion (e.g. ;email or ;brb)
+        val snippets = getSnippets()
+        for (snippet in snippets) {
+            if (snippet.trigger.isNotBlank() && snippet.expansion.isNotBlank()) {
+                text = text.replace(snippet.trigger, snippet.expansion, ignoreCase = true)
+            }
+        }
+
+        // 2. Personal dictionary replacements
+        val replacements = getReplacements()
+        for (rep in replacements) {
+            val forms = rep.heard.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+            for (form in forms) {
+                // Regex word boundary match
+                val pattern = "(?i)\\b" + Regex.escape(form) + "\\b"
+                text = text.replace(pattern.toRegex(), rep.replacement)
+            }
+        }
+
+        return text
+    }
+
+    companion object {
+        private const val KEY_CLEANUP_LEVEL = "cleanup_level"
+        private const val KEY_ACTIVE_TONE = "active_tone"
+        private const val KEY_LANGUAGE_MODE = "active_language_mode"
+        private const val KEY_SPOKEN_NUMBERS = "spoken_numbers"
+        private const val KEY_SPOKEN_EMOJI = "spoken_emoji"
+        private const val KEY_NUMBER_SYMBOLS = "number_symbols"
+        private const val KEY_AUTO_CAPITALIZE = "auto_capitalize"
+        private const val KEY_TRAILING_SPACE = "trailing_space"
+        private const val KEY_FLOATING_PILL = "floating_pill_enabled"
+        private const val KEY_FLOATING_CONTEXTUAL_ONLY = "floating_circle_contextual_only"
+        private const val KEY_FLOATING_CIRCLE_Y = "floating_circle_y"
+        private const val KEY_FLOATING_CIRCLE_DOCK_LEFT = "floating_circle_dock_left"
+        private const val KEY_HAPTIC = "haptic_feedback"
+        private const val KEY_SILENCE_SECONDS = "silence_seconds"
+        private const val KEY_HISTORY_STORAGE_MODE = "history_storage_mode"
+        private const val KEY_WORDS_PROCESSED = "stats_words_processed"
+        private const val KEY_HESITATIONS_REMOVED = "stats_hesitations_removed"
+        private const val KEY_STUTTERS_COLLAPSED = "stats_stutters_collapsed"
+        private const val KEY_HISTORY_JSON = "history_items_json"
+        private const val KEY_CLOUD_AI_ENABLED = "cloud_ai_enabled"
+        private const val KEY_CLOUD_PROVIDER = "cloud_provider"
+        private const val KEY_CLOUD_API_KEY = "cloud_api_key"
+        private const val KEY_CLOUD_MODEL = "cloud_model"
+        private const val KEY_CUSTOM_VOCABULARY = "custom_vocabulary"
+        private const val KEY_REPLACEMENTS_JSON = "replacements_items_json"
+        private const val KEY_SNIPPETS_JSON = "snippets_items_json"
+        private const val KEY_VOICE_COMMANDS_JSON = "voice_commands_items_json"
+        private const val KEY_SMART_REMINDERS = "smart_reminders_enabled"
+        private const val KEY_REMINDER_LEAD_MINUTES = "reminder_lead_minutes"
+        private const val KEY_SILENT_ALARMS_ENABLED = "silent_alarms_enabled"
+        private const val KEY_AUTO_COPY_CLIPBOARD = "auto_copy_to_clipboard"
+        private const val KEY_REMINDERS_JSON = "reminders_items_json"
+
+
+        val historyUpdatedFlow = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+        @Volatile
+        private var instance: SettingsManager? = null
+
+        fun getInstance(context: Context): SettingsManager =
+            instance ?: synchronized(this) {
+                instance ?: SettingsManager(context.applicationContext).also { instance = it }
+            }
+    }
+}

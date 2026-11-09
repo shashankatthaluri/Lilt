@@ -1,0 +1,203 @@
+name: Windows CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+  pull-requests: read
+
+# Do not use on.pull_request.paths. That can skip the whole workflow
+# and leave a required check pending. Filter in a cheap ubuntu job
+# instead, then skip the Windows VMs when only docs changed.
+
+jobs:
+  changes:
+    name: Check source changes
+    runs-on: ubuntu-latest
+    outputs:
+      source: ${{ steps.report.outputs.source }}
+    steps:
+      - uses: actions/checkout@v4
+        if: github.event_name != 'workflow_dispatch'
+      - uses: dorny/paths-filter@v3
+        id: filter
+        if: github.event_name != 'workflow_dispatch'
+        with:
+          filters: |
+            source:
+              - 'src/**'
+              - 'src-tauri/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - 'index.html'
+              - 'vite.config.*'
+              - 'tsconfig*.json'
+              - '.github/workflows/windows-ci.yml'
+              - '.github/scripts/**'
+      - id: report
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            echo "source=true"
+            echo "source=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "source=${{ steps.filter.outputs.source }}"
+            echo "source=${{ steps.filter.outputs.source }}" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+
+  test:
+    name: Build and test on Windows
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.source == 'true'
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      actions: write
+    env:
+      # Short target dir avoids MAX_PATH in whisper.cpp vulkan-shaders-gen nests.
+      CARGO_TARGET_DIR: C:\t
+      # MSBuild ExternalProject races / FileTracker path limits; Ninja avoids both.
+      CMAKE_GENERATOR: Ninja
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      # rust-cache joins workspaces targets as relative paths, so C:\t has to
+      # go in cache-directories. Job-scoped key keeps debug and release apart.
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          cache-targets: false
+          cache-directories: C:/t
+      - name: Install CMake, LLVM, Ninja, and Vulkan SDK
+        shell: pwsh
+        run: |
+          choco install cmake llvm ninja -y --no-progress
+          echo "LIBCLANG_PATH=C:\Program Files\LLVM\bin" >> $env:GITHUB_ENV
+          echo "C:\Program Files\CMake\bin" >> $env:GITHUB_PATH
+          echo "C:\Program Files\LLVM\bin" >> $env:GITHUB_PATH
+          $ver = "1.4.363.0"
+          $installer = "$env:RUNNER_TEMP\VulkanSDK.exe"
+          Invoke-WebRequest "https://sdk.lunarg.com/sdk/download/$ver/windows/vulkansdk-windows-X64-$ver.exe" -OutFile $installer
+          Start-Process -FilePath $installer -ArgumentList "--accept-licenses --default-answer --confirm-command install" -Wait
+          echo "VULKAN_SDK=C:\VulkanSDK\$ver" >> $env:GITHUB_ENV
+          echo "C:\VulkanSDK\$ver\Bin" >> $env:GITHUB_PATH
+      # Ninja does not load MSVC INCLUDE/LIB/PATH; vcvars must be exported.
+      # transcribe.cpp's ggml-vulkan does find_package(SPIRV-Headers CONFIG),
+      # which this Vulkan SDK install does not provide. The header-only
+      # package from the runner's vcpkg on CMAKE_PREFIX_PATH resolves it
+      # (the cmake crate forwards CMAKE_PREFIX_PATH). Same fix as Handy's CI.
+      - name: Install SPIRV-Headers for the transcribe.cpp Vulkan build
+        shell: pwsh
+        run: |
+          vcpkg install spirv-headers:x64-windows
+          if ($LASTEXITCODE -ne 0) { throw "vcpkg install spirv-headers failed" }
+          $prefix = "$env:VCPKG_INSTALLATION_ROOT/installed/x64-windows" -replace '\\','/'
+          $combined = if ($env:CMAKE_PREFIX_PATH) { "$prefix;$env:CMAKE_PREFIX_PATH" } else { $prefix }
+          Add-Content $env:GITHUB_ENV "CMAKE_PREFIX_PATH=$combined"
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Build frontend
+        run: npm run build
+      - name: Verify Windows dependency graph excludes GTK glib
+        shell: pwsh
+        run: |
+          $tree = cargo tree --manifest-path src-tauri/Cargo.toml --target x86_64-pc-windows-msvc --locked --edges normal,build --prefix none
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $glib = $tree | Select-String -Pattern '^glib v'
+          if ($glib) {
+            $glib
+            Write-Error 'GTK glib is present in the Windows dependency graph.'
+            exit 1
+          }
+          Write-Output 'GTK glib is absent from the Windows dependency graph.'
+      # Compiles cfg(windows) injection, Vulkan-enabled transcribe.cpp, and the
+      # Tauri command layer. Does not require a physical GPU or microphone.
+      - name: Test Rust command layer
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
+  installer:
+    name: Windows installer (beta)
+    needs: changes
+    # PRs never package. Main packages only when app/workflow source
+    # changed. workflow_dispatch still builds test + installer.
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && needs.changes.outputs.source == 'true')
+    runs-on: windows-latest
+    env:
+      CARGO_TARGET_DIR: C:\t
+      CMAKE_GENERATOR: Ninja
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      # Same C:\t cache as the test job. Separate job key (debug vs release).
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+          cache-targets: false
+          cache-directories: C:/t
+      - name: Install CMake, LLVM, Ninja, and Vulkan SDK
+        shell: pwsh
+        run: |
+          choco install cmake llvm ninja -y --no-progress
+          echo "LIBCLANG_PATH=C:\Program Files\LLVM\bin" >> $env:GITHUB_ENV
+          echo "C:\Program Files\CMake\bin" >> $env:GITHUB_PATH
+          echo "C:\Program Files\LLVM\bin" >> $env:GITHUB_PATH
+          $ver = "1.4.363.0"
+          $installer = "$env:RUNNER_TEMP\VulkanSDK.exe"
+          Invoke-WebRequest "https://sdk.lunarg.com/sdk/download/$ver/windows/vulkansdk-windows-X64-$ver.exe" -OutFile $installer
+          Start-Process -FilePath $installer -ArgumentList "--accept-licenses --default-answer --confirm-command install" -Wait
+          echo "VULKAN_SDK=C:\VulkanSDK\$ver" >> $env:GITHUB_ENV
+          echo "C:\VulkanSDK\$ver\Bin" >> $env:GITHUB_PATH
+      # transcribe.cpp's ggml-vulkan does find_package(SPIRV-Headers CONFIG),
+      # which this Vulkan SDK install does not provide. The header-only
+      # package from the runner's vcpkg on CMAKE_PREFIX_PATH resolves it
+      # (the cmake crate forwards CMAKE_PREFIX_PATH). Same fix as Handy's CI.
+      - name: Install SPIRV-Headers for the transcribe.cpp Vulkan build
+        shell: pwsh
+        run: |
+          vcpkg install spirv-headers:x64-windows
+          if ($LASTEXITCODE -ne 0) { throw "vcpkg install spirv-headers failed" }
+          $prefix = "$env:VCPKG_INSTALLATION_ROOT/installed/x64-windows" -replace '\\','/'
+          $combined = if ($env:CMAKE_PREFIX_PATH) { "$prefix;$env:CMAKE_PREFIX_PATH" } else { $prefix }
+          Add-Content $env:GITHUB_ENV "CMAKE_PREFIX_PATH=$combined"
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Build NSIS installer
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CARGO_TARGET_DIR: C:\t
+          CMAKE_GENERATOR: Ninja
+        with:
+          # Build only. Do not set tagName. Tagged beta Releases live in
+          # windows-alpha-release.yml. The moving nightly Release lives in
+          # nightly.yml. This job stays artifact-only.
+          args: --bundles nsis
+          includeUpdaterJson: false
+      # tauri-action with CARGO_TARGET_DIR=C:\t writes:
+      #   C:\t\release\bundle\nsis\VocaWin_*_x64-setup.exe
+      # Confirmed on the 2026-08-18 installer job (run 32196306136).
+      # Installers stay unsigned. Self-sign hung on Authenticode timestamps.
+      - name: Upload Windows beta installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: VocaWin-windows-beta
+          path: |
+            C:/t/release/bundle/nsis/*-setup.exe
+          if-no-files-found: error
+          retention-days: 14
