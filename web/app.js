@@ -1,800 +1,890 @@
-/**
- * LILT — AWWWARDS-CALIBER INTERACTIVE SHOWCASE ENGINE (v2.0)
- * Inspired by Wispr Flow, Granola, Linear, Raycast & Nothing OS
- */
+/* =========================================================================
+   LILT — WEBSITE v3 · interaction & motion
+   GSAP + ScrollTrigger + Lenis (progressive enhancement: the page works
+   and stays fully readable if the CDN scripts fail to load).
+   ========================================================================= */
 
-document.addEventListener("DOMContentLoaded", () => {
-  initOSDetectionAndQR();
-  initCursorSpecularGlow();
-  initScrollRevealAndScramble();
-  initHeroWorkspaceStage();
-  initDraggablePillSandbox();
-  initNothingSilentAlarmWidget();
-  initGranolaAutoNotesWidget();
-  initBacktrackingPipeline();
-  initStickyBottomDock();
-});
+(() => {
+  "use strict";
 
-/* ==========================================================================
-   1. SMART OS AUTO-DETECTION & PHONE QR DRAWER
-   ========================================================================== */
-function initOSDetectionAndQR() {
-  const ua = navigator.userAgent || navigator.vendor || window.opera;
-  const platform = navigator.platform || "";
+  const hasGSAP = typeof window.gsap !== "undefined" && typeof window.ScrollTrigger !== "undefined";
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const finePointer = window.matchMedia("(pointer: fine)").matches;
+  const animate = hasGSAP && !reduceMotion;
 
-  const REPO_URL = "https://github.com/shashankatthaluri/Lilt";
-  const WIN_EXE_URL = `${REPO_URL}/releases/latest/download/Lilt-Setup-x64.exe`;
-  const ANDROID_APK_URL = `${REPO_URL}/releases/latest/download/Lilt-v1.1-Release.apk`;
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
-  const isAndroid = /android/i.test(ua);
-  const isWindows = /win/i.test(platform) || /windows/i.test(ua);
-  const isMac = /mac/i.test(platform) && !isAndroid;
+  const REPO = "https://github.com/shashankatthaluri/Lilt";
+  const WIN_URL = `${REPO}/releases/latest/download/Lilt-Setup-x64.exe`;
+  const APK_URL = `${REPO}/releases/latest/download/Lilt-v1.1-Release.apk`;
 
-  const primaryDlBtn = document.getElementById("hero-primary-dl");
-  const primaryLabel = document.getElementById("hero-dl-label");
-  const osChip = document.getElementById("hero-os-chip");
-  const deviceSummary = document.getElementById("detected-device-summary");
-  const navQuickDl = document.getElementById("nav-quick-dl");
-
-  const winCard = document.getElementById("dl-card-windows");
-  const andCard = document.getElementById("dl-card-android");
-  const winRecBadge = document.getElementById("win-rec-badge");
-  const andRecBadge = document.getElementById("and-rec-badge");
-
-  if (isAndroid) {
-    if (primaryDlBtn) primaryDlBtn.href = ANDROID_APK_URL;
-    if (primaryLabel) primaryLabel.textContent = "Download Lilt for Android";
-    if (osChip) osChip.textContent = "APK • v1.1";
-    if (deviceSummary) deviceSummary.textContent = "✦ Detected Android — Direct ARM64 APK Ready";
-    if (navQuickDl) {
-      navQuickDl.textContent = "Get APK";
-      navQuickDl.href = ANDROID_APK_URL;
-    }
-    if (andCard) andCard.classList.add("recommended-os");
-    if (andRecBadge) {
-      andRecBadge.textContent = "★ RECOMMENDED FOR YOUR PHONE";
-      andRecBadge.style.color = "#FFB800";
-    }
-  } else if (isWindows) {
-    if (primaryDlBtn) primaryDlBtn.href = WIN_EXE_URL;
-    if (primaryLabel) primaryLabel.textContent = "Download Lilt for Windows";
-    if (osChip) osChip.textContent = "WIN 10/11 • X64";
-    if (deviceSummary) deviceSummary.textContent = "✦ Detected Windows (64-bit) — Native Rust Overlay Ready";
-    if (navQuickDl) {
-      navQuickDl.textContent = "Download .exe";
-      navQuickDl.href = WIN_EXE_URL;
-    }
-    if (winCard) winCard.classList.add("recommended-os");
-    if (winRecBadge) {
-      winRecBadge.textContent = "★ DETECTED OS";
-      winRecBadge.style.color = "#FFB800";
-    }
-  } else {
-    if (primaryDlBtn) primaryDlBtn.href = `${REPO_URL}/releases`;
-    if (primaryLabel) primaryLabel.textContent = "Download Lilt Releases";
-    if (osChip) osChip.textContent = isMac ? "WIN & ANDROID" : "ALL PLATFORMS";
-    if (deviceSummary) deviceSummary.textContent = "✦ Available for Windows 10/11 & Android 10+";
+  if (animate) {
+    document.documentElement.classList.add("anim-ready");
+    gsap.registerPlugin(ScrollTrigger);
   }
+  document.documentElement.classList.remove("js-loading");
 
-  // Phone Companion QR Toggle
-  const toggleQrBtn = document.getElementById("toggle-qr-btn");
-  const qrDrawer = document.getElementById("hero-qr-drawer");
-  const qrBox = document.getElementById("hero-qr-box");
+  let lenis = null;
 
-  if (qrBox) {
-    const qrImg = document.createElement("img");
-    qrImg.alt = "Scan to download Lilt Android APK";
-    qrImg.width = 78;
-    qrImg.height = 78;
-    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&color=08080A&bgcolor=FFFFFF&data=${encodeURIComponent(ANDROID_APK_URL)}`;
-    qrBox.appendChild(qrImg);
-  }
-
-  if (toggleQrBtn && qrDrawer) {
-    toggleQrBtn.addEventListener("click", () => {
-      qrDrawer.classList.toggle("is-open");
-    });
-  }
-}
-
-/* ==========================================================================
-   2. LINEAR / RAYCAST CURSOR-TRACKED SPECULAR GLOW
-   ========================================================================== */
-function initCursorSpecularGlow() {
-  const cards = document.querySelectorAll(".bento-card, .dl-platform-card");
-  cards.forEach((card) => {
-    card.addEventListener("mousemove", (e) => {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      card.style.setProperty("--mouse-x", `${x}px`);
-      card.style.setProperty("--mouse-y", `${y}px`);
-    });
-  });
-}
-
-/* ==========================================================================
-   3. SCROLL REVEAL & NOTHING OS DOT-MATRIX TEXT SCRAMBLE
-   ========================================================================== */
-function initScrollRevealAndScramble() {
-  const GLYPHS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ•/:⚡";
-
-  function scrambleElement(el) {
-    const target = el.getAttribute("data-scramble") || el.textContent;
-    let iteration = 0;
-    const totalIterations = target.length;
-
-    const interval = setInterval(() => {
-      el.textContent = target
-        .split("")
-        .map((char, idx) => {
-          if (char === " ") return " ";
-          if (idx < iteration) return target[idx];
-          return GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
-        })
-        .join("");
-
-      iteration += Math.max(0.5, totalIterations / 18);
-      if (iteration >= totalIterations) {
-        el.textContent = target;
-        clearInterval(interval);
-      }
-    }, 24);
-  }
-
-  const revealEls = document.querySelectorAll(".reveal-up");
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("in-view");
-          const scrambleTargets = entry.target.querySelectorAll("[data-scramble]");
-          scrambleTargets.forEach((el) => {
-            if (!el.dataset.scrambledOnce) {
-              el.dataset.scrambledOnce = "true";
-              scrambleElement(el);
-            }
-          });
-        }
-      });
-    },
-    { threshold: 0.14 }
-  );
-
-  revealEls.forEach((el) => observer.observe(el));
-
-  // Scramble hero eyebrow on load
-  const heroEyebrow = document.querySelector(".hero [data-scramble]");
-  if (heroEyebrow) {
-    setTimeout(() => scrambleElement(heroEyebrow), 260);
-  }
-}
-
-/* ==========================================================================
-   4. HERO MULTI-APP WORKSPACE STAGE + 60FPS SPECTRUM PILL + [SPACE] TRIGGER
-   ========================================================================== */
-function initHeroWorkspaceStage() {
-  const WORKSPACE_SCENARIOS = {
-    whatsapp: {
-      avatar: "VK",
-      title: "Venkatesh • Gachibowli",
-      sub: "WhatsApp Direct • Indian Contact & Tenglish Bias Active",
-      badge: "✓ ZERO-CONFLICT OVERLAY",
-      rawHtml: `
-        <span>Raw Stream:</span>
-        <span style="color: var(--text-secondary);">"Hey Venkatesh let's meet at Banjara Hills at 4 PM..."</span>
-        <span class="struck-disfluency">kaadu kaadu</span>
-        <span class="backtrack-badge">↺ BACKTRACKED</span>
-        <span style="color: var(--text-pure);">"make it Gachibowli at 5:30 PM and bring five thousand rupees"</span>
-      `,
-      finalOutput: "Hey Venkatesh, let's meet at Gachibowli at 5:30 PM and bring ₹5,000."
-    },
-    slack: {
-      avatar: "#P",
-      title: "#product-launch • Slack",
-      sub: "Desktop Overlay • Mid-Sentence Self-Correction",
-      badge: "⚡ 3.8ms RUST CLEANUP",
-      rawHtml: `
-        <span>Raw Stream:</span>
-        <span style="color: var(--text-secondary);">"Team we are shipping v1.1 on..."</span>
-        <span class="struck-disfluency">Friday afternoon umm no wait scratch that</span>
-        <span class="backtrack-badge">↺ BACKTRACKED</span>
-        <span style="color: var(--text-pure);">"Thursday at 9 AM IST after passing QA."</span>
-      `,
-      finalOutput: "Team, we are shipping v1.1 on Thursday at 9:00 AM IST after passing QA."
-    },
-    cursor: {
-      avatar: "RS",
-      title: "Cursor IDE • speech_engine.rs",
-      sub: "Developer Dictation • Technical Symbol & Snake_Case Aware",
-      badge: "🦀 NATIVE TAURI HOOK",
-      rawHtml: `
-        <span>Raw Stream:</span>
-        <span style="color: var(--text-secondary);">"Refactor parse temporal intent..."</span>
-        <span class="struck-disfluency">to return a boolean... wait no</span>
-        <span class="backtrack-badge">↺ BACKTRACKED</span>
-        <span style="color: var(--text-pure);">"to trigger silent lockscreen alarm when snooze stepper is set."</span>
-      `,
-      finalOutput: "// TODO: Refactor `parse_temporal_intent` to trigger silent lockscreen alarm when snooze stepper is set."
-    },
-    notes: {
-      avatar: "📌",
-      title: "Lilt Auto Note Taker",
-      sub: "Voice Directive ('Take a note...') • Auto-Checklist & Pin",
-      badge: "📝 AUTO-STRUCTURED",
-      rawHtml: `
-        <span>Raw Stream:</span>
-        <span style="color: var(--text-secondary);">"Take a note for weekend trip:"</span>
-        <span class="struck-disfluency">first buy milk no wait</span>
-        <span class="backtrack-badge">✦ LIST EXTRACTED</span>
-        <span style="color: var(--text-pure);">"first book flight to Hyderabad, second pack Nothing ear charger, third call Rajesh."</span>
-      `,
-      finalOutput: "☑ Book flight to Hyderabad  •  ☐ Pack Nothing Ear charger  •  ☐ Call Rajesh"
-    }
-  };
-
-  let activeAppKey = "whatsapp";
-  let isDictating = false;
-  let typewriterTimer = null;
-
-  const tabs = document.querySelectorAll(".context-tab");
-  const avatarEl = document.getElementById("stage-avatar");
-  const titleEl = document.getElementById("stage-app-title");
-  const subEl = document.getElementById("stage-app-sub");
-  const badgeEl = document.getElementById("stage-mode-badge");
-  const rawStreamEl = document.getElementById("stage-raw-stream");
-  const cleanEditorEl = document.getElementById("stage-clean-editor");
-
-  const magicPill = document.getElementById("hero-magic-pill");
-  const pillStatus = document.getElementById("hero-pill-status");
-  const stickyNarration = document.getElementById("sticky-pill-narration");
-  const canvas = document.getElementById("pill-spectrum");
-
-  function renderScenarioInstant(appKey) {
-    const sc = WORKSPACE_SCENARIOS[appKey];
-    if (!sc) return;
-    if (typewriterTimer) clearInterval(typewriterTimer);
-
-    avatarEl.textContent = sc.avatar;
-    titleEl.textContent = sc.title;
-    subEl.textContent = sc.sub;
-    badgeEl.textContent = sc.badge;
-    rawStreamEl.innerHTML = sc.rawHtml;
-    cleanEditorEl.innerHTML = `${sc.finalOutput}<span class="blinking-cursor"></span>`;
-  }
-
-  function runLiveDictationSimulation() {
-    if (isDictating) return;
-    isDictating = true;
-
-    const sc = WORKSPACE_SCENARIOS[activeAppKey];
-    magicPill.classList.add("is-recording");
-    pillStatus.textContent = "LISTENING • SPEAK MESSY...";
-    if (stickyNarration) stickyNarration.textContent = "🔴 LIVE SIMULATION • CAPTURING & BACKTRACKING...";
-
-    rawStreamEl.innerHTML = `<span>🎙️ Capturing live voice stream...</span> <span style="color: var(--nothing-red);">● REC</span>`;
-    cleanEditorEl.innerHTML = `<span style="color: var(--text-muted);">Waiting for speech completion...</span><span class="blinking-cursor"></span>`;
-
-    setTimeout(() => {
-      rawStreamEl.innerHTML = sc.rawHtml;
-      pillStatus.textContent = "🦀 STRIPPING FALSE STARTS (3.8ms)...";
-    }, 900);
-
-    setTimeout(() => {
-      magicPill.classList.remove("is-recording");
-      pillStatus.textContent = "✓ CLEANED & INSERTED • CLICK OR [SPACE]";
-      if (stickyNarration) stickyNarration.textContent = "✓ CLEANED IN 3.8MS • HOLD [SPACE] TO TEST AGAIN";
-
-      // Typewriter injection
-      cleanEditorEl.innerHTML = "";
-      let idx = 0;
-      const text = sc.finalOutput;
-      typewriterTimer = setInterval(() => {
-        idx += 2;
-        cleanEditorEl.innerHTML = `${text.slice(0, idx)}<span class="blinking-cursor"></span>`;
-        if (idx >= text.length) {
-          clearInterval(typewriterTimer);
-          isDictating = false;
-        }
-      }, 16);
-    }, 1650);
-  }
-
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      tabs.forEach((t) => t.classList.remove("active"));
-      tab.classList.add("active");
-      activeAppKey = tab.getAttribute("data-app");
-      isDictating = false;
-      magicPill.classList.remove("is-recording");
-      pillStatus.textContent = "CLICK PILL OR HOLD [SPACE]";
-      renderScenarioInstant(activeAppKey);
-      runLiveDictationSimulation();
-    });
-  });
-
-  if (magicPill) {
-    magicPill.addEventListener("click", () => {
-      runLiveDictationSimulation();
-    });
-  }
-
-  // Global [Spacebar] shortcut (unless typing in search input)
-  window.addEventListener("keydown", (e) => {
-    const tag = (e.target && e.target.tagName) || "";
-    if (tag === "INPUT" || tag === "TEXTAREA") return;
-    if (e.code === "Space" && !e.repeat) {
-      e.preventDefault();
-      runLiveDictationSimulation();
-    }
-  });
-
-  // 60FPS Audio Spectrum Canvas inside the Floating Pill
-  if (canvas) {
+  /* =====================================================================
+     WAVEFORM RENDERER (shared by every pill on the page)
+     ===================================================================== */
+  const waves = [];
+  function makeWave(canvas, { bars = 16, color = "#f4f2ed", active = "#ff3b1f" } = {}) {
+    if (!canvas) return { set() {} };
     const ctx = canvas.getContext("2d");
-    const barCount = 18;
-    let phase = 0;
-
-    function drawSpectrum() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const barWidth = 3;
-      const gap = 3;
-      const centerY = canvas.height / 2;
-
-      for (let i = 0; i < barCount; i++) {
-        const amp = isDictating
-          ? 4 + Math.abs(Math.sin(phase * 2.4 + i * 0.55)) * 18
-          : 2.5 + Math.abs(Math.sin(phase + i * 0.45)) * 7;
-
-        const x = i * (barWidth + gap) + 2;
-        const y = centerY - amp / 2;
-
-        ctx.fillStyle = isDictating
-          ? i % 3 === 0
-            ? "#FF2800"
-            : "#FFB800"
-          : "rgba(244, 244, 246, 0.55)";
-
-        ctx.beginPath();
-        ctx.roundRect(x, y, barWidth, amp, 2);
-        ctx.fill();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = canvas.width, h = canvas.height;
+    canvas.width = w * dpr; canvas.height = h * dpr;
+    canvas.style.width = w + "px"; canvas.style.height = h + "px";
+    ctx.scale(dpr, dpr);
+    const state = { level: 0.15, target: 0.15, hot: false, heights: new Array(bars).fill(2) };
+    const wave = {
+      set(level, hot = false) { state.target = level; state.hot = hot; },
+      draw(t) {
+        state.level += (state.target - state.level) * 0.08;
+        ctx.clearRect(0, 0, w, h);
+        const gap = w / bars;
+        const bw = Math.max(2, gap * 0.45);
+        for (let i = 0; i < bars; i++) {
+          const n = Math.sin(t * 0.006 + i * 0.7) * 0.5 + Math.sin(t * 0.011 + i * 1.9) * 0.35 + Math.sin(t * 0.017 + i * 0.3) * 0.15;
+          const env = Math.sin((i / (bars - 1)) * Math.PI) * 0.7 + 0.3;
+          const target = 2 + Math.abs(n) * env * (h - 3) * state.level;
+          state.heights[i] += (target - state.heights[i]) * 0.3;
+          const bh = state.heights[i];
+          ctx.fillStyle = state.hot ? (i % 4 === 0 ? "#ffb547" : active) : color;
+          ctx.globalAlpha = state.hot ? 1 : 0.55;
+          const x = i * gap + (gap - bw) / 2, y = (h - bh) / 2;
+          if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(x, y, bw, bh, bw / 2); ctx.fill(); }
+          else ctx.fillRect(x, y, bw, bh);
+        }
       }
+    };
+    waves.push(wave);
+    return wave;
+  }
+  (function loop(t) {
+    waves.forEach((w) => w.draw(t));
+    requestAnimationFrame(loop);
+  })(0);
 
-      phase += isDictating ? 0.16 : 0.05;
-      requestAnimationFrame(drawSpectrum);
+  /* =====================================================================
+     OS DETECTION + QR
+     ===================================================================== */
+  function initOS() {
+    const ua = navigator.userAgent || "";
+    const isAndroid = /android/i.test(ua);
+    const isIOS = /iphone|ipad|ipod/i.test(ua);
+    const isWindows = !isAndroid && /windows/i.test(ua);
+
+    const label = $("#hero-download-label");
+    const icon = $("#hero-os-icon");
+    const heroBtn = $("#hero-download");
+    const detected = $("#os-detected");
+
+    if (isAndroid) {
+      label.textContent = "Download for Android";
+      icon.innerHTML = '<img src="assets/icons/android.svg" alt="" />';
+      heroBtn.href = APK_URL;
+      $("#dl-android").classList.add("is-recommended");
+      detected.textContent = "Looks like you’re on Android — tap below to install the APK.";
+    } else if (isWindows) {
+      label.textContent = "Download for Windows";
+      icon.innerHTML = '<img src="assets/icons/windows.svg" alt="" />';
+      heroBtn.href = WIN_URL;
+      $("#dl-windows").classList.add("is-recommended");
+      detected.textContent = "Looks like you’re on Windows — your installer is ready.";
+    } else if (isIOS) {
+      detected.textContent = "iPhone isn’t supported yet — grab Lilt for Windows or Android below.";
+    } else {
+      detected.textContent = "Free forever. Available for Windows and Android.";
     }
 
-    drawSpectrum();
+    const qrBox = $("#qr-box");
+    const img = new Image();
+    img.alt = "QR code to download the Lilt Android APK";
+    img.loading = "lazy";
+    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=0&data=${encodeURIComponent(APK_URL)}`;
+    qrBox.appendChild(img);
+
+    $("#qr-toggle").addEventListener("click", () => {
+      $("#qr-panel").classList.toggle("is-open");
+      setTimeout(() => hasGSAP && ScrollTrigger.refresh(), 520);
+    });
   }
-}
 
-/* ==========================================================================
-   5. BENTO 1 — PHYSICALLY DRAGGABLE FLOATING PILL SANDBOX
-   ========================================================================== */
-function initDraggablePillSandbox() {
-  const sandbox = document.getElementById("pill-sandbox");
-  const pill = document.getElementById("draggable-pill");
-  const pillText = document.getElementById("drag-pill-text");
-  const coordsReadout = document.getElementById("drag-coords-readout");
-  const injectedTarget = document.getElementById("sandbox-injected-target");
-  const btnGhost = document.getElementById("btn-toggle-ghost");
-  const btnDock = document.getElementById("btn-dock-edge");
+  /* =====================================================================
+     SMOOTH SCROLL (Lenis) + anchor links
+     ===================================================================== */
+  function initScroll() {
+    if (animate && typeof window.Lenis !== "undefined") {
+      lenis = new Lenis({ lerp: 0.09, smoothWheel: true });
+      lenis.on("scroll", ScrollTrigger.update);
+      gsap.ticker.add((t) => lenis.raf(t * 1000));
+      gsap.ticker.lagSmoothing(0);
+    }
 
-  if (!sandbox || !pill) return;
+    $$('a[href^="#"]').forEach((a) => {
+      a.addEventListener("click", (e) => {
+        const id = a.getAttribute("href");
+        if (id.length < 2) return;
+        const target = $(id);
+        if (!target) return;
+        e.preventDefault();
+        if (lenis) lenis.scrollTo(target, { offset: id === "#top" ? 0 : -10, duration: 1.4 });
+        else target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+      });
+    });
+  }
 
-  let dragging = false;
-  let movedDistance = 0;
-  let startX = 0;
-  let startY = 0;
-  let isGhost = false;
-  let snippetIndex = 0;
+  /* =====================================================================
+     NAV — glass on scroll, hide on scroll-down
+     ===================================================================== */
+  function initNav() {
+    const nav = $("#nav");
+    let last = 0;
+    const onScroll = () => {
+      const y = window.scrollY;
+      nav.classList.toggle("is-scrolled", y > 30);
+      nav.classList.toggle("is-hidden", y > 700 && y > last + 2);
+      if (y < last - 2) nav.classList.remove("is-hidden");
+      last = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+  }
 
-  const CODE_SNIPPETS = [
-    `  // Dictated: "Refactor auth middleware before Monday standup"`,
-    `  // Dictated: "Ensure silent alarm wakes lockscreen without audio"`,
-    `  // Dictated: "Bias Whisper prompt with Venkatesh and Gachibowli"`,
-    `  // Dictated: "Auto-copy cleaned transcript to system clipboard"`
+  /* =====================================================================
+     CUSTOM CURSOR + MAGNETIC BUTTONS + CARD SPOTLIGHT
+     ===================================================================== */
+  function initPointer() {
+    if (!finePointer) return;
+    const cursor = $("#cursor");
+    const label = $("#cursor-label");
+    let x = innerWidth / 2, y = innerHeight / 2, cx = x, cy = y;
+
+    window.addEventListener("mousemove", (e) => { x = e.clientX; y = e.clientY; }, { passive: true });
+    (function follow() {
+      cx += (x - cx) * 0.2; cy += (y - cy) * 0.2;
+      cursor.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
+      requestAnimationFrame(follow);
+    })();
+
+    document.addEventListener("mouseover", (e) => {
+      const lbl = e.target.closest("[data-cursor]");
+      const hov = e.target.closest("a, button, input, summary, label");
+      cursor.classList.toggle("has-label", !!lbl);
+      cursor.classList.toggle("is-hover", !lbl && !!hov);
+      label.textContent = lbl ? lbl.getAttribute("data-cursor") : "";
+    });
+    document.addEventListener("mouseleave", () => (cursor.style.opacity = 0));
+    document.addEventListener("mouseenter", () => (cursor.style.opacity = 1));
+
+    // Magnetic buttons
+    $$(".magnetic").forEach((el) => {
+      el.addEventListener("mousemove", (e) => {
+        const r = el.getBoundingClientRect();
+        const dx = e.clientX - (r.left + r.width / 2);
+        const dy = e.clientY - (r.top + r.height / 2);
+        el.style.transform = `translate(${dx * 0.22}px, ${dy * 0.3}px)`;
+      });
+      el.addEventListener("mouseleave", () => {
+        el.style.transition = "transform 0.6s cubic-bezier(0.16,1,0.3,1), background 0.3s, box-shadow 0.3s";
+        el.style.transform = "";
+        setTimeout(() => (el.style.transition = ""), 600);
+      });
+    });
+
+    // Feature card spotlight
+    $$(".f-card").forEach((c) => {
+      c.addEventListener("mousemove", (e) => {
+        const r = c.getBoundingClientRect();
+        c.style.setProperty("--mx", `${e.clientX - r.left}px`);
+        c.style.setProperty("--my", `${e.clientY - r.top}px`);
+      });
+    });
+
+    // Hero glow follows the mouse
+    const glow = $("#hero-glow");
+    const hero = $(".hero");
+    let gx = 0, gy = 0, tx = 0, ty = 0;
+    hero.addEventListener("mousemove", (e) => {
+      const r = hero.getBoundingClientRect();
+      tx = (e.clientX - r.width / 2) * 0.25;
+      ty = (e.clientY - r.top - r.height * 0.4) * 0.25;
+    });
+    (function drift() {
+      gx += (tx - gx) * 0.05; gy += (ty - gy) * 0.05;
+      glow.style.transform = `translate(calc(-50% + ${gx}px), calc(-50% + ${gy}px))`;
+      requestAnimationFrame(drift);
+    })();
+  }
+
+  /* =====================================================================
+     HERO — live "messy → clean" loop
+     ===================================================================== */
+  const HERO_PHRASES = [
+    { raw: ["~so", "~um", "hey", "can", "we", "push", "the", "call", "to", "~Friday", "~no", "~wait", "~scratch", "~that", "Monday", "morning"], clean: "Hey, can we push the call to Monday morning?" },
+    { raw: ["let's", "meet", "at", "~Banjara", "~Hills", "~kaadu", "~kaadu", "Gachibowli", "at", "five", "thirty"], clean: "Let's meet at Gachibowli at 5:30." },
+    { raw: ["~uh", "send", "five", "thousand", "rupees", "to", "ravi", "at", "gmail", "dot", "com"], clean: "Send ₹5,000 to ravi@gmail.com." },
+    { raw: ["~like", "I", "~I", "~I", "think", "the", "new", "build", "is", "ready", "~you", "~know"], clean: "I think the new build is ready." }
   ];
 
-  function setPillPosition(xPx, yPx) {
-    const rect = sandbox.getBoundingClientRect();
-    const pillRect = pill.getBoundingClientRect();
+  function initHeroDemo() {
+    const rawEl = $("#hero-raw");
+    const cleanEl = $("#hero-clean");
+    const pill = $("#hero-pill");
+    const status = $("#hero-pill-status");
+    const wave = makeWave($("#hero-wave"), { bars: 18 });
+    let gen = 0;
+    let idx = 0;
 
-    const minX = pillRect.width / 2 + 10;
-    const maxX = rect.width - pillRect.width / 2 - 10;
-    const minY = pillRect.height / 2 + 10;
-    const maxY = rect.height - pillRect.height / 2 - 36;
-
-    const clampedX = Math.max(minX, Math.min(maxX, xPx));
-    const clampedY = Math.max(minY, Math.min(maxY, yPx));
-
-    const pctX = Math.round((clampedX / rect.width) * 100);
-    const pctY = Math.round((clampedY / rect.height) * 100);
-
-    pill.style.left = `${pctX}%`;
-    pill.style.top = `${pctY}%`;
-    if (coordsReadout) {
-      coordsReadout.textContent = `POS: X: ${pctX}% • Y: ${pctY}%`;
-    }
-  }
-
-  pill.addEventListener("pointerdown", (e) => {
-    dragging = true;
-    movedDistance = 0;
-    startX = e.clientX;
-    startY = e.clientY;
-    pill.setPointerCapture(e.pointerId);
-    pill.style.transition = "none";
-  });
-
-  pill.addEventListener("pointermove", (e) => {
-    if (!dragging) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    movedDistance = Math.hypot(dx, dy);
-
-    const rect = sandbox.getBoundingClientRect();
-    setPillPosition(e.clientX - rect.left, e.clientY - rect.top);
-  });
-
-  pill.addEventListener("pointerup", (e) => {
-    if (!dragging) return;
-    dragging = false;
-    pill.releasePointerCapture(e.pointerId);
-    pill.style.transition = "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)";
-
-    // If it was a tap rather than a drag, trigger live code injection
-    if (movedDistance < 6) {
-      snippetIndex = (snippetIndex + 1) % CODE_SNIPPETS.length;
-      if (pillText) pillText.textContent = "✓ INJECTED INTO IDE";
-      if (injectedTarget) {
-        injectedTarget.textContent = CODE_SNIPPETS[snippetIndex];
-        injectedTarget.style.color = "#FFB800";
-        setTimeout(() => {
-          injectedTarget.style.color = "#4ADE80";
-        }, 450);
-      }
-      setTimeout(() => {
-        if (pillText) pillText.textContent = "DRAG ME • TAP TO DICTATE";
-      }, 1300);
-    }
-  });
-
-  if (btnGhost) {
-    btnGhost.addEventListener("click", () => {
-      isGhost = !isGhost;
-      pill.style.opacity = isGhost ? "0.38" : "1";
-      btnGhost.textContent = isGhost ? "Ghost: 38%" : "Ghost Opacity";
-    });
-  }
-
-  if (btnDock) {
-    btnDock.addEventListener("click", () => {
-      pill.style.transition = "all 0.35s cubic-bezier(0.16, 1, 0.3, 1)";
-      pill.style.left = "82%";
-      pill.style.top = "36%";
-      if (coordsReadout) coordsReadout.textContent = "POS: DOCKED RIGHT EDGE (82%, 36%)";
-    });
-  }
-}
-
-/* ==========================================================================
-   6. BENTO 2 — NOTHING OS SILENT ALARM & TACTILE 5-MIN STEPPER
-   ========================================================================== */
-function initNothingSilentAlarmWidget() {
-  let snoozeMinutes = 10;
-  let isSilentMode = true;
-
-  const badgePill = document.getElementById("alarm-badge-pill");
-  const btnToggleSilent = document.getElementById("btn-toggle-silent-mode");
-  const titleEl = document.getElementById("alarm-demo-title");
-  const subEl = document.getElementById("alarm-demo-sub");
-  const valDisplay = document.getElementById("stepper-val-display");
-  const btnMinus = document.getElementById("stepper-minus");
-  const btnPlus = document.getElementById("stepper-plus");
-  const presetChips = document.querySelectorAll(".preset-chip");
-  const btnSnooze = document.getElementById("btn-demo-snooze");
-  const btnAck = document.getElementById("btn-demo-ack");
-
-  function formatDuration(mins) {
-    if (mins >= 60) {
-      const h = Math.floor(mins / 60);
-      const rem = mins % 60;
-      return rem === 0 ? `${h}h` : `${h}h ${rem}m`;
-    }
-    return `${mins}m`;
-  }
-
-  function syncStepperUI() {
-    const label = formatDuration(snoozeMinutes);
-    if (valDisplay) valDisplay.textContent = label;
-    if (btnSnooze) btnSnooze.textContent = `SNOOZE (+${label})`;
-
-    presetChips.forEach((chip) => {
-      const chipMins = parseInt(chip.getAttribute("data-mins"), 10);
-      chip.classList.toggle("active", chipMins === snoozeMinutes);
-    });
-  }
-
-  if (btnToggleSilent) {
-    btnToggleSilent.addEventListener("click", () => {
-      isSilentMode = !isSilentMode;
-      btnToggleSilent.classList.toggle("active", isSilentMode);
-      btnToggleSilent.textContent = isSilentMode ? "Silent Mode: ON" : "Silent Mode: OFF";
-
-      if (badgePill) {
-        badgePill.textContent = isSilentMode
-          ? "🔕 SILENT ALARM (VISUAL)"
-          : "🔴 AUDIBLE ALARM (RINGING)";
-        badgePill.style.color = isSilentMode ? "#FFB800" : "#FF2800";
-        badgePill.style.borderColor = isSilentMode
-          ? "rgba(255, 184, 0, 0.35)"
-          : "rgba(255, 40, 0, 0.45)";
-      }
-
-      if (subEl) {
-        subEl.textContent = isSilentMode
-          ? "Wakes screen & demands action with zero audio ringtone"
-          : "Full-screen lockscreen wakeup + escalating Nothing OS alarm tone";
-      }
-    });
-  }
-
-  if (btnMinus) {
-    btnMinus.addEventListener("click", () => {
-      snoozeMinutes = Math.max(5, snoozeMinutes - 5);
-      syncStepperUI();
-    });
-  }
-
-  if (btnPlus) {
-    btnPlus.addEventListener("click", () => {
-      snoozeMinutes = Math.min(180, snoozeMinutes + 5);
-      syncStepperUI();
-    });
-  }
-
-  presetChips.forEach((chip) => {
-    chip.addEventListener("click", () => {
-      snoozeMinutes = parseInt(chip.getAttribute("data-mins"), 10) || 10;
-      syncStepperUI();
-    });
-  });
-
-  if (btnSnooze) {
-    btnSnooze.addEventListener("click", () => {
-      const formatted = formatDuration(snoozeMinutes);
-      if (titleEl) titleEl.textContent = `⏳ Snoozed for ${formatted}`;
-      if (subEl) subEl.textContent = `Alarm will re-wake screen in ${formatted} unless acknowledged`;
-      setTimeout(() => {
-        if (titleEl) titleEl.textContent = "Call Rajesh regarding Q4 deck";
-        if (subEl) {
-          subEl.textContent = isSilentMode
-            ? "Wakes screen & demands action with zero audio ringtone"
-            : "Full-screen lockscreen wakeup + escalating Nothing OS alarm tone";
-        }
-      }, 2000);
-    });
-  }
-
-  if (btnAck) {
-    btnAck.addEventListener("click", () => {
-      if (titleEl) titleEl.textContent = "✓ Alarm Acknowledged & Cleared";
-      if (subEl) subEl.textContent = "Marked Done in Lilt Alerts Tab • Next reminder queued";
-      setTimeout(() => {
-        if (titleEl) titleEl.textContent = "Call Rajesh regarding Q4 deck";
-        if (subEl) {
-          subEl.textContent = isSilentMode
-            ? "Wakes screen & demands action with zero audio ringtone"
-            : "Full-screen lockscreen wakeup + escalating Nothing OS alarm tone";
-        }
-      }, 2000);
-    });
-  }
-}
-
-/* ==========================================================================
-   7. BENTO 3 — GRANOLA-STYLE AUTO NOTE TAKER + PIN + AMBER SEARCH
-   ========================================================================== */
-function initGranolaAutoNotesWidget() {
-  const notesData = [
-    {
-      id: "note-1",
-      title: "Hyderabad Sprint & Groceries",
-      time: "JUST NOW • VOICE NOTE",
-      isPinned: true,
-      items: [
-        { text: "Buy organic almond milk and cold brew", done: true },
-        { text: "Send ₹5,000 advance to Venkatesh in Gachibowli", done: false },
-        { text: "Review silent alarm lockscreen PR", done: false }
-      ]
-    },
-    {
-      id: "note-2",
-      title: "Flight & Release Checklist",
-      time: "14 MINS AGO • AUTO LIST",
-      isPinned: false,
-      items: [
-        { text: "Book morning flight to Bengaluru (BLR)", done: true },
-        { text: "Publish Lilt v1.1 APK & Windows installer on GitHub", done: true },
-        { text: "Test Tenglish kaadu kaadu backtracking", done: false }
-      ]
-    },
-    {
-      id: "note-3",
-      title: "Quick Contact Capture",
-      time: "1 HR AGO • PHONE EXTRACT",
-      isPinned: false,
-      items: [
-        { text: "Save Rajeshwar Rao (+91 98480 22338) to Contacts", done: false }
-      ]
-    }
-  ];
-
-  const searchInput = document.getElementById("bento-note-search");
-  const container = document.getElementById("bento-notes-container");
-  if (!container) return;
-
-  function highlightQuery(text, query) {
-    if (!query) return text;
-    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(`(${escaped})`, "gi");
-    return text.replace(regex, `<mark class="amber-hl">$1</mark>`);
-  }
-
-  function renderNotes() {
-    const query = (searchInput ? searchInput.value : "").trim();
-    const sorted = [...notesData].sort((a, b) => Number(b.isPinned) - Number(a.isPinned));
-
-    const filtered = sorted.filter((note) => {
-      if (!query) return true;
-      const q = query.toLowerCase();
-      const inTitle = note.title.toLowerCase().includes(q);
-      const inItems = note.items.some((it) => it.text.toLowerCase().includes(q));
-      return inTitle || inItems;
-    });
-
-    if (filtered.length === 0) {
-      container.innerHTML = `
-        <div style="text-align:center; padding: 24px 12px; color: var(--text-muted); font-family: var(--font-mono); font-size: 12px;">
-          No notes matching "${query}". Try "milk", "flight", or "Venkatesh".
-        </div>
-      `;
+    if (reduceMotion) {
+      const p = HERO_PHRASES[0];
+      rawEl.innerHTML = p.raw.map((w) => `<span class="w in ${w[0] === "~" ? "cut" : ""}">${w.replace("~", "")}</span>`).join("");
+      cleanEl.textContent = p.clean;
+      status.textContent = "INSERTED ✓";
+      pill.classList.add("is-done");
       return;
     }
 
-    container.innerHTML = filtered
-      .map(
-        (note) => `
-        <div class="mini-note-item ${note.isPinned ? "is-pinned" : ""}" data-id="${note.id}">
-          <div class="note-item-head">
-            <div>
-              <strong style="font-size: 13px; color: #FFF;">${highlightQuery(note.title, query)}</strong>
-              <span style="display:block; font-family: var(--font-mono); font-size: 9.5px; color: var(--text-muted); margin-top: 2px;">
-                ${note.isPinned ? "📌 PINNED TO TOP • " : ""}${note.time}
-              </span>
-            </div>
-            <button type="button" class="pin-toggle-btn ${note.isPinned ? "pinned" : ""}" data-pin-id="${note.id}" title="Toggle Pin to Top">
-              📌
-            </button>
-          </div>
-          <div class="note-checklist">
-            ${note.items
-              .map(
-                (item, idx) => `
-              <div class="check-bullet-row ${item.done ? "checked" : ""}" data-note-id="${note.id}" data-item-idx="${idx}">
-                <span class="custom-checkbox">${item.done ? "✓" : ""}</span>
-                <span>${highlightQuery(item.text, query)}</span>
-              </div>
-            `
-              )
-              .join("")}
-          </div>
-        </div>
-      `
-      )
-      .join("");
+    async function run(g) {
+      while (g === gen) {
+        const p = HERO_PHRASES[idx % HERO_PHRASES.length];
+        idx++;
 
-    // Bind Pin buttons
-    container.querySelectorAll("[data-pin-id]").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const id = btn.getAttribute("data-pin-id");
-        const target = notesData.find((n) => n.id === id);
-        if (target) {
-          target.isPinned = !target.isPinned;
-          renderNotes();
+        // 1 — listening
+        pill.classList.remove("is-done");
+        pill.classList.add("is-listening");
+        status.textContent = "LISTENING";
+        wave.set(1, true);
+        cleanEl.innerHTML = "";
+        rawEl.innerHTML = p.raw.map((w) => `<span class="w${w[0] === "~" ? " x" : ""}">${w.replace("~", "")}</span>`).join("");
+        const words = $$(".w", rawEl);
+        for (const w of words) {
+          if (g !== gen) return;
+          w.classList.add("in");
+          await sleep(115 + Math.random() * 70);
         }
-      });
-    });
+        await sleep(350);
+        if (g !== gen) return;
 
-    // Bind Checklist toggles
-    container.querySelectorAll(".check-bullet-row").forEach((row) => {
-      row.addEventListener("click", () => {
-        const noteId = row.getAttribute("data-note-id");
-        const itemIdx = parseInt(row.getAttribute("data-item-idx"), 10);
-        const target = notesData.find((n) => n.id === noteId);
-        if (target && target.items[itemIdx]) {
-          target.items[itemIdx].done = !target.items[itemIdx].done;
-          renderNotes();
+        // 2 — cleaning
+        pill.classList.remove("is-listening");
+        status.textContent = "CLEANING";
+        wave.set(0.3, false);
+        const cuts = $$(".w.x", rawEl);
+        for (const c of cuts) {
+          if (g !== gen) return;
+          c.classList.add("cut");
+          await sleep(85);
         }
-      });
-    });
-  }
+        await sleep(650);
+        cuts.forEach((c) => c.classList.add("gone"));
+        await sleep(420);
+        if (g !== gen) return;
 
-  if (searchInput) {
-    searchInput.addEventListener("input", renderNotes);
-  }
-
-  renderNotes();
-}
-
-/* ==========================================================================
-   8. BENTO 4 — KINETIC BACKTRACKING & TENGLISH PIPELINE SWITCHER
-   ========================================================================== */
-function initBacktrackingPipeline() {
-  const PIPELINE_CASES = {
-    backtrack: {
-      raw: `"Send the client contract by <span style="color:#F87171;text-decoration:line-through;">Friday evening... no wait, scratch that,</span> Monday 10 AM."`,
-      clean: `"Send the client contract by Monday 10:00 AM."`
-    },
-    tenglish: {
-      raw: `"Mama let's meet at <span style="color:#F87171;text-decoration:line-through;">Jubilee Hills... kaadu kaadu,</span> Gachibowli DLF gate near 7 PM."`,
-      clean: `"Mama, let's meet at Gachibowli DLF Gate near 7:00 PM."`
-    },
-    currency: {
-      raw: `"Transfer <span style="color:#FFB800;">forty five thousand five hundred rupees</span> to <span style="color:#FFB800;">shashank dot dev at gmail dot com</span>"`,
-      clean: `"Transfer ₹45,500 to shashank.dev@gmail.com."`
-    },
-    stutter: {
-      raw: `"<span style="color:#F87171;text-decoration:line-through;">I I I think we should umm</span> deploy the Android release APK right now."`,
-      clean: `"I think we should deploy the Android release APK right now."`
+        // 3 — inserted
+        pill.classList.add("is-done");
+        status.textContent = "INSERTED ✓";
+        wave.set(0.12, false);
+        cleanEl.innerHTML = p.clean.split(/(\s+)/).map((t) => `<span class="cw">${t}</span>`).join("");
+        const cws = $$(".cw", cleanEl);
+        for (const c of cws) {
+          if (g !== gen) return;
+          c.classList.add("in");
+          await sleep(38);
+        }
+        await sleep(2700);
+        if (g !== gen) return;
+        cws.forEach((c) => c.classList.remove("in"));
+        $$(".w", rawEl).forEach((w) => w.classList.remove("in"));
+        await sleep(500);
+      }
     }
-  };
 
-  const buttons = document.querySelectorAll(".scenario-pill");
-  const rawBox = document.getElementById("pipe-raw-text");
-  const cleanBox = document.getElementById("pipe-clean-text");
+    pill.addEventListener("click", () => { gen++; run(gen); });
+    window.addEventListener("keydown", (e) => {
+      if (e.code !== "Space" || e.repeat) return;
+      const tag = (e.target.tagName || "").toLowerCase();
+      if (["input", "textarea", "button", "summary", "a"].includes(tag)) return;
+      if (window.scrollY > innerHeight * 0.8) return;
+      e.preventDefault();
+      gen++; run(gen);
+    });
 
-  buttons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      buttons.forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      const key = btn.getAttribute("data-sc");
-      const data = PIPELINE_CASES[key];
-      if (data && rawBox && cleanBox) {
-        rawBox.innerHTML = data.raw;
-        cleanBox.innerHTML = data.clean;
+    // start after preloader
+    return () => { gen++; run(gen); };
+  }
+
+  /* =====================================================================
+     PRELOADER + HERO INTRO
+     ===================================================================== */
+  function initPreloader(onDone) {
+    const pre = $("#preloader");
+    const count = $("#pre-count");
+    const start = performance.now();
+    const dur = reduceMotion ? 200 : 1100;
+    (function tick(now) {
+      const p = clamp((now - start) / dur, 0, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      count.textContent = Math.round(eased * 100);
+      if (p < 1) requestAnimationFrame(tick);
+      else {
+        pre.classList.add("is-done");
+        onDone();
+      }
+    })(start);
+  }
+
+  function heroIntro() {
+    if (!animate) return;
+    const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
+    tl.fromTo(".hero-title .line-inner", { y: 0, yPercent: 110 }, { y: 0, yPercent: 0, duration: 1.4, stagger: 0.12 })
+      .fromTo(".intro-item", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 1.2, stagger: 0.09 }, 0.35)
+      .fromTo(".hero-grid", { opacity: 0 }, { opacity: 1, duration: 2 }, 0)
+      .fromTo(".hero-glow", { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 2.4 }, 0);
+  }
+
+  /* =====================================================================
+     SCROLL ANIMATIONS
+     ===================================================================== */
+  function initScrollFX() {
+    if (!animate) return;
+
+    // Hero parallax out
+    gsap.to(".hero-inner", {
+      yPercent: -12, opacity: 0.15, ease: "none",
+      scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true }
+    });
+    gsap.to(".hero-grid", {
+      yPercent: 25, ease: "none",
+      scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: true }
+    });
+
+    // Generic reveals
+    ScrollTrigger.batch(".reveal", {
+      start: "top 88%",
+      once: true,
+      onEnter: (batch) => gsap.to(batch, { opacity: 1, y: 0, duration: 1.1, ease: "expo.out", stagger: 0.09, overwrite: true })
+    });
+
+    // Eyebrows slide
+    $$(".eyebrow").forEach((el) => {
+      gsap.from(el, { x: -20, opacity: 0, duration: 1, ease: "expo.out", scrollTrigger: { trigger: el, start: "top 90%", once: true } });
+    });
+
+    // Desk scales up into place
+    gsap.fromTo("#desk", { scale: 0.9, rotateX: 8, transformPerspective: 1400 }, {
+      scale: 1, rotateX: 0, ease: "none",
+      scrollTrigger: { trigger: "#desk", start: "top 95%", end: "top 35%", scrub: true }
+    });
+
+    // Phone floats in
+    gsap.fromTo("#alarm-phone", { y: 120, rotate: 7 }, {
+      y: 0, rotate: 0, ease: "none",
+      scrollTrigger: { trigger: ".alarms", start: "top bottom", end: "center center", scrub: true }
+    });
+
+    // Notes app tilt
+    gsap.fromTo("#notes-app", { rotate: -3, y: 60 }, {
+      rotate: 0, y: 0, ease: "none",
+      scrollTrigger: { trigger: ".notes", start: "top bottom", end: "center center", scrub: true }
+    });
+
+    // Download cards
+    gsap.fromTo(".dl-card", { y: 80 }, {
+      y: 0, stagger: 0.1, ease: "none",
+      scrollTrigger: { trigger: ".dl-grid", start: "top bottom", end: "top 50%", scrub: true }
+    });
+
+    // Final title scale
+    gsap.fromTo(".final-title", { scale: 0.86 }, {
+      scale: 1, ease: "none",
+      scrollTrigger: { trigger: ".final", start: "top bottom", end: "center center", scrub: true }
+    });
+
+    // Giant footer wordmark rises
+    gsap.fromTo("#footer-word", { yPercent: 40, opacity: 0.2 }, {
+      yPercent: 0, opacity: 1, ease: "none",
+      scrollTrigger: { trigger: ".footer", start: "top bottom", end: "bottom bottom", scrub: true }
+    });
+
+    // Marquee speeds up with scroll velocity
+    const track = $(".marquee-track");
+    ScrollTrigger.create({
+      trigger: ".marquee-section", start: "top bottom", end: "bottom top",
+      onUpdate: (self) => {
+        const v = clamp(Math.abs(self.getVelocity()) / 1500, 0, 3);
+        track.style.animationDuration = `${40 / (1 + v)}s`;
       }
     });
-  });
-}
+  }
 
-/* ==========================================================================
-   9. STICKY BOTTOM FLOATING PILL DOCK (SCROLL-AWARE NARRATION)
-   ========================================================================== */
-function initStickyBottomDock() {
-  const dock = document.getElementById("sticky-bottom-dock");
-  const narration = document.getElementById("sticky-pill-narration");
-  if (!dock) return;
+  /* =====================================================================
+     MANIFESTO — words light up as you scroll
+     ===================================================================== */
+  function initManifesto() {
+    const el = $("#manifesto-text");
+    const serifWords = new Set(["friend", "meant,", "said."]);
+    const words = el.textContent.trim().split(/\s+/);
+    el.innerHTML = words.map((w) => `<span class="mw${serifWords.has(w) ? " serif-word" : ""}">${w}</span>`).join(" ");
+    const spans = $$(".mw", el);
 
-  window.addEventListener("scroll", () => {
-    const y = window.scrollY;
-    if (y > 420) {
-      dock.classList.add("visible");
-    } else {
-      dock.classList.remove("visible");
+    if (!animate) { spans.forEach((s) => (s.style.color = "var(--text)")); return; }
+
+    ScrollTrigger.create({
+      trigger: "#manifesto",
+      start: "top 70%",
+      end: "bottom 60%",
+      scrub: true,
+      onUpdate: (self) => {
+        const lit = Math.floor(self.progress * spans.length * 1.05);
+        spans.forEach((s, i) => {
+          s.style.color = i < lit ? (s.classList.contains("serif-word") ? "#ff6a4d" : "var(--text)") : "";
+        });
+      }
+    });
+  }
+
+  /* =====================================================================
+     HOW IT WORKS — pinned scrollytelling
+     ===================================================================== */
+  function initHow() {
+    const toks = $$("#how-transcript .tok");
+    const fillers = toks.filter((t) => t.classList.contains("f"));
+    const backs = toks.filter((t) => t.classList.contains("b"));
+    const steps = $$("#how-steps .how-step");
+    const bar = $("#how-progress-bar");
+    const out = $("#how-out");
+    const legend = $("#how-legend");
+    const chatSub = $("#chat-sub");
+    const inputText = $("#chat-input-text");
+    const wave = makeWave($("#how-wave"), { bars: 10 });
+
+    out.style.transition = "opacity .5s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1)";
+    legend.style.transition = "opacity .4s";
+
+    let lastStep = -1;
+    function update(p) {
+      const step = p < 0.36 ? 0 : p < 0.68 ? 1 : 2;
+      if (step !== lastStep) {
+        steps.forEach((s, i) => s.classList.toggle("is-active", i === step));
+        lastStep = step;
+      }
+      bar.style.width = `${p * 100}%`;
+
+      // Phase 1: words appear
+      const shown = Math.floor(clamp((p - 0.03) / 0.33, 0, 1) * toks.length);
+      toks.forEach((t, i) => (t.style.opacity = i < shown ? 1 : 0.1));
+
+      // Phase 2: fillers / backtracks get struck
+      const cutF = p > 0.42, cutB = p > 0.5, fade = p > 0.6;
+      fillers.forEach((t) => { t.classList.toggle("cut-f", cutF); if (fade) t.style.opacity = 0.3; });
+      backs.forEach((t) => { t.classList.toggle("cut-b", cutB); if (fade) t.style.opacity = 0.3; });
+      legend.style.opacity = cutF ? 1 : 0;
+
+      // Phase 3: clean message sent
+      const sent = p > 0.72;
+      out.style.opacity = sent ? 1 : 0;
+      out.style.transform = sent ? "none" : "translateY(18px) scale(.94)";
+
+      const listening = p > 0.03 && p < 0.37;
+      wave.set(listening ? 1 : 0.12, listening);
+      chatSub.textContent = listening ? "you’re talking…" : step === 1 ? "Lilt is cleaning up…" : sent ? "online" : "online";
+      inputText.textContent = listening ? "Listening…" : step === 1 ? "Removing filler…" : sent ? "Sent ✓" : "Message";
+      chatSub.style.color = listening ? "var(--red)" : step === 1 ? "var(--amber)" : "";
     }
 
-    if (!narration) return;
-    if (y > 1900) {
-      narration.textContent = "✦ READY TO INSTALL • WINDOWS (.EXE) & ANDROID (.APK)";
-    } else if (y > 1200) {
-      narration.textContent = "📌 AUTO NOTE TAKER • PIN TO TOP & AMBER SEARCH";
-    } else if (y > 650) {
-      narration.textContent = "🔕 PERSISTENT SILENT ALARMS • 5M TACTILE STEPPER";
-    } else {
-      narration.textContent = "LILT OVERLAY READY • HOLD [SPACE] TO TEST";
+    if (!animate) { update(1); return; }
+    update(0);
+
+    ScrollTrigger.create({
+      trigger: "#how-pin",
+      start: "top top",
+      end: () => "+=" + innerHeight * 2.6,
+      pin: true,
+      scrub: true,
+      anticipatePin: 1,
+      onUpdate: (self) => update(self.progress)
+    });
+  }
+
+  /* =====================================================================
+     FEATURES — horizontal scroll gallery
+     ===================================================================== */
+  function initFeatures() {
+    if (!animate) return;
+    const track = $("#h-track");
+    const mm = gsap.matchMedia();
+    mm.add("(min-width: 761px)", () => {
+      const dist = () => Math.max(0, track.scrollWidth - innerWidth);
+      const tween = gsap.to(track, {
+        x: () => -dist(),
+        ease: "none",
+        scrollTrigger: {
+          trigger: "#features-pin",
+          start: "top top",
+          end: () => "+=" + dist(),
+          pin: true,
+          scrub: 0.8,
+          invalidateOnRefresh: true,
+          anticipatePin: 1
+        }
+      });
+      // cards gently rise as they enter horizontally
+      $$(".f-card", track).forEach((card) => {
+        gsap.fromTo(card, { y: 60, rotate: 2 }, {
+          y: 0, rotate: 0, ease: "none",
+          scrollTrigger: { trigger: card, containerAnimation: tween, start: "left 100%", end: "left 60%", scrub: true }
+        });
+      });
+    });
+  }
+
+  /* =====================================================================
+     FLOATING PILL — draggable desktop demo
+     ===================================================================== */
+  function initFloatPill() {
+    const screen = $("#desk-screen");
+    const pill = $("#float-pill");
+    const status = $("#float-status");
+    const posEl = $("#float-pos");
+    const tabs = $$(".desk-tab");
+    const views = $$(".app-view");
+    const wave = makeWave($("#float-wave"), { bars: 9 });
+
+    const TEXTS = {
+      mail: "The launch is moving to Monday. I’ll share the final deck by 10 AM.",
+      slack: "Yes — build 1.1 passed QA. Shipping the APK tonight 🚀",
+      code: "// TODO: retry the payment if the bank times out"
+    };
+    const BASE = {};
+    views.forEach((v) => (BASE[v.dataset.view] = $("[data-target]", v).innerHTML));
+
+    let app = "mail";
+    let busy = false;
+
+    function setPos(px, py) {
+      const r = screen.getBoundingClientRect();
+      const pr = pill.getBoundingClientRect();
+      const x = clamp(px, pr.width / 2 + 8, r.width - pr.width / 2 - 8);
+      const y = clamp(py, pr.height / 2 + 8, r.height - pr.height / 2 - 8);
+      pill.style.left = `${(x / r.width) * 100}%`;
+      pill.style.top = `${(y / r.height) * 100}%`;
+      posEl.textContent = `x ${Math.round((x / r.width) * 100)}% · y ${Math.round((y / r.height) * 100)}%`;
     }
+
+    let dragging = false, moved = 0, sx = 0, sy = 0, ox = 0, oy = 0;
+    pill.addEventListener("pointerdown", (e) => {
+      dragging = true; moved = 0; sx = e.clientX; sy = e.clientY;
+      const pr = pill.getBoundingClientRect();
+      ox = e.clientX - (pr.left + pr.width / 2);
+      oy = e.clientY - (pr.top + pr.height / 2);
+      pill.setPointerCapture(e.pointerId);
+      pill.classList.add("is-dragging");
+      pill.style.transition = "opacity .4s, box-shadow .3s, border-color .3s";
+    });
+    pill.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      moved = Math.max(moved, Math.hypot(e.clientX - sx, e.clientY - sy));
+      const r = screen.getBoundingClientRect();
+      setPos(e.clientX - r.left - ox, e.clientY - r.top - oy);
+    });
+    const end = () => {
+      if (!dragging) return;
+      dragging = false;
+      pill.classList.remove("is-dragging");
+      if (moved < 6) dictate();
+    };
+    pill.addEventListener("pointerup", end);
+    pill.addEventListener("pointercancel", () => { dragging = false; pill.classList.remove("is-dragging"); });
+
+    async function dictate() {
+      if (busy) return;
+      busy = true;
+      const view = views.find((v) => v.dataset.view === app);
+      const target = $("[data-target]", view);
+      const thisApp = app;
+      target.innerHTML = BASE[app] + '<span class="caret"></span>';
+      pill.classList.add("is-listening");
+      status.textContent = "LISTENING";
+      wave.set(1, true);
+      await sleep(1100);
+      pill.classList.remove("is-listening");
+      status.textContent = "TYPING";
+      wave.set(0.25);
+      const text = TEXTS[thisApp];
+      for (let i = 1; i <= text.length; i++) {
+        if (app !== thisApp) break;
+        target.innerHTML = BASE[thisApp] + `<span class="typed">${text.slice(0, i)}</span><span class="caret"></span>`;
+        await sleep(16);
+      }
+      status.textContent = "READY";
+      wave.set(0.12);
+      busy = false;
+    }
+
+    tabs.forEach((t) =>
+      t.addEventListener("click", () => {
+        tabs.forEach((x) => x.classList.toggle("is-active", x === t));
+        app = t.dataset.app;
+        views.forEach((v) => v.classList.toggle("is-active", v.dataset.view === app));
+        busy = false;
+        status.textContent = "READY";
+        pill.classList.remove("is-listening");
+        wave.set(0.12);
+      })
+    );
+
+    $("#btn-ghost").addEventListener("click", (e) => {
+      const on = pill.classList.toggle("is-ghost");
+      e.currentTarget.classList.toggle("is-active", on);
+    });
+    $("#btn-snap").addEventListener("click", () => {
+      const r = screen.getBoundingClientRect();
+      pill.style.transition = "left .6s cubic-bezier(.16,1,.3,1), top .6s cubic-bezier(.16,1,.3,1), opacity .4s";
+      setPos(r.width, parseFloat(pill.style.top || "70") / 100 * r.height);
+    });
+
+    // Auto-demo once when the desk enters view
+    if (hasGSAP) {
+      ScrollTrigger.create({ trigger: "#desk", start: "top 55%", once: true, onEnter: () => setTimeout(dictate, 400) });
+    }
+  }
+
+  /* =====================================================================
+     SILENT ALARM — phone lockscreen demo
+     ===================================================================== */
+  function initAlarm() {
+    const phone = $("#alarm-phone");
+    const sw = $("#silent-switch");
+    const title = $("#silent-title");
+    const desc = $("#silent-desc");
+    const mode = $("#alarm-mode");
+    const card = $("#alarm-card");
+    const aTitle = $("#alarm-title");
+    const aSub = $("#alarm-sub");
+    const val = $("#snooze-val");
+    const snoozeBtn = $("#btn-snooze");
+    const presets = $$("#snooze-presets button");
+    let mins = 10;
+
+    const fmt = (m) => (m >= 60 ? (m % 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m / 60} hr`) : `${m} min`);
+    const pad = (n) => String(n).padStart(2, "0");
+
+    // live clock
+    const lockTime = $("#lock-time"), lockDate = $("#lock-date");
+    const tick = () => {
+      const d = new Date();
+      lockTime.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      lockDate.textContent = d.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" }).toUpperCase();
+    };
+    tick(); setInterval(tick, 15000);
+
+    function syncSnooze() {
+      val.textContent = fmt(mins);
+      snoozeBtn.textContent = `Snooze ${fmt(mins)}`;
+      presets.forEach((b) => b.classList.toggle("is-active", +b.dataset.m === mins));
+      if (hasGSAP) gsap.fromTo(val, { y: -6, opacity: 0.3 }, { y: 0, opacity: 1, duration: 0.35, ease: "expo.out" });
+    }
+
+    function syncSilent() {
+      const silent = sw.checked;
+      title.textContent = silent ? "Silent alarm is on" : "Silent alarm is off";
+      desc.textContent = silent ? "Shows on screen until you act — no sound." : "Shows on screen and rings until you act.";
+      mode.textContent = silent ? "🔕 SILENT" : "🔔 RINGING";
+      mode.classList.toggle("ringing", !silent);
+      phone.classList.toggle("is-ringing", !silent);
+      if (!silent) {
+        phone.classList.add("is-shaking");
+        setTimeout(() => phone.classList.remove("is-shaking"), 1500);
+      }
+    }
+
+    $("#snooze-minus").addEventListener("click", () => { mins = Math.max(5, mins - 5); syncSnooze(); });
+    $("#snooze-plus").addEventListener("click", () => { mins = Math.min(180, mins + 5); syncSnooze(); });
+    presets.forEach((b) => b.addEventListener("click", () => { mins = +b.dataset.m; syncSnooze(); }));
+    sw.addEventListener("change", syncSilent);
+
+    async function dismiss(t, s) {
+      card.classList.add("is-leaving");
+      phone.classList.remove("is-ringing");
+      await sleep(450);
+      aTitle.textContent = t;
+      aSub.textContent = s;
+      card.classList.remove("is-leaving");
+      await sleep(2400);
+      card.classList.add("is-leaving");
+      await sleep(450);
+      aTitle.textContent = "Call Rajesh about the Q4 deck";
+      aSub.textContent = "Set by voice · stays until you act";
+      card.classList.remove("is-leaving");
+      syncSilent();
+    }
+
+    snoozeBtn.addEventListener("click", () => {
+      const d = new Date(Date.now() + mins * 60000);
+      dismiss(`Snoozed for ${fmt(mins)}`, `Back on screen at ${pad(d.getHours())}:${pad(d.getMinutes())}`);
+    });
+    $("#btn-done").addEventListener("click", () => dismiss("✓ Done. Nice one.", "Marked complete in your Reminders"));
+
+    syncSilent();
+  }
+
+  /* =====================================================================
+     NOTES — search, filters, pin, checklists
+     ===================================================================== */
+  function initNotes() {
+    const items = [
+      { id: 1, type: "note", title: "Weekend groceries", time: "Today · 9:12 AM", pinned: true, checks: [["Milk", true], ["Eggs", false], ["Phone charger", false], ["Coffee beans", false]] },
+      { id: 2, type: "alert", title: "Call Rajesh about the Q4 deck", time: "Today · 6:40 PM", pinned: false, text: "Silent alarm · snooze 10 min" },
+      { id: 3, type: "text", title: "Message to Priya", time: "Today · 11:03 AM", pinned: false, text: "Hey Priya, can we move it to Monday at 10:00? I’ll send the deck." },
+      { id: 4, type: "note", title: "Goa trip", time: "Yesterday", pinned: false, checks: [["Book flights", false], ["Pay ₹4,500 hotel advance", true], ["Pack sunscreen", false]] },
+      { id: 5, type: "alert", title: "Pay electricity bill ₹1,250", time: "Tomorrow · 10:00 AM", pinned: false, text: "Reminder · rings normally" },
+      { id: 6, type: "text", title: "Email to team", time: "Mon", pinned: false, text: "The launch is moving to Monday. Final deck by 10 AM." }
+    ];
+    const LABEL = { note: "NOTE", alert: "REMINDER", text: "DICTATION" };
+
+    const list = $("#notes-list");
+    const input = $("#notes-search");
+    const count = $("#notes-count");
+    const filters = $$("#notes-filters button");
+    let filter = "all";
+    let flip = null;
+
+    const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const hl = (s, q) => {
+      const safe = esc(s);
+      if (!q) return safe;
+      const rx = new RegExp(`(${esc(q).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+      return safe.replace(rx, "<mark>$1</mark>");
+    };
+
+    function render() {
+      const q = input.value.trim();
+      const ql = q.toLowerCase();
+      const shown = items
+        .filter((i) => filter === "all" || i.type === filter)
+        .filter((i) => !ql || [i.title, i.text || "", ...(i.checks || []).map((c) => c[0])].join(" ").toLowerCase().includes(ql))
+        .sort((a, b) => b.pinned - a.pinned || a.id - b.id);
+
+      count.textContent = shown.length;
+      if (!shown.length) {
+        list.innerHTML = `<div class="n-empty">Nothing matches “${esc(q)}”.<br/>Try “milk”, “rajesh” or “₹”.</div>`;
+        return;
+      }
+      list.innerHTML = shown.map((i) => `
+        <div class="n-item${i.pinned ? " is-pinned" : ""}${flip === i.id ? " flip-in" : ""}">
+          <div class="n-head">
+            <div>
+              <div class="n-type mono ${i.type}">${i.pinned ? "📌 PINNED · " : ""}${LABEL[i.type]} · ${esc(i.time)}</div>
+              <div class="n-title">${hl(i.title, q)}</div>
+            </div>
+            <button type="button" class="n-pin${i.pinned ? " on" : ""}" data-pin="${i.id}" aria-label="${i.pinned ? "Unpin" : "Pin to top"}">📌</button>
+          </div>
+          ${i.text ? `<div class="n-text">${hl(i.text, q)}</div>` : ""}
+          ${i.checks ? `<div class="n-checks">${i.checks.map((c, k) => `
+            <button type="button" class="n-check${c[1] ? " done" : ""}" data-check="${i.id}:${k}">
+              <span class="n-box">${c[1] ? "✓" : ""}</span><span>${hl(c[0], q)}</span>
+            </button>`).join("")}</div>` : ""}
+        </div>`).join("");
+      flip = null;
+    }
+
+    list.addEventListener("click", (e) => {
+      const pin = e.target.closest("[data-pin]");
+      const chk = e.target.closest("[data-check]");
+      if (pin) {
+        const it = items.find((i) => i.id === +pin.dataset.pin);
+        it.pinned = !it.pinned;
+        flip = it.id;
+        render();
+      } else if (chk) {
+        const [id, k] = chk.dataset.check.split(":").map(Number);
+        const it = items.find((i) => i.id === id);
+        it.checks[k][1] = !it.checks[k][1];
+        render();
+      }
+    });
+    input.addEventListener("input", render);
+    filters.forEach((b) => b.addEventListener("click", () => {
+      filter = b.dataset.f;
+      filters.forEach((x) => x.classList.toggle("is-active", x === b));
+      render();
+    }));
+    $$(".notes-try button").forEach((b) => b.addEventListener("click", () => {
+      input.value = b.dataset.q;
+      render();
+      input.focus({ preventScroll: true });
+    }));
+
+    render();
+  }
+
+  /* =====================================================================
+     COUNTERS
+     ===================================================================== */
+  function initCounters() {
+    const els = $$("[data-count]");
+    const run = (el) => {
+      const to = +el.dataset.count;
+      const from = to === 0 ? 99 : 0;
+      const start = performance.now();
+      const dur = 1600;
+      (function step(now) {
+        const p = clamp((now - start) / dur, 0, 1);
+        const e = 1 - Math.pow(1 - p, 4);
+        el.textContent = Math.round(from + (to - from) * e);
+        if (p < 1) requestAnimationFrame(step);
+      })(start);
+    };
+    if (!hasGSAP) { els.forEach((el) => (el.textContent = el.dataset.count)); return; }
+    els.forEach((el) => ScrollTrigger.create({ trigger: el, start: "top 90%", once: true, onEnter: () => run(el) }));
+  }
+
+  /* =====================================================================
+     FAQ — single-open accordion
+     ===================================================================== */
+  function initFAQ() {
+    const items = $$(".faq details");
+    items.forEach((d) => d.addEventListener("toggle", () => {
+      if (d.open) items.forEach((o) => o !== d && (o.open = false));
+      if (hasGSAP) {
+        if (d.open) gsap.fromTo($("p", d), { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" });
+        setTimeout(() => ScrollTrigger.refresh(), 60);
+      }
+    }));
+  }
+
+  /* =====================================================================
+     BOOT
+     ===================================================================== */
+  initOS();
+  initScroll();
+  initNav();
+  initPointer();
+  const startHero = initHeroDemo();
+  initManifesto();
+  initHow();
+  initFeatures();
+  initFloatPill();
+  initAlarm();
+  initNotes();
+  initCounters();
+  initFAQ();
+  initScrollFX();
+
+  initPreloader(() => {
+    heroIntro();
+    if (startHero) setTimeout(startHero, animate ? 900 : 0);
   });
-}
+
+  if (hasGSAP) {
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => ScrollTrigger.refresh());
+    window.addEventListener("load", () => ScrollTrigger.refresh());
+  }
+})();

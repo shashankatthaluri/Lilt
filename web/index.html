@@ -1,194 +1,245 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="js-loading">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lilt — Speak Messy. Write Effortlessly.</title>
-  <meta name="description" content="Award-caliber open-source voice dictation for Windows & Android. Transparent floating pill, mid-sentence self-correction, persistent silent alarms, and automated note structuring." />
+  <title>Lilt — Speak messy. Write beautifully.</title>
+  <meta name="description" content="Lilt is a free, open-source voice keyboard for Windows and Android. Talk naturally — umms, restarts, 'scratch that', even Tenglish — and get clean, ready-to-send text in any app." />
+  <meta name="theme-color" content="#09090B" />
 
-  <meta property="og:title" content="Lilt — Speak Messy. Write Effortlessly." />
-  <meta property="og:description" content="Next-gen voice typing with transparent floating pill, Tenglish/English backtracking, persistent silent alarms, and auto checklists." />
+  <meta property="og:title" content="Lilt — Speak messy. Write beautifully." />
+  <meta property="og:description" content="A floating voice keyboard that cleans up how you actually talk. Free & open source for Windows and Android." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://shashankatthaluri.github.io/Lilt/" />
+  <meta property="og:image" content="assets/og-image.png" />
 
-  <!-- Editorial Serif + Geometric Sans + Technical Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
 
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" type="image/svg+xml" href="assets/brand/voca-app-icon.svg" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
 </head>
 <body>
 
-  <!-- Ambient Shaders & Film Grain -->
-  <div class="ambient-canvas"></div>
-  <div class="noise-overlay"></div>
-
-  <!-- Floating Glassmorphic Navigation -->
-  <div class="navbar-wrapper">
-    <header class="navbar">
-      <a href="#" class="brand-lockup">
-        <span class="brand-led"></span>
-        <span class="brand-wordmark">LILT</span>
-        <span class="brand-version">v1.1 OSS</span>
-      </a>
-
-      <nav class="nav-links">
-        <a href="#workspace-stage" class="nav-link">Live Stage</a>
-        <a href="#bento-showcase" class="nav-link">Floating Pill</a>
-        <a href="#bento-alarm" class="nav-link">Silent Alarms</a>
-        <a href="#bento-notes" class="nav-link">Auto Notes</a>
-        <a href="#bento-pipeline" class="nav-link">Intelligence</a>
-        <a href="#downloads" class="nav-link">Downloads</a>
-      </nav>
-
-      <div class="nav-cta-group">
-        <a href="https://github.com/shashankatthaluri/Lilt" target="_blank" rel="noopener noreferrer" class="btn-nav-gh">
-          <svg height="15" width="15" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
-          </svg>
-          <span>Star on GitHub</span>
-        </a>
-        <a href="#downloads" class="btn-nav-dl" id="nav-quick-dl">Download</a>
+  <!-- ============ PRELOADER ============ -->
+  <div class="preloader" id="preloader" aria-hidden="true">
+    <div class="pre-inner">
+      <div class="pre-pill">
+        <span class="led"></span>
+        <span class="pre-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
       </div>
-    </header>
+      <div class="pre-count mono"><span id="pre-count">0</span>%</div>
+    </div>
   </div>
 
-  <main>
-    <!-- ====================================================================
-         HERO SECTION — WISPR EDITORIAL + LIVING WORKSPACE STAGE
-         ==================================================================== -->
-    <section class="hero">
-      <div class="container">
-        <div class="hero-eyebrow">
-          <span class="eyebrow-pill">OPEN SOURCE</span>
-          <span class="eyebrow-text" data-scramble="NOTHING OS AESTHETIC • RUST CORE • WINDOWS & ANDROID">NOTHING OS AESTHETIC • RUST CORE • WINDOWS & ANDROID</span>
-        </div>
+  <div class="cursor" id="cursor" aria-hidden="true"><span class="cursor-label" id="cursor-label"></span></div>
+  <div class="grain" aria-hidden="true"></div>
 
-        <h1 class="hero-headline">
-          Speak messy.<br />
-          Write <span class="serif-italic">effortlessly.</span>
+  <!-- ============ NAV ============ -->
+  <header class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="#top" class="brand" aria-label="Lilt home">
+        <span class="led"></span>
+        <span class="brand-word">lilt</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#how">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#pill">Floating pill</a>
+        <a href="#alarms">Reminders</a>
+        <a href="#notes">Notes</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <div class="nav-cta">
+        <a class="nav-gh" href="https://github.com/shashankatthaluri/Lilt" target="_blank" rel="noopener" aria-label="GitHub repository">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          <span>Star</span>
+        </a>
+        <a class="btn btn-light btn-sm magnetic" href="#download" data-os-link>Download</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ 1. HERO ============ -->
+    <section class="hero" id="top">
+      <div class="hero-glow" id="hero-glow" aria-hidden="true"></div>
+      <div class="hero-grid" aria-hidden="true"></div>
+
+      <div class="container hero-inner">
+        <a class="hero-badge intro-item" href="https://github.com/shashankatthaluri/Lilt" target="_blank" rel="noopener">
+          <span class="badge-dot"></span>
+          <span>Free &amp; open source</span>
+          <span class="badge-sep"></span>
+          <span class="muted">Windows + Android</span>
+          <span class="badge-arrow">→</span>
+        </a>
+
+        <h1 class="hero-title">
+          <span class="line"><span class="line-inner">Speak messy.</span></span>
+          <span class="line"><span class="line-inner">Write <em class="serif">beautifully.</em></span></span>
         </h1>
 
-        <p class="hero-subheadline">
-          Real humans hesitate, backtrack mid-sentence, and mix languages. <strong>Lilt</strong> floats invisibly over every app—stripping false starts, formatting Indian names with 100% precision, structuring instant checklists, and waking your screen with persistent silent alarms.
+        <p class="hero-sub intro-item">
+          Lilt is a voice keyboard that floats over every app. Talk the way you really talk —
+          “umm”, restarts, <em>“scratch that”</em>, even Telugu-English — and get clean,
+          ready-to-send text in about a second.
         </p>
 
-        <!-- Smart OS-Aware CTA Cluster -->
-        <div class="hero-cta-cluster">
-          <div class="primary-cta-row">
-            <a id="hero-primary-dl" href="https://github.com/shashankatthaluri/Lilt/releases" class="btn-hero-primary">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              <span id="hero-dl-label">Download Lilt</span>
-              <span id="hero-os-chip" class="os-badge-chip">AUTO-DETECTED</span>
-            </a>
-
-            <button type="button" id="toggle-qr-btn" class="btn-hero-secondary">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="7" height="7"></rect>
-                <rect x="14" y="3" width="7" height="7"></rect>
-                <rect x="14" y="14" width="7" height="7"></rect>
-                <rect x="3" y="14" width="7" height="7"></rect>
-              </svg>
-              <span>Phone Companion QR</span>
-            </button>
-          </div>
-
-          <!-- Expandable Phone QR Companion Drawer -->
-          <div id="hero-qr-drawer" class="qr-popover-card">
-            <div class="qr-frame" id="hero-qr-box"></div>
-            <div>
-              <div style="font-family: var(--font-mono); font-size: 10px; color: var(--amber-gold); letter-spacing: 1px; margin-bottom: 3px;">INSTANT ANDROID INSTALL</div>
-              <h4 style="font-size: 14px; font-weight: 700; color: #FFF; margin-bottom: 4px;">Scan with your phone camera</h4>
-              <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.45;">Downloads <code>Lilt-v1.1-Release.apk</code> directly to your Android device. Zero account or Play Store wait required.</p>
-            </div>
-          </div>
-
-          <div class="hero-meta-strip">
-            <span id="detected-device-summary">✦ Optimised for your device</span>
-            <span>•</span>
-            <a href="https://github.com/shashankatthaluri/Lilt/releases/latest/download/Lilt-Setup-x64.exe">Windows x64 (.exe)</a>
-            <span>•</span>
-            <a href="https://github.com/shashankatthaluri/Lilt/releases/latest/download/Lilt-v1.1-Release.apk">Android ARM64 (.apk)</a>
-            <span>•</span>
-            <a href="https://github.com/shashankatthaluri/Lilt" target="_blank" rel="noopener">Apache 2.0 Source</a>
-          </div>
+        <div class="hero-ctas intro-item">
+          <a class="btn btn-light btn-lg magnetic" id="hero-download" href="#download" data-os-link>
+            <span class="os-icon" id="hero-os-icon" aria-hidden="true">↓</span>
+            <span id="hero-download-label">Download Lilt — it’s free</span>
+          </a>
+          <a class="btn btn-ghost btn-lg magnetic" href="#how">
+            <span>See how it works</span>
+          </a>
         </div>
 
-        <!-- ================================================================
-             THE LIVING WORKSPACE STAGE (INTERACTIVE MULTI-APP SIMULATOR)
-             ================================================================ -->
-        <div class="workspace-stage-outer" id="workspace-stage">
-          <div class="workspace-stage">
-            <div class="stage-topbar">
-              <div class="window-traffic">
-                <span class="traffic-dot red"></span>
-                <span class="traffic-dot yellow"></span>
-                <span class="traffic-dot green"></span>
+        <!-- Live messy → clean demo -->
+        <div class="hero-demo intro-item" aria-label="Live demo: messy speech turning into clean text">
+          <div class="demo-card demo-raw-card">
+            <div class="demo-label mono"><span class="rec-dot"></span> WHAT YOU SAY</div>
+            <p class="demo-raw" id="hero-raw"></p>
+          </div>
+
+          <div class="hero-pill" id="hero-pill" data-cursor="Tap">
+            <span class="pill-orb">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+            </span>
+            <canvas class="pill-wave" id="hero-wave" width="120" height="28"></canvas>
+            <span class="pill-status mono" id="hero-pill-status">LISTENING</span>
+          </div>
+
+          <div class="demo-card demo-clean-card">
+            <div class="demo-label mono"><span class="ok-dot"></span> WHAT LILT TYPES</div>
+            <p class="demo-clean" id="hero-clean"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="scroll-cue mono" aria-hidden="true">
+        <span>SCROLL</span>
+        <span class="scroll-line"></span>
+      </div>
+    </section>
+
+    <!-- ============ 2. APPS MARQUEE ============ -->
+    <section class="marquee-section" aria-label="Works in every app">
+      <p class="marquee-caption mono">WORKS WHEREVER YOU CAN TYPE</p>
+      <div class="marquee">
+        <div class="marquee-track">
+          <span>WhatsApp</span><span>Gmail</span><span>Slack</span><span>Notion</span><span>VS Code</span><span>Cursor</span><span>Chrome</span><span>Word</span><span>Telegram</span><span>Instagram</span><span>Teams</span><span>Google Docs</span><span>Outlook</span><span>Discord</span>
+          <span>WhatsApp</span><span>Gmail</span><span>Slack</span><span>Notion</span><span>VS Code</span><span>Cursor</span><span>Chrome</span><span>Word</span><span>Telegram</span><span>Instagram</span><span>Teams</span><span>Google Docs</span><span>Outlook</span><span>Discord</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 3. MANIFESTO (scroll-scrubbed words) ============ -->
+    <section class="manifesto" id="manifesto">
+      <div class="container">
+        <p class="eyebrow mono">WHY LILT</p>
+        <p class="manifesto-text" id="manifesto-text">
+          You think three times faster than you type. But voice typing has always made you talk like a robot — perfect sentences, no pauses, no second thoughts. Lilt listens the way a friend does. It hears what you meant, not just what you said.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ 4. HOW IT WORKS (pinned scrollytelling) ============ -->
+    <section class="how" id="how">
+      <div class="how-pin" id="how-pin">
+        <div class="container how-grid">
+          <div class="how-copy">
+            <p class="eyebrow mono">HOW IT WORKS</p>
+            <h2 class="section-title">Three steps.<br /><em class="serif">Zero effort.</em></h2>
+
+            <ol class="how-steps" id="how-steps">
+              <li class="how-step is-active" data-step="0">
+                <span class="step-num mono">01</span>
+                <div>
+                  <h3>Tap the pill</h3>
+                  <p>Or hold your hotkey. Lilt starts listening without moving your cursor or switching apps.</p>
+                </div>
+              </li>
+              <li class="how-step" data-step="1">
+                <span class="step-num mono">02</span>
+                <div>
+                  <h3>Just talk — mistakes welcome</h3>
+                  <p>Say “um”. Change your mind. Lilt quietly removes the filler and keeps only what you meant.</p>
+                </div>
+              </li>
+              <li class="how-step" data-step="2">
+                <span class="step-num mono">03</span>
+                <div>
+                  <h3>Clean text appears</h3>
+                  <p>Punctuated, capitalised and typed right where your cursor is. Hit send.</p>
+                </div>
+              </li>
+            </ol>
+
+            <div class="how-progress"><span id="how-progress-bar"></span></div>
+          </div>
+
+          <div class="how-stage">
+            <div class="phone-chat">
+              <div class="chat-head">
+                <div class="chat-avatar">P</div>
+                <div>
+                  <div class="chat-name">Priya</div>
+                  <div class="chat-sub mono" id="chat-sub">online</div>
+                </div>
               </div>
 
-              <div class="context-tabs" role="tablist">
-                <button type="button" class="context-tab active" data-app="whatsapp">💬 WhatsApp</button>
-                <button type="button" class="context-tab" data-app="slack">⚡ Slack</button>
-                <button type="button" class="context-tab" data-app="cursor">💻 Cursor IDE</button>
-                <button type="button" class="context-tab" data-app="notes">📝 Auto Note</button>
-              </div>
+              <div class="chat-body">
+                <div class="bubble in">Are we still on for Friday? 🙂</div>
 
-              <div class="stage-Shortcut-hint">
-                <span>Press</span>
-                <span class="kbd-badge">Space</span>
-                <span>or click pill to dictate</span>
-              </div>
-            </div>
-
-            <div class="stage-viewport">
-              <!-- Active App Mock Window -->
-              <div class="mock-app-window">
-                <div class="mock-app-header">
-                  <div class="mock-recipient">
-                    <div class="recipient-avatar" id="stage-avatar">VK</div>
-                    <div class="recipient-info">
-                      <h4 id="stage-app-title">Venkatesh • Gachibowli</h4>
-                      <span id="stage-app-sub">WhatsApp Direct • Indian Contact Bias Active</span>
-                    </div>
+                <div class="transcript" id="how-transcript" aria-label="Live transcript">
+                  <span class="t-label mono">LIVE TRANSCRIPT</span>
+                  <p>
+                    <span class="tok f">so</span>
+                    <span class="tok f">um</span>
+                    <span class="tok">hey</span>
+                    <span class="tok">Priya</span>
+                    <span class="tok">can</span>
+                    <span class="tok">we</span>
+                    <span class="tok">move</span>
+                    <span class="tok">it</span>
+                    <span class="tok">to</span>
+                    <span class="tok b">Friday</span>
+                    <span class="tok b">no</span>
+                    <span class="tok b">wait</span>
+                    <span class="tok b">scratch</span>
+                    <span class="tok b">that</span>
+                    <span class="tok">Monday</span>
+                    <span class="tok">at</span>
+                    <span class="tok">ten</span>
+                    <span class="tok f">uh</span>
+                    <span class="tok">and</span>
+                    <span class="tok">I'll</span>
+                    <span class="tok">send</span>
+                    <span class="tok">the</span>
+                    <span class="tok">deck</span>
+                  </p>
+                  <div class="t-legend mono" id="how-legend">
+                    <span><i class="lg f"></i>filler removed</span>
+                    <span><i class="lg b"></i>change of mind</span>
                   </div>
-                  <span class="mock-mode-pill" id="stage-mode-badge">✓ ZERO-CONFLICT OVERLAY</span>
                 </div>
 
-                <!-- Kinetic Raw Speech Stream (Shows false starts being struck out) -->
-                <div class="speech-kinetic-stream" id="stage-raw-stream">
-                  <span>Raw Stream:</span>
-                  <span style="color: var(--text-secondary);">"Hey Venkatesh let's meet at Banjara Hills at 4 PM..."</span>
-                  <span class="struck-disfluency">kaadu kaadu</span>
-                  <span class="backtrack-badge">↺ BACKTRACKED</span>
-                  <span style="color: var(--text-pure);">"make it Gachibowli at 5:30 PM and bring five thousand rupees"</span>
+                <div class="bubble out" id="how-out">
+                  Hey Priya, can we move it to Monday at 10:00? I’ll send the deck.
+                  <span class="bubble-meta mono">✓✓ 0.4s</span>
                 </div>
-
-                <!-- Final Polished Insertion Editor -->
-                <div class="mock-editor-area" id="stage-clean-editor">Hey Venkatesh, let's meet at Gachibowli at 5:30 PM and bring ₹5,000.<span class="blinking-cursor"></span></div>
               </div>
 
-              <!-- The Interactive Transparent Floating Pill -->
-              <div class="hero-floating-pill-zone">
-                <div id="hero-magic-pill" class="lilt-magic-pill" title="Click or press Spacebar to test live voice cleaning">
-                  <div class="pill-mic-orb">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                      <line x1="12" y1="19" x2="12" y2="23"></line>
-                    </svg>
-                  </div>
-                  <canvas id="pill-spectrum" class="pill-spectrum-canvas" width="110" height="26"></canvas>
-                  <span id="hero-pill-status" class="pill-state-label">CLICK PILL OR HOLD [SPACE]</span>
+              <div class="chat-input">
+                <span class="chat-input-text" id="chat-input-text">Message</span>
+                <div class="mini-pill" id="how-pill">
+                  <span class="led"></span>
+                  <canvas class="pill-wave" id="how-wave" width="64" height="18"></canvas>
                 </div>
-                <span style="font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted);">
-                  Floats transparently over any window • Never steals keyboard focus
-                </span>
               </div>
             </div>
           </div>
@@ -196,365 +247,464 @@
       </div>
     </section>
 
-    <!-- ====================================================================
-         ASYMMETRIC 12-COLUMN INTERACTIVE BENTO SHOWCASE
-         ==================================================================== -->
-    <section class="section" id="bento-showcase">
+    <!-- ============ 5. FEATURES (horizontal scroll) ============ -->
+    <section class="features" id="features">
+      <div class="features-pin" id="features-pin">
+        <div class="container features-head">
+          <p class="eyebrow mono">WHAT IT UNDERSTANDS</p>
+          <h2 class="section-title">Built for the way<br />people <em class="serif">actually</em> talk.</h2>
+          <p class="section-lead">Every card shows exactly what you say on the left of the arrow — and what Lilt types.</p>
+        </div>
+
+        <div class="h-track-wrap">
+          <div class="h-track" id="h-track">
+            <article class="f-card">
+              <span class="f-index mono">01</span>
+              <h3>“Scratch that”</h3>
+              <p>Change your mind halfway through. Lilt drops the old part and keeps the new one.</p>
+              <div class="f-demo">
+                <div class="said">Book a table for <s>four, no wait, scratch that,</s> six tonight</div>
+                <div class="arrow mono">↓</div>
+                <div class="got">Book a table for six tonight.</div>
+              </div>
+            </article>
+
+            <article class="f-card">
+              <span class="f-index mono">02</span>
+              <h3>Fillers vanish</h3>
+              <p>Um, uh, like, you know, basically — gone. Stutters collapse into one clean word.</p>
+              <div class="f-demo">
+                <div class="said"><s>Um so like</s> I <s>I I</s> think we're ready</div>
+                <div class="arrow mono">↓</div>
+                <div class="got">I think we're ready.</div>
+              </div>
+            </article>
+
+            <article class="f-card accent-amber">
+              <span class="f-index mono">03</span>
+              <h3>Tenglish &amp; Hinglish</h3>
+              <p>Mix languages like you do with friends. “Kaadu kaadu” and “nahi nahi” work just like “scratch that”.</p>
+              <div class="f-demo">
+                <div class="said">Meet at <s>Ameerpet kaadu kaadu</s> Kondapur at 7</div>
+                <div class="arrow mono">↓</div>
+                <div class="got">Meet at Kondapur at 7:00.</div>
+              </div>
+            </article>
+
+            <article class="f-card">
+              <span class="f-index mono">04</span>
+              <h3>Names, spelled right</h3>
+              <p>Lilt learns your contacts and local places, so Indian names stop turning into random English words.</p>
+              <div class="f-demo">
+                <div class="said bad">Call <s>when cat ash</s> at <s>gotchy bowly</s></div>
+                <div class="arrow mono">↓</div>
+                <div class="got">Call Venkatesh at Gachibowli.</div>
+              </div>
+            </article>
+
+            <article class="f-card">
+              <span class="f-index mono">05</span>
+              <h3>Money, numbers, email</h3>
+              <p>Speak naturally. Lilt writes amounts, times and addresses the way you’d type them.</p>
+              <div class="f-demo">
+                <div class="said">five thousand rupees to ravi at gmail dot com</div>
+                <div class="arrow mono">↓</div>
+                <div class="got">₹5,000 to ravi@gmail.com</div>
+              </div>
+            </article>
+
+            <article class="f-card accent-red">
+              <span class="f-index mono">06</span>
+              <h3>Reminders by voice</h3>
+              <p>Say “remind me…” and Lilt sets an alarm that stays on screen until you deal with it.</p>
+              <div class="f-demo">
+                <div class="said">Remind me to call mom in 20 minutes</div>
+                <div class="arrow mono">↓</div>
+                <div class="got">⏰ Call mom · 6:40 PM</div>
+              </div>
+            </article>
+
+            <article class="f-card">
+              <span class="f-index mono">07</span>
+              <h3>Notes &amp; checklists</h3>
+              <p>Say “take a note” and list things out. Lilt turns it into a tidy checklist you can search later.</p>
+              <div class="f-demo">
+                <div class="said">Take a note: milk, eggs, and the charger</div>
+                <div class="arrow mono">↓</div>
+                <div class="got">☐ Milk&nbsp; ☐ Eggs&nbsp; ☐ Charger</div>
+              </div>
+            </article>
+
+            <article class="f-card">
+              <span class="f-index mono">08</span>
+              <h3>Contacts &amp; clipboard</h3>
+              <p>Phone numbers become one-tap contact cards. Every result can auto-copy so you can paste anywhere.</p>
+              <div class="f-demo">
+                <div class="said">Rahul's number is nine eight four eight zero…</div>
+                <div class="arrow mono">↓</div>
+                <div class="got">👤 Rahul · +91 98480 22338</div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 6. FLOATING PILL ============ -->
+    <section class="pill-section" id="pill">
       <div class="container">
-        <div class="section-header reveal-up">
-          <div class="section-kicker">INTERACTIVE ARCHITECTURE</div>
-          <h2 class="section-heading">
-            Every feature is a <span class="serif-accent">living</span> instrument.
-          </h2>
-          <p class="section-lead">
-            Don't just read about Lilt. Drag the floating pill, dial the silent alarm stepper, check off auto-structured notes, and test the disfluency engine right inside the cards below.
+        <div class="split-head">
+          <div>
+            <p class="eyebrow mono">THE FLOATING PILL</p>
+            <h2 class="section-title reveal">One tiny pill.<br /><em class="serif">Every app.</em></h2>
+          </div>
+          <p class="section-lead reveal">
+            Lilt lives in a small transparent pill that floats on top of everything. It never steals your
+            keyboard focus, so text lands exactly where you were typing. Go on — <strong>drag it.</strong>
           </p>
         </div>
 
-        <div class="bento-grid">
-          <!-- ==============================================================
-               BENTO 1 (SPAN 7): DRAGGABLE TRANSPARENT FLOATING PILL
-               ============================================================== -->
-          <article class="bento-card bento-span-7 reveal-up">
-            <div>
-              <div class="bento-meta">
-                <span class="bento-tag">01 // ZERO-FRICTION OVERLAY</span>
-                <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">DRAG ME ↓</span>
-              </div>
-              <h3 class="bento-title">The Transparent Floating Pill</h3>
-              <p class="bento-desc">
-                Hovers gracefully above WhatsApp, Slack, or your IDE on both Windows and Android. Drag it anywhere, dock it to the screen edge, or collapse it to a translucent dot that never blocks your UI.
-              </p>
+        <div class="desk reveal" id="desk">
+          <div class="desk-bar">
+            <span class="dots"><i></i><i></i><i></i></span>
+            <div class="desk-tabs" id="desk-tabs" role="tablist">
+              <button type="button" class="desk-tab is-active" data-app="mail">Gmail</button>
+              <button type="button" class="desk-tab" data-app="slack">Slack</button>
+              <button type="button" class="desk-tab" data-app="code">VS Code</button>
+            </div>
+            <span class="mono desk-hint">tap the pill to dictate</span>
+          </div>
+
+          <div class="desk-screen" id="desk-screen">
+            <div class="app-view is-active" data-view="mail">
+              <div class="mail-line"><span class="muted">To</span> team@studio.in</div>
+              <div class="mail-line"><span class="muted">Subject</span> Launch update</div>
+              <div class="app-text" data-target>Hi team,<br /><br /></div>
+            </div>
+            <div class="app-view" data-view="slack">
+              <div class="slack-msg"><b>Arjun</b> <span class="muted mono">10:02</span><br />Is the build ready?</div>
+              <div class="app-text" data-target></div>
+            </div>
+            <div class="app-view mono" data-view="code">
+              <div class="code-line"><span class="c-k">fn</span> <span class="c-f">send_invoice</span>(user: &amp;User) {</div>
+              <div class="app-text code-text" data-target>  </div>
+              <div class="code-line">}</div>
             </div>
 
-            <div class="pill-sandbox-canvas" id="pill-sandbox">
-              <div class="sandbox-bg-code">
-                <div>// active_window: Cursor_IDE — main.rs</div>
-                <div>fn process_voice_stream(audio: &amp;[f32]) -&gt;CleanedText {</div>
-                <div>&nbsp;&nbsp;let raw = whisper_transcribe(audio);</div>
-                <div id="sandbox-injected-target" class="sandbox-injected-line">
-                  &nbsp;&nbsp;// Dictated: "Refactor auth middleware before Monday standup"
-                </div>
-                <div>}</div>
-              </div>
-
-              <!-- Physically Draggable Pill -->
-              <div id="draggable-pill" class="draggable-pill-widget">
-                <span class="brand-led"></span>
-                <span style="font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; color: #FFF;" id="drag-pill-text">DRAG ME • TAP TO DICTATE</span>
-              </div>
-
-              <div class="sandbox-controls">
-                <span id="drag-coords-readout">POS: X: 50% • Y: 50%</span>
-                <div style="display: flex; gap: 6px;">
-                  <button type="button" class="mini-pill-btn" id="btn-toggle-ghost">Ghost Opacity</button>
-                  <button type="button" class="mini-pill-btn" id="btn-dock-edge">Snap Edge</button>
-                </div>
-              </div>
+            <div class="float-pill" id="float-pill" data-cursor="Drag">
+              <span class="led"></span>
+              <canvas class="pill-wave" id="float-wave" width="70" height="20"></canvas>
+              <span class="mono float-status" id="float-status">READY</span>
             </div>
-          </article>
+          </div>
 
-          <!-- ==============================================================
-               BENTO 2 (SPAN 5): PERSISTENT SILENT ALARM & TACTILE STEPPER
-               ============================================================== -->
-          <article class="bento-card bento-span-5 reveal-up" id="bento-alarm">
-            <div>
-              <div class="bento-meta">
-                <span class="bento-tag">02 // SMART TEMPORAL ALERTS</span>
-                <span style="font-family: var(--font-mono); font-size: 11px; color: var(--nothing-red);">● LIVE WIDGET</span>
-              </div>
-              <h3 class="bento-title">Persistent Silent Alarms</h3>
-              <p class="bento-desc">
-                Say <em>"Remind me to call Rajesh in 20 minutes"</em>. Instead of a swipeable banner you forget, Lilt wakes your lockscreen persistently—with a <strong>Silent Visual Mode</strong> and tactile 5-minute snooze stepper.
-              </p>
+          <div class="desk-foot">
+            <span class="mono" id="float-pos">x 72% · y 70%</span>
+            <div class="desk-actions">
+              <button type="button" class="chip" id="btn-ghost">Fade when idle</button>
+              <button type="button" class="chip" id="btn-snap">Snap to edge</button>
             </div>
+          </div>
+        </div>
 
-            <!-- Interactive Nothing OS Lockscreen Alarm Widget -->
-            <div class="alarm-phone-mockup" id="alarm-widget-card">
-              <div class="alarm-top-row">
-                <span id="alarm-badge-pill" class="alarm-mode-badge">
-                  🔕 SILENT ALARM (VISUAL)
-                </span>
-                <button type="button" id="btn-toggle-silent-mode" class="silent-switch-btn active">
-                  Silent Mode: ON
-                </button>
-              </div>
+        <ul class="pill-facts">
+          <li class="reveal"><b>Always on top</b><span>Visible over every window, game or full-screen app.</span></li>
+          <li class="reveal"><b>Never steals focus</b><span>Your cursor stays put. Text goes where you were typing.</span></li>
+          <li class="reveal"><b>Out of the way</b><span>Drag it anywhere, snap it to an edge, or let it fade when idle.</span></li>
+          <li class="reveal"><b>Phone too</b><span>On Android it floats at the screen edge and doubles as a voice keyboard.</span></li>
+        </ul>
+      </div>
+    </section>
 
-              <div class="alarm-task-title" id="alarm-demo-title">Call Rajesh regarding Q4 deck</div>
-              <div class="alarm-task-sub" id="alarm-demo-sub">Wakes screen &amp; demands action with zero audio ringtone</div>
+    <!-- ============ 7. REMINDERS / SILENT ALARMS ============ -->
+    <section class="alarms" id="alarms">
+      <div class="container alarms-grid">
+        <div class="alarms-copy">
+          <p class="eyebrow mono">REMINDERS THAT STICK</p>
+          <h2 class="section-title reveal">Say it once.<br /><em class="serif">Never forget it.</em></h2>
+          <p class="section-lead reveal">
+            Normal notifications get swiped away and forgotten. Lilt reminders take over the screen and stay there until you
+            tap <b>Done</b> or <b>Snooze</b>. In a meeting? Turn on <b>Silent alarm</b> — it still shows up, it just doesn’t make a sound.
+          </p>
 
-              <!-- Tactile [- / +] 5-Minute Stepper -->
-              <div class="snooze-stepper-box">
-                <button type="button" class="stepper-btn" id="stepper-minus" aria-label="Decrease snooze">−</button>
-                <div class="stepper-readout">
-                  <span class="val" id="stepper-val-display">10m</span>
-                  <span class="lbl">SNOOZE DURATION (5M STEPS)</span>
-                </div>
-                <button type="button" class="stepper-btn" id="stepper-plus" aria-label="Increase snooze">+</button>
-              </div>
-
-              <!-- Quick Jump Presets -->
-              <div class="preset-chips-row">
-                <button type="button" class="preset-chip" data-mins="5">5m</button>
-                <button type="button" class="preset-chip active" data-mins="10">10m</button>
-                <button type="button" class="preset-chip" data-mins="15">15m</button>
-                <button type="button" class="preset-chip" data-mins="30">30m</button>
-                <button type="button" class="preset-chip" data-mins="60">1h</button>
-              </div>
-
-              <div class="alarm-action-buttons">
-                <button type="button" class="btn-alarm-snooze" id="btn-demo-snooze">SNOOZE (+10m)</button>
-                <button type="button" class="btn-alarm-ack" id="btn-demo-ack">✓ ACKNOWLEDGE</button>
-              </div>
-            </div>
-          </article>
-
-          <!-- ==============================================================
-               BENTO 3 (SPAN 5): GRANOLA-STYLE AUTO NOTES + PIN + SEARCH
-               ============================================================== -->
-          <article class="bento-card bento-span-5 reveal-up" id="bento-notes">
-            <div>
-              <div class="bento-meta">
-                <span class="bento-tag">03 // SECOND BRAIN CAPTURE</span>
-                <span style="font-family: var(--font-mono); font-size: 11px; color: var(--amber-gold);">TRY SEARCH &amp; PIN ↓</span>
-              </div>
-              <h3 class="bento-title">Auto Note Taker &amp; Instant Search</h3>
-              <p class="bento-desc">
-                Say <em>"Take a note..."</em> to auto-format interactive checklists. Pin critical thoughts to the top (📌) and filter hundreds of entries with real-time amber keyword highlighting.
-              </p>
-            </div>
-
-            <div class="notes-interactive-widget">
-              <div class="mini-search-bar">
-                <span style="color: var(--amber-gold); font-size: 13px;">🔍</span>
-                <input type="text" id="bento-note-search" placeholder="Search notes (try 'milk', 'flight', 'rupees')..." />
-              </div>
-
-              <div class="mini-note-list" id="bento-notes-container">
-                <!-- Populated & sorted dynamically via app.js -->
-              </div>
-            </div>
-          </article>
-
-          <!-- ==============================================================
-               BENTO 4 (SPAN 7): "SCRATCH THAT" & TENGLISH BACKTRACKING
-               ============================================================== -->
-          <article class="bento-card bento-span-7 reveal-up" id="bento-pipeline">
-            <div>
-              <div class="bento-meta">
-                <span class="bento-tag">04 // CONTEXTUAL SPEECH ENGINE</span>
-                <span style="font-family: var(--font-mono); font-size: 11px; color: #4ADE80;">⚡ 3.8ms LATENCY</span>
-              </div>
-              <h3 class="bento-title">Mid-Sentence Backtracking &amp; Tenglish</h3>
-              <p class="bento-desc">
-                Change your mind while speaking—in English, Telugu, or Hinglish. Lilt detects negation markers (<em>"scratch that"</em>, <em>"no wait"</em>, <em>"kaadu kaadu"</em>, <em>"nahi nahi"</em>) and rewrites the clause cleanly.
-              </p>
-            </div>
-
-            <div class="pipeline-Interactive">
-              <div class="scenario-pills">
-                <button type="button" class="scenario-pill active" data-sc="backtrack">English Backtrack</button>
-                <button type="button" class="scenario-pill" data-sc="tenglish">Tenglish ("Kaadu Kaadu")</button>
-                <button type="button" class="scenario-pill" data-sc="currency">Rupees &amp; Email</button>
-                <button type="button" class="scenario-pill" data-sc="stutter">Stutter Collapse</button>
-              </div>
-
-              <div class="pipeline-stages">
-                <div class="pipe-box">
-                  <div class="pipe-label">RAW SPOKEN AUDIO</div>
-                  <div id="pipe-raw-text" style="font-size: 13.5px; color: var(--text-secondary); line-height: 1.55;">
-                    "Send the client contract by <span style="color:#F87171;text-decoration:line-through;">Friday evening... no wait, scratch that,</span> Monday 10 AM."
-                  </div>
-                </div>
-
-                <div class="pipe-node">
-                  <div>🦀 lilt-core</div>
-                  <div style="font-size: 8.5px; color: var(--text-muted); margin-top: 2px;">AST CLEANUP</div>
-                </div>
-
-                <div class="pipe-box clean-out">
-                  <div class="pipe-label" style="color: #4ADE80;">✓ POLISHED OUTPUT</div>
-                  <div id="pipe-clean-text" style="font-size: 14px; font-weight: 600; color: #FFFFFF; line-height: 1.55;">
-                    "Send the client contract by Monday 10:00 AM."
-                  </div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <!-- ==============================================================
-               BENTO 5 (SPAN 6): INDIAN CONTACT & REGIONAL VOCABULARY BIAS
-               ============================================================== -->
-          <article class="bento-card bento-span-6 reveal-up">
-            <div>
-              <div class="bento-meta">
-                <span class="bento-tag">05 // ZERO PHONETIC DISTORTION</span>
-                <span style="font-family: var(--font-mono); font-size: 11px; color: var(--amber-gold);">🇮🇳 REGIONAL PRECISION</span>
-              </div>
-              <h3 class="bento-title">Dynamic Contact &amp; Locality Injection</h3>
-              <p class="bento-desc">
-                Mainstream voice keyboards butcher Indian names and neighborhoods. Lilt biases transcription with your top contacts and regional vocabulary, plus extracts spoken numbers into 1-tap Contact Cards.
-              </p>
-            </div>
-
-            <div class="vs-comparison-box">
-              <div class="vs-row bad">
-                <div>
-                  <div style="font-family: var(--font-mono); font-size: 9.5px; opacity: 0.8;">STANDARD VOICE TYPING</div>
-                  <div>"Call <s>When cat ash</s> at <s>Gotchy bowly</s> on 98480..."</div>
-                </div>
-                <span style="font-family: var(--font-mono); font-size: 11px;">✗ MANGLED</span>
-              </div>
-
-              <div class="vs-row good">
-                <div>
-                  <div style="font-family: var(--font-mono); font-size: 9.5px; opacity: 0.9;">LILT CONTEXT BIAS</div>
-                  <div>"Call <strong>Venkatesh</strong> at <strong>Gachibowli</strong> on +91 98480 22338"</div>
-                </div>
-                <span style="font-family: var(--font-mono); font-size: 11px;">✓ 100% EXACT</span>
-              </div>
-
+          <div class="flow">
+            <div class="flow-step reveal">
+              <span class="flow-num mono">1</span>
               <div>
-                <span class="contact-chip-preview">
-                  👤 Auto-Extracted: Venkatesh • +91 98480 22338 [Save Contact]
-                </span>
+                <span class="flow-k mono">YOU SAY</span>
+                <p>“Remind me to call Rajesh in 20 minutes.”</p>
               </div>
             </div>
-          </article>
+            <div class="flow-step reveal">
+              <span class="flow-num mono">2</span>
+              <div>
+                <span class="flow-k mono">LILT UNDERSTANDS</span>
+                <p><span class="tag">Task · Call Rajesh</span> <span class="tag">When · in 20 min</span></p>
+              </div>
+            </div>
+            <div class="flow-step reveal">
+              <span class="flow-num mono">3</span>
+              <div>
+                <span class="flow-k mono">YOUR PHONE</span>
+                <p>Wakes up and shows the reminder until you act on it.</p>
+              </div>
+            </div>
+          </div>
 
-          <!-- ==============================================================
-               BENTO 6 (SPAN 6): SHARED RUST CORE & PRIVACY TELEMETRY
-               ============================================================== -->
-          <article class="bento-card bento-span-6 reveal-up">
-            <div>
-              <div class="bento-meta">
-                <span class="bento-tag">06 // NATIVE SYSTEMS ENGINEERING</span>
-                <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">ARM64 + X86_64</span>
-              </div>
-              <h3 class="bento-title">Powered by <code>lilt-core</code> in Rust</h3>
-              <p class="bento-desc">
-                One shared Rust engine compiled to native Windows binaries and Android JNI (<code>liblilt_core.so</code>). Auto-copies cleaned results to your clipboard the instant you finish speaking.
-              </p>
-            </div>
+          <label class="switch-row reveal" for="silent-switch">
+            <span class="switch">
+              <input type="checkbox" id="silent-switch" checked />
+              <span class="switch-track"><span class="switch-thumb"></span></span>
+            </span>
+            <span>
+              <b id="silent-title">Silent alarm is on</b>
+              <span class="muted" id="silent-desc">Shows on screen until you act — no sound.</span>
+            </span>
+          </label>
+        </div>
 
-            <div class="telemetry-grid">
-              <div class="telemetry-stat">
-                <div class="telemetry-val" data-scramble="3.8ms">3.8ms</div>
-                <div class="telemetry-lbl">CLEANUP LATENCY</div>
-              </div>
-              <div class="telemetry-stat">
-                <div class="telemetry-val" style="color: var(--amber-gold);" data-scramble="0 KB">0 KB</div>
-                <div class="telemetry-lbl">DATA TELEMETRY</div>
-              </div>
-              <div class="telemetry-stat">
-                <div class="telemetry-val" style="color: #4ADE80;" data-scramble="100%">100%</div>
-                <div class="telemetry-lbl">OPEN SOURCE</div>
+        <div class="phone-wrap">
+          <div class="phone" id="alarm-phone">
+            <div class="ring-waves" aria-hidden="true"><i></i><i></i><i></i></div>
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="lock-time mono" id="lock-time">18:20</div>
+              <div class="lock-date mono" id="lock-date">MONDAY, 9 NOV</div>
+
+              <div class="alarm-card" id="alarm-card">
+                <div class="alarm-top">
+                  <span class="alarm-mode mono" id="alarm-mode">🔕 SILENT</span>
+                  <span class="mono muted">LILT REMINDER</span>
+                </div>
+                <h4 class="alarm-title" id="alarm-title">Call Rajesh about the Q4 deck</h4>
+                <p class="alarm-sub mono" id="alarm-sub">Set by voice · stays until you act</p>
+
+                <div class="stepper">
+                  <button type="button" class="step-btn" id="snooze-minus" aria-label="Less snooze time">−</button>
+                  <div class="step-val">
+                    <span id="snooze-val">10 min</span>
+                    <small class="mono">SNOOZE FOR</small>
+                  </div>
+                  <button type="button" class="step-btn" id="snooze-plus" aria-label="More snooze time">+</button>
+                </div>
+
+                <div class="presets" id="snooze-presets">
+                  <button type="button" data-m="5">5m</button>
+                  <button type="button" data-m="10" class="is-active">10m</button>
+                  <button type="button" data-m="15">15m</button>
+                  <button type="button" data-m="30">30m</button>
+                  <button type="button" data-m="60">1h</button>
+                </div>
+
+                <div class="alarm-actions">
+                  <button type="button" class="a-snooze" id="btn-snooze">Snooze 10 min</button>
+                  <button type="button" class="a-done" id="btn-done">✓ Done</button>
+                </div>
               </div>
             </div>
-          </article>
+          </div>
+          <p class="phone-caption mono">↑ Try it — it’s the real flow</p>
         </div>
       </div>
     </section>
 
-    <!-- ====================================================================
-         DOWNLOADS MATRIX SECTION
-         ==================================================================== -->
-    <section class="section" id="downloads">
-      <div class="container">
-        <div class="section-header reveal-up">
-          <div class="section-kicker">GET LILT TODAY</div>
-          <h2 class="section-heading">
-            Built for your <span class="serif-accent">desktop</span> and your <span class="serif-accent">pocket.</span>
-          </h2>
-          <p class="section-lead">
-            Free, open-source under Apache 2.0, and ready to install in seconds. Your device is highlighted automatically below.
-          </p>
+    <!-- ============ 8. NOTES + SEARCH + PIN ============ -->
+    <section class="notes" id="notes">
+      <div class="container notes-grid">
+        <div class="notes-app reveal" id="notes-app">
+          <div class="notes-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="search" id="notes-search" placeholder="Search everything you’ve said…" autocomplete="off" aria-label="Search notes" />
+            <span class="mono notes-count" id="notes-count">5</span>
+          </div>
+          <div class="notes-filters" id="notes-filters">
+            <button type="button" class="is-active" data-f="all">All</button>
+            <button type="button" data-f="note">Notes</button>
+            <button type="button" data-f="alert">Reminders</button>
+            <button type="button" data-f="text">Dictations</button>
+          </div>
+          <div class="notes-list" id="notes-list"></div>
+          <div class="notes-try mono">TRY: <button type="button" data-q="milk">milk</button><button type="button" data-q="rajesh">rajesh</button><button type="button" data-q="₹">₹</button></div>
         </div>
 
-        <div class="downloads-grid">
-          <!-- Windows Desktop Card -->
-          <div class="dl-platform-card reveal-up" id="dl-card-windows">
-            <div>
-              <div class="bento-meta">
-                <span class="bento-tag">WINDOWS 10 / 11 (64-BIT)</span>
-                <span class="brand-version" id="win-rec-badge">TAURI v2 + RUST</span>
-              </div>
-              <h3 style="font-size: 30px; font-weight: 800; margin-bottom: 8px;">Lilt for Windows</h3>
-              <p style="color: var(--text-secondary); font-size: 14.5px;">
-                Ultra-lightweight native desktop overlay (~24 MB) with global hotkey activation and direct cursor typing.
-              </p>
+        <div class="notes-copy">
+          <p class="eyebrow mono">YOUR SECOND BRAIN</p>
+          <h2 class="section-title reveal">Notes that<br /><em class="serif">organise themselves.</em></h2>
+          <p class="section-lead reveal">
+            Everything you say is saved in one place. Start with <b>“take a note”</b> and Lilt turns your rambling into a tidy checklist.
+            Find anything in a second with search, and <b>📌 pin</b> what matters so it stays on top.
+          </p>
+          <ul class="ticks">
+            <li class="reveal">Instant search across notes, reminders and dictations</li>
+            <li class="reveal">Matches highlighted as you type</li>
+            <li class="reveal">Pin important items to the top</li>
+            <li class="reveal">Tick items off as you go</li>
+          </ul>
+        </div>
+      </div>
+    </section>
 
-              <ul class="dl-check-list">
-                <li>Transparent floating pill across all Windows apps</li>
-                <li>Global hotkey trigger (Hold Space / Custom shortcut)</li>
-                <li>Local Whisper + optional Groq/Gemini cloud polish</li>
-                <li>Zero background bloat compared to Electron apps</li>
-              </ul>
-            </div>
+    <!-- ============ 9. OPEN SOURCE / PRIVACY ============ -->
+    <section class="open" id="open">
+      <div class="container">
+        <p class="eyebrow mono center">OPEN BY DEFAULT</p>
+        <h2 class="section-title center reveal">Yours to use, read<br />and <em class="serif">make better.</em></h2>
 
-            <a href="https://github.com/shashankatthaluri/Lilt/releases/latest/download/Lilt-Setup-x64.exe" class="btn-hero-primary" style="justify-content: center; width: 100%;">
-              <span>↓ Download Lilt for Windows (.exe)</span>
-            </a>
+        <div class="stats">
+          <div class="stat reveal">
+            <span class="stat-num"><span data-count="100">0</span><small>%</small></span>
+            <span class="stat-lbl">Open source (Apache 2.0)</span>
           </div>
-
-          <!-- Android Mobile Card -->
-          <div class="dl-platform-card reveal-up" id="dl-card-android">
-            <div>
-              <div class="bento-meta">
-                <span class="bento-tag">ANDROID 10+ (ARM64)</span>
-                <span class="brand-version" id="and-rec-badge">NOTHING OS UI</span>
-              </div>
-              <h3 style="font-size: 30px; font-weight: 800; margin-bottom: 8px;">Lilt for Android</h3>
-              <p style="color: var(--text-secondary); font-size: 14.5px;">
-                Pure Nothing OS AMOLED dark luxury app (~17 MB) with edge overlay pill, persistent silent alarms, and instant search.
-              </p>
-
-              <ul class="dl-check-list">
-                <li>Floating edge pill &amp; custom voice keyboard IME</li>
-                <li>Persistent Silent Alarm lockscreen wakeup + 5m stepper</li>
-                <li>Auto Note Taker with Pin-to-Top (📌) &amp; amber search</li>
-                <li>1-tap Contact extraction &amp; Auto-Copy to clipboard</li>
-              </ul>
-            </div>
-
-            <a href="https://github.com/shashankatthaluri/Lilt/releases/latest/download/Lilt-v1.1-Release.apk" class="btn-hero-primary" style="justify-content: center; width: 100%;">
-              <span>↓ Download Lilt for Android (.apk)</span>
-            </a>
+          <div class="stat reveal">
+            <span class="stat-num"><span data-count="0">0</span><small>ads</small></span>
+            <span class="stat-lbl">No ads, no tracking, no account</span>
           </div>
+          <div class="stat reveal">
+            <span class="stat-num">&lt;<span data-count="1">0</span><small>sec</small></span>
+            <span class="stat-lbl">From speaking to clean text</span>
+          </div>
+          <div class="stat reveal">
+            <span class="stat-num"><span data-count="2">0</span><small>apps</small></span>
+            <span class="stat-lbl">Windows &amp; Android, one shared Rust core</span>
+          </div>
+        </div>
+
+        <div class="privacy-row">
+          <div class="privacy-card reveal">
+            <h3>Your keys, your data</h3>
+            <p>Bring your own speech API key, or run Whisper locally on desktop. Your history stays on your device.</p>
+          </div>
+          <div class="privacy-card reveal">
+            <h3>Read every line</h3>
+            <p>The full source for desktop, mobile and the Rust engine is on GitHub. Audit it, fork it, improve it.</p>
+          </div>
+          <div class="privacy-card reveal">
+            <h3>Made in Hyderabad</h3>
+            <p>Built for Indian English, Tenglish and Hinglish speakers first — and for anyone who talks like a human.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 10. DOWNLOAD ============ -->
+    <section class="download" id="download">
+      <div class="container">
+        <div class="download-head">
+          <p class="eyebrow mono center">GET LILT</p>
+          <h2 class="section-title center reveal">Start talking<br /><em class="serif">in two minutes.</em></h2>
+          <p class="section-lead center reveal" id="os-detected">Free forever. Pick your device below.</p>
+        </div>
+
+        <div class="dl-grid">
+          <article class="dl-card reveal" id="dl-windows">
+            <span class="dl-rec mono">★ Recommended for you</span>
+            <img src="assets/icons/windows.svg" alt="" width="34" height="34" class="dl-icon" />
+            <h3>Windows</h3>
+            <p class="muted">Windows 10 &amp; 11 · 64-bit · ~24 MB</p>
+            <ul>
+              <li>Floating pill over every app</li>
+              <li>Global hotkey to start talking</li>
+              <li>Types straight into the focused window</li>
+            </ul>
+            <a class="btn btn-light btn-block magnetic" href="https://github.com/shashankatthaluri/Lilt/releases/latest/download/Lilt-Setup-x64.exe">Download for Windows</a>
+          </article>
+
+          <article class="dl-card reveal" id="dl-android">
+            <span class="dl-rec mono">★ Recommended for you</span>
+            <img src="assets/icons/android.svg" alt="" width="34" height="34" class="dl-icon" />
+            <h3>Android</h3>
+            <p class="muted">Android 10+ · ~17 MB APK</p>
+            <ul>
+              <li>Edge pill + voice keyboard</li>
+              <li>Silent alarms &amp; snooze</li>
+              <li>Notes with search and pins</li>
+            </ul>
+            <a class="btn btn-light btn-block magnetic" href="https://github.com/shashankatthaluri/Lilt/releases/latest/download/Lilt-v1.1-Release.apk">Download APK</a>
+            <button type="button" class="qr-toggle mono" id="qr-toggle">On a computer? Scan to install on your phone ↓</button>
+            <div class="qr-panel" id="qr-panel">
+              <div class="qr-box" id="qr-box"></div>
+              <p class="muted">Point your phone camera here to download the APK directly.</p>
+            </div>
+          </article>
+        </div>
+
+        <p class="dl-foot muted center">
+          Prefer to build it yourself? <a href="https://github.com/shashankatthaluri/Lilt" target="_blank" rel="noopener">Clone the repo →</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ 11. FAQ ============ -->
+    <section class="faq" id="faq">
+      <div class="container faq-grid">
+        <div>
+          <p class="eyebrow mono">QUESTIONS</p>
+          <h2 class="section-title reveal">Good<br /><em class="serif">questions.</em></h2>
+        </div>
+        <div class="faq-list">
+          <details class="reveal">
+            <summary>Is Lilt really free?<span class="plus"></span></summary>
+            <p>Yes. Lilt is open source under the Apache 2.0 licence. No subscription, no ads, no account.</p>
+          </details>
+          <details class="reveal">
+            <summary>Which languages does it understand?<span class="plus"></span></summary>
+            <p>English with Indian accents is the focus, along with mixed Telugu-English (Tenglish) and Hindi-English (Hinglish) phrases like “kaadu kaadu” and “nahi nahi”.</p>
+          </details>
+          <details class="reveal">
+            <summary>Where does my voice go?<span class="plus"></span></summary>
+            <p>Audio is sent only to the speech engine you choose — your own API key (for example Groq) or a local Whisper model on desktop. Your history is stored on your device.</p>
+          </details>
+          <details class="reveal">
+            <summary>Why does the Android app need special permissions?<span class="plus"></span></summary>
+            <p>To float the pill over other apps it needs “display over other apps”. Microphone is for listening, and alarms need permission to show on the lock screen. Nothing else.</p>
+          </details>
+          <details class="reveal">
+            <summary>What does “silent alarm” mean?<span class="plus"></span></summary>
+            <p>The reminder still takes over your screen and stays until you tap Done or Snooze — it just doesn’t ring. Perfect for meetings, libraries and late nights.</p>
+          </details>
+          <details class="reveal">
+            <summary>Can I contribute?<span class="plus"></span></summary>
+            <p>Please do. Check CONTRIBUTING.md on GitHub — bug reports, new language rules and UI polish are all welcome.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 12. FINAL CTA ============ -->
+    <section class="final" id="final">
+      <div class="container center">
+        <h2 class="final-title reveal">Stop typing.<br /><em class="serif">Start talking.</em></h2>
+        <div class="hero-ctas center-row reveal">
+          <a class="btn btn-light btn-lg magnetic" href="#download" data-os-link>Download Lilt</a>
+          <a class="btn btn-ghost btn-lg magnetic" href="https://github.com/shashankatthaluri/Lilt" target="_blank" rel="noopener">View on GitHub</a>
         </div>
       </div>
     </section>
   </main>
 
-  <!-- Sticky Bottom Floating Pill Dock (Follows scroll) -->
-  <div class="bottom-sticky-pill-wrap" id="sticky-bottom-dock">
-    <div class="bottom-sticky-pill">
-      <span class="brand-led"></span>
-      <span class="sticky-status-text" id="sticky-pill-narration">LILT OVERLAY READY • HOLD [SPACE] TO TEST</span>
-      <a href="#downloads" class="btn-nav-dl" style="padding: 6px 14px; font-size: 11.5px;">Get Lilt</a>
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <footer class="site-footer">
-    <div class="container footer-row">
+  <footer class="footer">
+    <div class="container footer-top">
       <div>
-        <div style="display: flex; align-items: center; gap: 8px; color: #FFF; font-family: var(--font-mono); font-weight: 700; margin-bottom: 6px;">
-          <span class="brand-led"></span>
-          <span>L I L T</span>
-        </div>
-        <p>Released under the Apache 2.0 Open Source License. Crafted by <a href="https://github.com/shashankatthaluri" target="_blank" rel="noopener" style="color: #FFF;">Shashank Atthaluri</a>.</p>
+        <a href="#top" class="brand"><span class="led"></span><span class="brand-word">lilt</span></a>
+        <p class="muted">Speak messy. Write beautifully.</p>
       </div>
-
       <div class="footer-links">
-        <a href="https://github.com/shashankatthaluri/Lilt" target="_blank" rel="noopener">GitHub Monorepo</a>
+        <a href="https://github.com/shashankatthaluri/Lilt" target="_blank" rel="noopener">GitHub</a>
         <a href="https://github.com/shashankatthaluri/Lilt/releases" target="_blank" rel="noopener">Releases</a>
-        <a href="https://github.com/shashankatthaluri/Lilt/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
+        <a href="https://github.com/shashankatthaluri/Lilt/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contribute</a>
         <a href="https://github.com/shashankatthaluri/Lilt/blob/main/SECURITY.md" target="_blank" rel="noopener">Security</a>
       </div>
     </div>
+    <div class="footer-word" aria-hidden="true" id="footer-word">lilt</div>
+    <div class="container footer-bottom mono muted">
+      <span>© 2026 Shashank Atthaluri · Apache 2.0</span>
+      <span>Made with ♥ in Hyderabad</span>
+    </div>
   </footer>
 
-  <script src="app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js" defer></script>
+  <script src="app.js" defer></script>
 </body>
 </html>
