@@ -255,8 +255,9 @@
      ===================================================================== */
   const HERO_PHRASES = [
     { raw: ["~so", "~um", "hey", "can", "we", "push", "the", "call", "to", "~Friday", "~no", "~wait", "~scratch", "~that", "Monday", "morning"], clean: "Hey, can we push the call to Monday morning?" },
-    { raw: ["let's", "meet", "at", "~Banjara", "~Hills", "~kaadu", "~kaadu", "Gachibowli", "at", "five", "thirty"], clean: "Let's meet at Gachibowli at 5:30." },
+    { raw: ["~Romanized", "~Telugu", "repu", "morning", "ten", "ki", "team", "meeting", "undi"], clean: "Repu morning 10:00 ki team meeting undi." },
     { raw: ["~uh", "send", "five", "thousand", "rupees", "to", "ravi", "at", "gmail", "dot", "com"], clean: "Send ₹5,000 to ravi@gmail.com." },
+    { raw: ["~Romanized", "~Hindi", "kal", "shaam", "paanch", "baje", "call", "karte", "hain"], clean: "Kal shaam 5:00 baje call karte hain." },
     { raw: ["~like", "I", "~I", "~I", "think", "the", "new", "build", "is", "ready", "~you", "~know"], clean: "I think the new build is ready." }
   ];
 
@@ -741,7 +742,7 @@
       btn.addEventListener("click", () => {
         wpBtns.forEach((b) => b.classList.toggle("is-active", b === btn));
         const wp = btn.dataset.wp;
-        desk.classList.remove("wp-aurora", "wp-sunset", "wp-ocean", "wp-oled");
+        desk.classList.remove("wp-aurora", "wp-sunset", "wp-ocean", "wp-pearl", "wp-oled");
         desk.classList.add(`wp-${wp}`);
       });
     });

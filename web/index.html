@@ -281,8 +281,8 @@
 
             <article class="f-card accent-amber">
               <span class="f-index mono">03</span>
-              <h3>99+ languages &amp; Romanized voice</h3>
-              <p>Pick your languages for Auto mode, or say <i>“Romanized Telugu”</i> / <i>“Romanized Hindi”</i> before speaking to type in Latin script.</p>
+              <h3>Bounded Auto &amp; Romanized voice</h3>
+              <p>Choose the exact languages you speak so Auto mode never hallucinates foreign scripts. Say <i>“Romanized Telugu”</i> or <i>“Romanized Hindi”</i> first to type in Latin script.</p>
               <div class="f-demo">
                 <div class="said"><s>“Romanized Telugu”</s> Repu morning 10 ki meeting undi</div>
                 <div class="arrow mono">↓</div>
@@ -385,10 +385,11 @@
               <button type="button" class="desk-tab" data-app="code">VS Code</button>
             </div>
             <div class="wp-switcher" id="wp-switcher" aria-label="Change background wallpaper">
-              <span class="mono wp-lbl">WALLPAPER:</span>
-              <button type="button" class="wp-dot is-active" data-wp="aurora" title="Aurora Mesh"><i></i>Aurora</button>
+              <span class="mono wp-lbl">THEME:</span>
+              <button type="button" class="wp-dot is-active" data-wp="aurora" title="Obsidian Aurora"><i></i>Aurora</button>
               <button type="button" class="wp-dot" data-wp="sunset" title="Warm Sunset"><i></i>Sunset</button>
               <button type="button" class="wp-dot" data-wp="ocean" title="Deep Ocean"><i></i>Ocean</button>
+              <button type="button" class="wp-dot" data-wp="pearl" title="Alabaster Light Glass"><i></i>Light</button>
               <button type="button" class="wp-dot" data-wp="oled" title="Pure OLED"><i></i>OLED</button>
             </div>
           </div>
@@ -627,9 +628,9 @@
             <h3>Windows</h3>
             <p class="muted">Windows 10 &amp; 11 · 64-bit · ~24 MB</p>
             <ul>
-              <li>Liquid Glass floating pill over every app</li>
-              <li>Global hotkey to start talking</li>
-              <li>Types straight into the focused window</li>
+              <li>Translucent circle when idle → expands into status pill</li>
+              <li>99+ languages with Bounded Auto &amp; “Romanized” voice prefix</li>
+              <li>Global hotkey &amp; instant typing into any focused window</li>
             </ul>
             <a class="btn btn-light btn-block magnetic" href="https://github.com/shashankatthaluri/Lilt/releases/latest/download/Lilt-Setup-x64.exe">Download for Windows (.exe)</a>
             <p class="dl-disclaimer mono">Unsigned open-source installer · Click “Run anyway” if Windows SmartScreen prompts.</p>
@@ -641,9 +642,9 @@
             <h3>Every Android Phone</h3>
             <p class="muted">Samsung, Pixel, OnePlus, Xiaomi, Nothing · Android 10+</p>
             <ul>
-              <li>Wallpaper-adaptive Liquid Glass pill &amp; keyboard</li>
-              <li>Persistent silent alarms &amp; 5-min snooze stepper</li>
-              <li>Auto notes with instant search and pins</li>
+              <li>Obsidian Dark, Alabaster Light &amp; System Liquid Glass themes</li>
+              <li>Floating translucent circle with 4-color situation dot</li>
+              <li>Bounded multi-language Auto, silent alarms &amp; smart notes</li>
             </ul>
             <a class="btn btn-light btn-block magnetic" href="https://github.com/shashankatthaluri/Lilt/releases/latest/download/Lilt-v1.1-Release.apk">Download Universal APK</a>
             <p class="dl-disclaimer mono">Direct open-source APK (install at your own discretion; allow “Install unknown apps” when prompted).</p>
@@ -688,8 +689,12 @@
             <p>Yes. Lilt is open source under the Apache 2.0 licence. No subscription, no ads, no account.</p>
           </details>
           <details class="reveal">
-            <summary>Which languages does it understand?<span class="plus"></span></summary>
-            <p>Powered by Groq Whisper, Lilt understands 99+ world languages (English, Hindi, Telugu, Tamil, Kannada, Malayalam, Bengali, Marathi, Spanish, French, German, Japanese, Arabic, and more). You choose the specific languages you speak so Auto mode stays strictly locked to your languages — and you can say <i>“Romanized Telugu”</i> or <i>“Romanized Hindi”</i> before speaking to get clean Latin-script output automatically.</p>
+            <summary>Which languages and scripts does Lilt support?<span class="plus"></span></summary>
+            <p>Powered by Groq Whisper and Qwen3, Lilt supports 99+ languages (English, Hindi, Telugu, Tamil, Kannada, Malayalam, Bengali, Marathi, Gujarati, Punjabi, Urdu, Spanish, French, German, Japanese, Arabic, and more). You check the specific languages you actually speak, and <b>Auto Mode</b> restricts recognition and text output strictly to your selected languages. Whenever you want Latin-script output, just say <i>“Romanized Telugu”</i> or <i>“Romanized Hindi”</i> right before speaking — Lilt strips the prefix and types your message in clean Romanized script.</p>
+          </details>
+          <details class="reveal">
+            <summary>Does it work on every Android phone and theme?<span class="plus"></span></summary>
+            <p>Yes. Lilt is designed universally for all Android 10+ devices (Samsung, Pixel, OnePlus, Xiaomi, Motorola, Nothing) with adaptive <b>Obsidian Dark Glass</b>, <b>Alabaster Light Glass</b>, and <b>System Auto</b> themes, plus a translucent floating circle pill that adapts over any wallpaper or app. iOS and macOS versions are currently in development and coming soon.</p>
           </details>
           <details class="reveal">
             <summary>Where does my voice go?<span class="plus"></span></summary>

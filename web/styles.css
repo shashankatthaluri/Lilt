@@ -821,6 +821,7 @@ section { position: relative; }
 .wp-dot[data-wp="aurora"] i { background: linear-gradient(135deg, #38bdf8, #a855f7, #ec4899); }
 .wp-dot[data-wp="sunset"] i { background: linear-gradient(135deg, #ff3b1f, #ffb547, #f43f5e); }
 .wp-dot[data-wp="ocean"] i { background: linear-gradient(135deg, #06b6d4, #3b82f6, #10b981); }
+.wp-dot[data-wp="pearl"] i { background: linear-gradient(135deg, #ffffff, #e0f2fe, #fce7f3); border: 1px solid rgba(255,255,255,0.5); }
 .wp-dot[data-wp="oled"] i { background: #18181b; border: 1px solid rgba(255,255,255,0.3); }
 .wp-dot.is-active, .wp-dot:hover { color: #fff; border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.08); }
 
@@ -852,6 +853,14 @@ section { position: relative; }
 .desk.wp-ocean .b1 { background: #0284c7; }
 .desk.wp-ocean .b2 { background: #10b981; }
 .desk.wp-ocean .b3 { background: #6366f1; }
+
+.desk.wp-pearl .desk-screen { background: #f4f4f8; color: #09090b; }
+.desk.wp-pearl .mail-line { border-color: rgba(0,0,0,0.08); color: #18181b; }
+.desk.wp-pearl .app-text, .desk.wp-pearl .typed { color: #09090b; }
+.desk.wp-pearl .slack-msg { color: #09090b; }
+.desk.wp-pearl .b1 { background: #ff8a65; opacity: 0.45; }
+.desk.wp-pearl .b2 { background: #38bdf8; opacity: 0.45; }
+.desk.wp-pearl .b3 { background: #c084fc; opacity: 0.40; }
 
 .desk.wp-oled .desk-wallpaper-blobs { opacity: 0.08; }
 
