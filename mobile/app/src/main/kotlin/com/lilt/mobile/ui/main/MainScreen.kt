@@ -214,7 +214,6 @@ fun MainScreen(
     var isAlwaysOnActive by remember { mutableStateOf(!settings.floatingCircleContextualOnly) }
 
     // Engine & Liquid Glass Theme settings state
-    var themeMode by remember { mutableStateOf(settings.themeMode.also { LiltThemeState.mode = it }) }
     var activeTone by remember { mutableStateOf(settings.activeTone) }
     var activeLanguageMode by remember { mutableStateOf(settings.activeLanguageMode) }
     var enabledLanguageCodes by remember { mutableStateOf(settings.enabledLanguageCodes) }
@@ -548,38 +547,6 @@ fun MainScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // One-Tap Theme Switcher Pill (Dark Glass -> Light Glass -> System Auto)
-                    val themeLabel = when (themeMode) {
-                        "light" -> "☀️ LIGHT"
-                        "system" -> "◐ AUTO"
-                        else -> "🌙 DARK"
-                    }
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(NothingCard)
-                            .border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(16.dp))
-                            .clickable {
-                                val next = when (themeMode) {
-                                    "dark" -> "light"
-                                    "light" -> "system"
-                                    else -> "dark"
-                                }
-                                themeMode = next
-                                settings.themeMode = next
-                                LiltThemeState.mode = next
-                            }
-                            .padding(horizontal = 9.dp, vertical = 5.dp)
-                    ) {
-                        Text(
-                            text = themeLabel,
-                            color = NothingTextPrimary,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.6.sp
-                        )
-                    }
-
                     // One-Click Report Button (Top Bar)
                     Box(
                         modifier = Modifier
@@ -2509,81 +2476,6 @@ fun MainScreen(
             )
 
             Spacer(modifier = Modifier.height(20.dp))
-
-            // 5.9 Universal Liquid Glass Appearance Selector
-            Text(
-                text = "APPEARANCE & LIQUID GLASS THEME",
-                color = NothingTextMuted,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.2.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 4.dp)
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = NothingCard)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        text = "Adaptive Liquid Glass Texture",
-                        color = NothingTextPrimary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "Switch between Obsidian Dark Glass, Alabaster Light Pearl Glass, or follow your phone's system theme.",
-                        color = NothingTextMuted,
-                        fontSize = 12.sp
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        TonePill(
-                            label = "🌙 Dark Glass",
-                            isActive = themeMode == "dark",
-                            modifier = Modifier.weight(1f),
-                            onClick = {
-                                themeMode = "dark"
-                                settings.themeMode = "dark"
-                                LiltThemeState.mode = "dark"
-                            }
-                        )
-                        TonePill(
-                            label = "☀️ Light Glass",
-                            isActive = themeMode == "light",
-                            modifier = Modifier.weight(1f),
-                            onClick = {
-                                themeMode = "light"
-                                settings.themeMode = "light"
-                                LiltThemeState.mode = "light"
-                            }
-                        )
-                        TonePill(
-                            label = "◐ System",
-                            isActive = themeMode == "system",
-                            modifier = Modifier.weight(1f),
-                            onClick = {
-                                themeMode = "system"
-                                settings.themeMode = "system"
-                                LiltThemeState.mode = "system"
-                            }
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
 
             // 6. System Integration Surfaces
             Text(

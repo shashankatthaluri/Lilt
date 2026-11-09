@@ -78,37 +78,28 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun LiltTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val context = LocalContext.current
     val view = LocalView.current
-    val settings = SettingsManager.getInstance(context)
 
-    if (LiltThemeState.mode != settings.themeMode && LiltThemeState.mode == "dark" && settings.themeMode != "dark") {
-        LiltThemeState.mode = settings.themeMode
-    }
-
-    val useDark = when (LiltThemeState.mode) {
-        "light" -> false
-        "system" -> darkTheme
-        else -> true
-    }
-    LiltThemeState.isDark = useDark
+    // Pure Signature Dark Obsidian Glass aesthetic across every Android device
+    LiltThemeState.isDark = true
+    LiltThemeState.mode = "dark"
 
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as? Activity)?.window
             if (window != null) {
                 val controller = WindowCompat.getInsetsController(window, view)
-                controller.isAppearanceLightStatusBars = !useDark
-                controller.isAppearanceLightNavigationBars = !useDark
+                controller.isAppearanceLightStatusBars = false
+                controller.isAppearanceLightNavigationBars = false
             }
         }
     }
 
     val palette = LiltGlassPalette(
-        isDark = useDark,
+        isDark = true,
         background = NothingBlack,
         card = NothingCard,
         cardElevated = NothingCardElevated,
@@ -122,7 +113,7 @@ fun LiltTheme(
 
     CompositionLocalProvider(LocalLiltGlassPalette provides palette) {
         MaterialTheme(
-            colorScheme = if (useDark) DarkColorScheme else LightColorScheme,
+            colorScheme = DarkColorScheme,
             typography = Typography,
             content = content
         )
