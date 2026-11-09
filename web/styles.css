@@ -1197,6 +1197,14 @@ mark { background: rgba(255,181,71,0.25); color: var(--amber); border-radius: 4p
   transition: all 0.4s var(--ease);
 }
 .dl-card.is-recommended .dl-rec { opacity: 1; transform: none; }
+.dl-soon {
+  position: absolute; top: 20px; right: 20px;
+  font-size: 10px; letter-spacing: 0.12em; font-weight: 700;
+  padding: 5px 11px; border-radius: 999px;
+  background: rgba(255, 181, 71, 0.14);
+  border: 1px solid rgba(255, 181, 71, 0.45);
+  color: var(--amber);
+}
 .dl-icon { filter: invert(1); opacity: 0.9; }
 .dl-card h3 { font-size: 34px; letter-spacing: -0.03em; font-weight: 600; margin-top: 26px; }
 .dl-card ul { list-style: none; margin: 22px 0 28px; display: flex; flex-direction: column; gap: 10px; }

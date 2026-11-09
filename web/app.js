@@ -78,6 +78,7 @@
     const ua = navigator.userAgent || "";
     const isAndroid = /android/i.test(ua);
     const isIOS = /iphone|ipad|ipod/i.test(ua);
+    const isMac = !isIOS && /macintosh|mac os x/i.test(ua);
     const isWindows = !isAndroid && /windows/i.test(ua);
 
     const label = $("#hero-download-label");
@@ -97,12 +98,12 @@
       heroBtn.href = WIN_URL;
       $("#dl-windows").classList.add("is-recommended");
       detected.textContent = "Detected Windows — your native Liquid Glass overlay installer is ready.";
-    } else if (isIOS) {
+    } else if (isIOS || isMac) {
       const iosCard = $("#dl-ios");
       if (iosCard) iosCard.classList.add("is-recommended");
-      detected.textContent = "Detected iPhone / iOS — check the experimental iOS source build below, or grab Windows / Android.";
+      detected.textContent = "Detected Apple device — iOS & macOS are coming soon! Available today for Windows and Android.";
     } else {
-      detected.textContent = "Free & open source. Available for Windows, every Android 10+ phone, and experimental iOS source.";
+      detected.textContent = "Free & open source for Windows and Android. iOS & macOS coming soon.";
     }
 
     const qrBox = $("#qr-box");
