@@ -159,26 +159,55 @@
      ===================================================================== */
   function initPointer() {
     if (!finePointer) return;
+    const dot = $("#cursor-dot");
     const cursor = $("#cursor");
     const label = $("#cursor-label");
-    let x = innerWidth / 2, y = innerHeight / 2, cx = x, cy = y;
+    let x = -100, y = -100, cx = -100, cy = -100;
+    let movedOnce = false;
 
-    window.addEventListener("mousemove", (e) => { x = e.clientX; y = e.clientY; }, { passive: true });
-    (function follow() {
-      cx += (x - cx) * 0.2; cy += (y - cy) * 0.2;
-      cursor.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
+    window.addEventListener("pointermove", (e) => {
+      x = e.clientX;
+      y = e.clientY;
+      if (!movedOnce) {
+        movedOnce = true;
+        cx = x;
+        cy = y;
+        dot.style.opacity = "1";
+        cursor.style.opacity = "1";
+      }
+      if (dot) dot.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    }, { passive: true });
+
+    let lastTime = performance.now();
+    (function follow(now) {
+      const dt = Math.min(32, now - lastTime);
+      lastTime = now;
+      // Frame-rate independent spring lerp (~60-144Hz smooth)
+      const alpha = 1 - Math.pow(0.0006, dt / 1000);
+      cx += (x - cx) * alpha;
+      cy += (y - cy) * alpha;
+      cursor.style.transform = `translate3d(${cx.toFixed(2)}px, ${cy.toFixed(2)}px, 0)`;
       requestAnimationFrame(follow);
-    })();
+    })(lastTime);
 
     document.addEventListener("mouseover", (e) => {
       const lbl = e.target.closest("[data-cursor]");
       const hov = e.target.closest("a, button, input, summary, label");
       cursor.classList.toggle("has-label", !!lbl);
       cursor.classList.toggle("is-hover", !lbl && !!hov);
+      if (dot) dot.classList.toggle("is-hidden-dot", !!lbl);
       label.textContent = lbl ? lbl.getAttribute("data-cursor") : "";
     });
-    document.addEventListener("mouseleave", () => (cursor.style.opacity = 0));
-    document.addEventListener("mouseenter", () => (cursor.style.opacity = 1));
+    document.addEventListener("mouseleave", () => {
+      cursor.style.opacity = "0";
+      if (dot) dot.style.opacity = "0";
+    });
+    document.addEventListener("mouseenter", () => {
+      if (movedOnce) {
+        cursor.style.opacity = "1";
+        if (dot) dot.style.opacity = "1";
+      }
+    });
 
     // Magnetic buttons
     $$(".magnetic").forEach((el) => {
