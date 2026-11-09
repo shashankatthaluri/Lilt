@@ -266,34 +266,28 @@
     const pillStack = $("#hero-pill");
     const winPill = $("#hero-win-pill");
     const winDot = $("#hero-win-dot");
-    const mobDot = $("#hero-mob-dot");
     const status = $("#hero-pill-status");
     let gen = 0;
     let idx = 0;
 
     function setHeroState(phase) {
-      if (!winPill || !winDot || !mobDot || !status) return;
+      if (!winPill || !winDot || !status) return;
       winDot.className = "lilt-status-dot";
-      mobDot.className = "lilt-status-dot";
       if (phase === "idle") {
         winPill.classList.add("is-idle");
         winDot.classList.add("dot-white");
-        mobDot.classList.add("dot-white");
         status.textContent = "";
       } else if (phase === "listening") {
         winPill.classList.remove("is-idle");
         winDot.classList.add("dot-red");
-        mobDot.classList.add("dot-red");
         status.textContent = "Listening…";
       } else if (phase === "transcribing") {
         winPill.classList.remove("is-idle");
         winDot.classList.add("dot-yellow");
-        mobDot.classList.add("dot-yellow");
         status.textContent = "Transcribing…";
       } else if (phase === "copied") {
         winPill.classList.remove("is-idle");
         winDot.classList.add("dot-green");
-        mobDot.classList.add("dot-green");
         status.textContent = "Copied";
       }
     }
