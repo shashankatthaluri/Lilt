@@ -350,21 +350,20 @@
       </div>
     </section>
 
-    <!-- ============ 6. FLOATING PILL ============ -->
+    <!-- ============ 6. FLOATING PILL & LIQUID GLASS ============ -->
     <section class="pill-section" id="pill">
       <div class="container">
         <div class="split-head">
           <div>
-            <p class="eyebrow mono">THE FLOATING PILL</p>
-            <h2 class="section-title reveal">One tiny pill.<br /><em class="serif">Every app.</em></h2>
+            <p class="eyebrow mono">ADAPTIVE LIQUID GLASS</p>
+            <h2 class="section-title reveal">Blurs whatever<br /><em class="serif">is behind it.</em></h2>
           </div>
           <p class="section-lead reveal">
-            Lilt lives in a small transparent pill that floats on top of everything. It never steals your
-            keyboard focus, so text lands exactly where you were typing. Go on — <strong>drag it.</strong>
+            Lilt isn’t locked to a single dark or light theme. Its <b>Liquid Glass</b> surface refracts and blurs your live wallpaper or active app in real time—feeling native on Samsung, Pixel, OnePlus, Xiaomi, Nothing, and Windows. <strong>Drag the pill or switch the wallpaper below.</strong>
           </p>
         </div>
 
-        <div class="desk reveal" id="desk">
+        <div class="desk reveal wp-aurora" id="desk">
           <div class="desk-bar">
             <span class="dots"><i></i><i></i><i></i></span>
             <div class="desk-tabs" id="desk-tabs" role="tablist">
@@ -372,10 +371,22 @@
               <button type="button" class="desk-tab" data-app="slack">Slack</button>
               <button type="button" class="desk-tab" data-app="code">VS Code</button>
             </div>
-            <span class="mono desk-hint">tap the pill to dictate</span>
+            <div class="wp-switcher" id="wp-switcher" aria-label="Change background wallpaper">
+              <span class="mono wp-lbl">WALLPAPER:</span>
+              <button type="button" class="wp-dot is-active" data-wp="aurora" title="Aurora Mesh"><i></i>Aurora</button>
+              <button type="button" class="wp-dot" data-wp="sunset" title="Warm Sunset"><i></i>Sunset</button>
+              <button type="button" class="wp-dot" data-wp="ocean" title="Deep Ocean"><i></i>Ocean</button>
+              <button type="button" class="wp-dot" data-wp="oled" title="Pure OLED"><i></i>OLED</button>
+            </div>
           </div>
 
           <div class="desk-screen" id="desk-screen">
+            <div class="desk-wallpaper-blobs" aria-hidden="true">
+              <span class="blob b1"></span>
+              <span class="blob b2"></span>
+              <span class="blob b3"></span>
+            </div>
+
             <div class="app-view is-active" data-view="mail">
               <div class="mail-line"><span class="muted">To</span> team@studio.in</div>
               <div class="mail-line"><span class="muted">Subject</span> Launch update</div>
@@ -391,7 +402,7 @@
               <div class="code-line">}</div>
             </div>
 
-            <div class="float-pill" id="float-pill" data-cursor="Drag">
+            <div class="float-pill liquid-glass" id="float-pill" data-cursor="Drag">
               <span class="led"></span>
               <canvas class="pill-wave" id="float-wave" width="70" height="20"></canvas>
               <span class="mono float-status" id="float-status">READY</span>
@@ -399,7 +410,7 @@
           </div>
 
           <div class="desk-foot">
-            <span class="mono" id="float-pos">x 72% · y 70%</span>
+            <span class="mono" id="float-pos">x 72% · y 70% · real-time backdrop blur</span>
             <div class="desk-actions">
               <button type="button" class="chip" id="btn-ghost">Fade when idle</button>
               <button type="button" class="chip" id="btn-snap">Snap to edge</button>
@@ -408,10 +419,10 @@
         </div>
 
         <ul class="pill-facts">
-          <li class="reveal"><b>Always on top</b><span>Visible over every window, game or full-screen app.</span></li>
-          <li class="reveal"><b>Never steals focus</b><span>Your cursor stays put. Text goes where you were typing.</span></li>
-          <li class="reveal"><b>Out of the way</b><span>Drag it anywhere, snap it to an edge, or let it fade when idle.</span></li>
-          <li class="reveal"><b>Phone too</b><span>On Android it floats at the screen edge and doubles as a voice keyboard.</span></li>
+          <li class="reveal"><b>True Liquid Glass</b><span>Blurs and refracts your wallpaper or active window with specular edge highlights.</span></li>
+          <li class="reveal"><b>Never steals focus</b><span>Your cursor stays put. Text goes right where you were typing.</span></li>
+          <li class="reveal"><b>Every Android &amp; PC</b><span>Adapts cleanly to Samsung One UI, Pixel, OnePlus, Xiaomi, Nothing &amp; Windows 11.</span></li>
+          <li class="reveal"><b>Out of the way</b><span>Drag it anywhere, snap it to any screen edge, or let it fade when idle.</span></li>
         </ul>
       </div>
     </section>
@@ -591,45 +602,61 @@
       <div class="container">
         <div class="download-head">
           <p class="eyebrow mono center">GET LILT</p>
-          <h2 class="section-title center reveal">Start talking<br /><em class="serif">in two minutes.</em></h2>
-          <p class="section-lead center reveal" id="os-detected">Free forever. Pick your device below.</p>
+          <h2 class="section-title center reveal">Built for <em class="serif">every</em> device.<br />Start in two minutes.</h2>
+          <p class="section-lead center reveal" id="os-detected">Free &amp; open source. Pick your platform below.</p>
         </div>
 
-        <div class="dl-grid">
-          <article class="dl-card reveal" id="dl-windows">
-            <span class="dl-rec mono">★ Recommended for you</span>
+        <div class="dl-grid dl-grid-3">
+          <article class="dl-card liquid-card reveal" id="dl-windows">
+            <span class="dl-rec mono">★ Detected OS</span>
             <img src="assets/icons/windows.svg" alt="" width="34" height="34" class="dl-icon" />
             <h3>Windows</h3>
             <p class="muted">Windows 10 &amp; 11 · 64-bit · ~24 MB</p>
             <ul>
-              <li>Floating pill over every app</li>
+              <li>Liquid Glass floating pill over every app</li>
               <li>Global hotkey to start talking</li>
               <li>Types straight into the focused window</li>
             </ul>
-            <a class="btn btn-light btn-block magnetic" href="https://github.com/shashankatthaluri/Lilt/releases/latest/download/Lilt-Setup-x64.exe">Download for Windows</a>
+            <a class="btn btn-light btn-block magnetic" href="https://github.com/shashankatthaluri/Lilt/releases/latest/download/Lilt-Setup-x64.exe">Download for Windows (.exe)</a>
+            <p class="dl-disclaimer mono">Unsigned open-source installer · Click “Run anyway” if Windows SmartScreen prompts.</p>
           </article>
 
-          <article class="dl-card reveal" id="dl-android">
-            <span class="dl-rec mono">★ Recommended for you</span>
+          <article class="dl-card liquid-card reveal" id="dl-android">
+            <span class="dl-rec mono">★ Detected OS</span>
             <img src="assets/icons/android.svg" alt="" width="34" height="34" class="dl-icon" />
-            <h3>Android</h3>
-            <p class="muted">Android 10+ · ~17 MB APK</p>
+            <h3>Every Android Phone</h3>
+            <p class="muted">Samsung, Pixel, OnePlus, Xiaomi, Nothing · Android 10+</p>
             <ul>
-              <li>Edge pill + voice keyboard</li>
-              <li>Silent alarms &amp; snooze</li>
-              <li>Notes with search and pins</li>
+              <li>Wallpaper-adaptive Liquid Glass pill &amp; keyboard</li>
+              <li>Persistent silent alarms &amp; 5-min snooze stepper</li>
+              <li>Auto notes with instant search and pins</li>
             </ul>
-            <a class="btn btn-light btn-block magnetic" href="https://github.com/shashankatthaluri/Lilt/releases/latest/download/Lilt-v1.1-Release.apk">Download APK</a>
-            <button type="button" class="qr-toggle mono" id="qr-toggle">On a computer? Scan to install on your phone ↓</button>
+            <a class="btn btn-light btn-block magnetic" href="https://github.com/shashankatthaluri/Lilt/releases/latest/download/Lilt-v1.1-Release.apk">Download Universal APK</a>
+            <p class="dl-disclaimer mono">Direct open-source APK (install at your own discretion; allow “Install unknown apps” when prompted).</p>
+            <button type="button" class="qr-toggle mono" id="qr-toggle">On a computer? Scan QR for your phone ↓</button>
             <div class="qr-panel" id="qr-panel">
               <div class="qr-box" id="qr-box"></div>
-              <p class="muted">Point your phone camera here to download the APK directly.</p>
+              <p class="muted">Point any Android camera here to download the universal APK directly.</p>
             </div>
+          </article>
+
+          <article class="dl-card liquid-card reveal" id="dl-ios">
+            <span class="dl-rec mono">★ Detected OS</span>
+            <img src="assets/icons/apple.svg" alt="" width="34" height="34" class="dl-icon" />
+            <h3>iPhone &amp; iOS</h3>
+            <p class="muted">Experimental / Source Build · iOS 16+</p>
+            <ul>
+              <li>Shared <code>lilt-core</code> Rust engine compiles to iOS ARM64</li>
+              <li>Apple restricts third-party floating overlays outside the App Store</li>
+              <li>Sideload via AltStore / Xcode at your own risk or follow the iOS Keyboard target</li>
+            </ul>
+            <a class="btn btn-ghost btn-block magnetic" href="https://github.com/shashankatthaluri/Lilt" target="_blank" rel="noopener">Explore iOS Build &amp; Source →</a>
+            <p class="dl-disclaimer mono">iOS native keyboard extension is in active open-source development.</p>
           </article>
         </div>
 
         <p class="dl-foot muted center">
-          Prefer to build it yourself? <a href="https://github.com/shashankatthaluri/Lilt" target="_blank" rel="noopener">Clone the repo →</a>
+          Provided open-source “as-is” under the Apache 2.0 License. <a href="https://github.com/shashankatthaluri/Lilt" target="_blank" rel="noopener">Inspect or build from source on GitHub →</a>
         </p>
       </div>
     </section>

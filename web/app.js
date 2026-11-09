@@ -86,21 +86,23 @@
     const detected = $("#os-detected");
 
     if (isAndroid) {
-      label.textContent = "Download for Android";
+      label.textContent = "Download for Android (Universal APK)";
       icon.innerHTML = '<img src="assets/icons/android.svg" alt="" />';
       heroBtn.href = APK_URL;
       $("#dl-android").classList.add("is-recommended");
-      detected.textContent = "Looks like you’re on Android — tap below to install the APK.";
+      detected.textContent = "Detected Android — works on Samsung, Pixel, OnePlus, Xiaomi, Nothing & all Android 10+ phones.";
     } else if (isWindows) {
       label.textContent = "Download for Windows";
       icon.innerHTML = '<img src="assets/icons/windows.svg" alt="" />';
       heroBtn.href = WIN_URL;
       $("#dl-windows").classList.add("is-recommended");
-      detected.textContent = "Looks like you’re on Windows — your installer is ready.";
+      detected.textContent = "Detected Windows — your native Liquid Glass overlay installer is ready.";
     } else if (isIOS) {
-      detected.textContent = "iPhone isn’t supported yet — grab Lilt for Windows or Android below.";
+      const iosCard = $("#dl-ios");
+      if (iosCard) iosCard.classList.add("is-recommended");
+      detected.textContent = "Detected iPhone / iOS — check the experimental iOS source build below, or grab Windows / Android.";
     } else {
-      detected.textContent = "Free forever. Available for Windows and Android.";
+      detected.textContent = "Free & open source. Available for Windows, every Android 10+ phone, and experimental iOS source.";
     }
 
     const qrBox = $("#qr-box");
@@ -648,6 +650,18 @@
       const r = screen.getBoundingClientRect();
       pill.style.transition = "left .6s cubic-bezier(.16,1,.3,1), top .6s cubic-bezier(.16,1,.3,1), opacity .4s";
       setPos(r.width, parseFloat(pill.style.top || "70") / 100 * r.height);
+    });
+
+    // Wallpaper Switcher for Adaptive Liquid Glass demo
+    const desk = $("#desk");
+    const wpBtns = $$("#wp-switcher .wp-dot");
+    wpBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        wpBtns.forEach((b) => b.classList.toggle("is-active", b === btn));
+        const wp = btn.dataset.wp;
+        desk.classList.remove("wp-aurora", "wp-sunset", "wp-ocean", "wp-oled");
+        desk.classList.add(`wp-${wp}`);
+      });
     });
 
     // Auto-demo once when the desk enters view

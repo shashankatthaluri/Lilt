@@ -615,9 +615,58 @@ section { position: relative; }
 .desk-tab.is-active, .desk-tab:hover { background: rgba(255,255,255,0.07); color: var(--text); }
 .desk-hint { font-size: 11px; color: var(--dim); }
 
+/* Wallpaper Switcher & Dynamic Liquid Glass Blobs */
+.wp-switcher { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.wp-lbl { font-size: 10px; color: var(--dim); letter-spacing: 0.14em; margin-right: 4px; }
+.wp-dot {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; color: var(--muted);
+  padding: 5px 10px; border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.02);
+  transition: all 0.25s var(--ease);
+}
+.wp-dot i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.wp-dot[data-wp="aurora"] i { background: linear-gradient(135deg, #38bdf8, #a855f7, #ec4899); }
+.wp-dot[data-wp="sunset"] i { background: linear-gradient(135deg, #ff3b1f, #ffb547, #f43f5e); }
+.wp-dot[data-wp="ocean"] i { background: linear-gradient(135deg, #06b6d4, #3b82f6, #10b981); }
+.wp-dot[data-wp="oled"] i { background: #18181b; border: 1px solid rgba(255,255,255,0.3); }
+.wp-dot.is-active, .wp-dot:hover { color: #fff; border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.08); }
+
+.desk-wallpaper-blobs {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0;
+  transition: opacity 0.6s var(--ease);
+}
+.desk-wallpaper-blobs .blob {
+  position: absolute; border-radius: 50%; filter: blur(48px); opacity: 0.55;
+  transition: background 0.8s var(--ease), transform 0.8s var(--ease), opacity 0.6s;
+  animation: blobFloat 11s ease-in-out infinite alternate;
+}
+.desk-wallpaper-blobs .b1 { width: 320px; height: 320px; left: 52%; top: 38%; }
+.desk-wallpaper-blobs .b2 { width: 260px; height: 260px; left: 66%; top: 52%; animation-delay: -4s; }
+.desk-wallpaper-blobs .b3 { width: 240px; height: 240px; left: 25%; top: 58%; animation-delay: -7s; }
+@keyframes blobFloat {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-28px, 22px) scale(1.12); }
+}
+
+.desk.wp-aurora .b1 { background: #7c3aed; }
+.desk.wp-aurora .b2 { background: #06b6d4; }
+.desk.wp-aurora .b3 { background: #ec4899; }
+
+.desk.wp-sunset .b1 { background: #ff3b1f; }
+.desk.wp-sunset .b2 { background: #ffb547; }
+.desk.wp-sunset .b3 { background: #e11d48; }
+
+.desk.wp-ocean .b1 { background: #0284c7; }
+.desk.wp-ocean .b2 { background: #10b981; }
+.desk.wp-ocean .b3 { background: #6366f1; }
+
+.desk.wp-oled .desk-wallpaper-blobs { opacity: 0.08; }
+
 .desk-screen { position: relative; height: 440px; touch-action: none; }
 .app-view {
-  position: absolute; inset: 0; padding: 34px 40px;
+  position: absolute; inset: 0; padding: 34px 40px; z-index: 1;
   opacity: 0; visibility: hidden; transform: translateY(8px);
   transition: opacity 0.45s var(--ease), transform 0.5s var(--ease), visibility 0.45s;
 }
@@ -637,13 +686,16 @@ section { position: relative; }
   position: absolute; left: 72%; top: 70%;
   transform: translate(-50%, -50%);
   display: flex; align-items: center; gap: 10px;
-  padding: 11px 16px;
+  padding: 12px 18px;
   border-radius: 999px;
-  background: rgba(22, 22, 26, 0.6);
-  border: 1px solid var(--line-2);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 20px 50px -15px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.08);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  box-shadow:
+    0 24px 54px -12px rgba(0, 0, 0, 0.75),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.45),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.08);
   cursor: grab;
   user-select: none;
   z-index: 5;
@@ -939,14 +991,24 @@ mark { background: rgba(255,181,71,0.25); color: var(--amber); border-radius: 4p
   pointer-events: none;
 }
 .dl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 920px; margin: 60px auto 0; position: relative; }
+.dl-grid.dl-grid-3 { grid-template-columns: repeat(3, 1fr); max-width: 1180px; }
 .dl-card {
   position: relative;
-  padding: 34px;
+  padding: 32px;
   border-radius: 28px;
-  border: 1px solid var(--line-2);
-  background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015));
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
   display: flex; flex-direction: column;
   transition: border-color 0.4s, transform 0.5s var(--ease);
+}
+.dl-disclaimer {
+  margin-top: 12px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--dim);
 }
 .dl-card.is-recommended { border-color: rgba(255,59,31,0.5); box-shadow: 0 0 0 6px rgba(255,59,31,0.06); }
 .dl-rec {
@@ -1055,6 +1117,7 @@ html.anim-ready .hero-title .line-inner { transform: translateY(110%); }
   .how-grid, .alarms-grid, .notes-grid, .split-head, .faq-grid { grid-template-columns: 1fr; gap: 50px; }
   .notes-copy { order: -1; }
   .pill-facts { grid-template-columns: 1fr 1fr; }
+  .dl-grid.dl-grid-3 { grid-template-columns: 1fr; max-width: 560px; }
   .stats { grid-template-columns: 1fr 1fr; }
   .stat:nth-child(2) { border-right: 0; }
   .stat:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
