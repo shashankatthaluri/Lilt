@@ -143,17 +143,12 @@
   }
 
   /* =====================================================================
-     NAV — glass on scroll, hide on scroll-down
+     NAV — stays fixed at top always, deepens glass on scroll
      ===================================================================== */
   function initNav() {
     const nav = $("#nav");
-    let last = 0;
     const onScroll = () => {
-      const y = window.scrollY;
-      nav.classList.toggle("is-scrolled", y > 30);
-      nav.classList.toggle("is-hidden", y > 700 && y > last + 2);
-      if (y < last - 2) nav.classList.remove("is-hidden");
-      last = y;
+      nav.classList.toggle("is-scrolled", window.scrollY > 24);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
@@ -413,16 +408,6 @@
     gsap.fromTo("#footer-word", { yPercent: 40, opacity: 0.2 }, {
       yPercent: 0, opacity: 1, ease: "none",
       scrollTrigger: { trigger: ".footer", start: "top bottom", end: "bottom bottom", scrub: true }
-    });
-
-    // Marquee speeds up with scroll velocity
-    const track = $(".marquee-track");
-    ScrollTrigger.create({
-      trigger: ".marquee-section", start: "top bottom", end: "bottom top",
-      onUpdate: (self) => {
-        const v = clamp(Math.abs(self.getVelocity()) / 1500, 0, 3);
-        track.style.animationDuration = `${40 / (1 + v)}s`;
-      }
     });
   }
 
