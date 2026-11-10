@@ -175,6 +175,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Translate
 import kotlinx.coroutines.launch
 import com.lilt.mobile.ui.theme.LiltGlassCardBrush
 import com.lilt.mobile.ui.theme.LiltGlassSpecularBorderBrush
@@ -894,107 +895,6 @@ fun MainScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 4.dp, vertical = 4.dp)
             )
-
-            if (showLanguagePickerDialog) {
-                AlertDialog(
-                    onDismissRequest = { showLanguagePickerDialog = false },
-                    containerColor = if (LiltThemeState.isDark) Color(0xFF141418) else Color(0xFFFBFBFD),
-                    titleContentColor = NothingTextPrimary,
-                    textContentColor = NothingTextSecondary,
-                    title = {
-                        Column {
-                            Text(
-                                text = "Select Your Languages",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp,
-                                color = NothingTextPrimary
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "Auto Mode restricts recognition & text output strictly to the languages you check below. Say \"Romanized Telugu\" or \"Romanized Hindi\" before speaking to automatically output in Latin script.",
-                                fontSize = 12.sp,
-                                color = NothingTextMuted
-                            )
-                        }
-                    },
-                    text = {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(380.dp)
-                                .verticalScroll(rememberScrollState()),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            SettingsManager.ALL_SUPPORTED_LANGUAGES.forEach { lang ->
-                                val isChecked = enabledLanguageCodes.contains(lang.code)
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(if (isChecked) Color(0x26FF3B1F) else NothingCardElevated)
-                                        .border(
-                                            1.dp,
-                                            if (isChecked) Color(0x88FF3B1F) else NothingBorder,
-                                            RoundedCornerShape(12.dp)
-                                        )
-                                        .clickable {
-                                            val updated = if (isChecked) {
-                                                if (enabledLanguageCodes.size > 1) enabledLanguageCodes - lang.code else enabledLanguageCodes
-                                            } else {
-                                                enabledLanguageCodes + lang.code
-                                            }
-                                            enabledLanguageCodes = updated
-                                            settings.enabledLanguageCodes = updated
-                                            if (activeLanguageMode != "auto" && !updated.contains(activeLanguageMode)) {
-                                                activeLanguageMode = "auto"
-                                                settings.activeLanguageMode = "auto"
-                                            }
-                                        }
-                                        .padding(horizontal = 12.dp, vertical = 10.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = lang.fullName,
-                                            color = NothingTextPrimary,
-                                            fontSize = 13.5.sp,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                        Text(
-                                            text = if (lang.isRomanized) "Voice trigger: \"Romanized ${lang.baseLanguageName}\"" else "Whisper ISO: ${lang.whisperIsoCode.uppercase()}",
-                                            color = NothingTextMuted,
-                                            fontSize = 11.sp
-                                        )
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .size(22.dp)
-                                            .clip(CircleShape)
-                                            .background(if (isChecked) Color(0xFFFF3B1F) else Color(0x22FFFFFF)),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        if (isChecked) {
-                                            Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    confirmButton = {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(999.dp))
-                                .background(Color.White)
-                                .clickable { showLanguagePickerDialog = false }
-                                .padding(horizontal = 18.dp, vertical = 8.dp)
-                        ) {
-                            Text("Done", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                        }
-                    }
-                )
-            }
 
             Spacer(modifier = Modifier.height(14.dp))
 
@@ -2476,6 +2376,142 @@ fun MainScreen(
             )
 
             Spacer(modifier = Modifier.height(20.dp))
+
+            // 5. Languages & Voice Recognition Section
+            Text(
+                text = "LANGUAGES & VOICE DIRECTIVES",
+                color = NothingTextMuted,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = NothingCard)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(NothingCardElevated)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Translate,
+                                    contentDescription = "Language",
+                                    tint = NothingTextPrimary,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(14.dp))
+                            Column {
+                                Text(
+                                    text = "Spoken Languages (${enabledLanguageCodes.size} Selected)",
+                                    color = NothingTextPrimary,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Auto Mode restricts recognition strictly to this pool",
+                                    color = NothingTextMuted,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Selected Language Pills
+                    val enabledLangObjs = enabledLanguageCodes.mapNotNull { SettingsManager.findLanguageByCode(it) }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        TonePill(
+                            label = "Auto (${enabledLanguageCodes.size})",
+                            isActive = activeLanguageMode == "auto",
+                            modifier = Modifier.width(96.dp),
+                            onClick = {
+                                activeLanguageMode = "auto"
+                                settings.activeLanguageMode = "auto"
+                            }
+                        )
+                        enabledLangObjs.forEach { lang ->
+                            TonePill(
+                                label = lang.shortLabel,
+                                isActive = activeLanguageMode == lang.code,
+                                modifier = Modifier.width(96.dp),
+                                onClick = {
+                                    activeLanguageMode = lang.code
+                                    settings.activeLanguageMode = lang.code
+                                }
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Button to open the full Language Picker Dialog
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(Color(0x1AFF3B1F))
+                            .border(1.dp, Color(0x66FF3B1F), RoundedCornerShape(14.dp))
+                            .clickable { showLanguagePickerDialog = true }
+                            .padding(vertical = 12.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                tint = NothingRed,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "CHOOSE LANGUAGES & SCRIPTS",
+                                color = NothingRed,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Text(
+                        text = "Voice Directive: Say \"Romanized Telugu\", \"Romanized Hindi\", or \"Romanized <Language>\" right before speaking to automatically output in Latin script.",
+                        color = NothingTextMuted,
+                        fontSize = 11.5.sp,
+                        lineHeight = 16.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
 
             // 6. System Integration Surfaces
             Text(
@@ -4370,7 +4406,110 @@ fun MainScreen(
         }
 
         // Diagnostic & Error Report Dialog
-        if (showErrorDialog) {
+                if (showLanguagePickerDialog) {
+                AlertDialog(
+                    onDismissRequest = { showLanguagePickerDialog = false },
+                    containerColor = if (LiltThemeState.isDark) Color(0xFF141418) else Color(0xFFFBFBFD),
+                    titleContentColor = NothingTextPrimary,
+                    textContentColor = NothingTextSecondary,
+                    title = {
+                        Column {
+                            Text(
+                                text = "Select Your Languages",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                color = NothingTextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Auto Mode restricts recognition & text output strictly to the languages you check below. Say \"Romanized Telugu\" or \"Romanized Hindi\" before speaking to automatically output in Latin script.",
+                                fontSize = 12.sp,
+                                color = NothingTextMuted
+                            )
+                        }
+                    },
+                    text = {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(380.dp)
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            SettingsManager.ALL_SUPPORTED_LANGUAGES.forEach { lang ->
+                                val isChecked = enabledLanguageCodes.contains(lang.code)
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(if (isChecked) Color(0x26FF3B1F) else NothingCardElevated)
+                                        .border(
+                                            1.dp,
+                                            if (isChecked) Color(0x88FF3B1F) else NothingBorder,
+                                            RoundedCornerShape(12.dp)
+                                        )
+                                        .clickable {
+                                            val updated = if (isChecked) {
+                                                if (enabledLanguageCodes.size > 1) enabledLanguageCodes - lang.code else enabledLanguageCodes
+                                            } else {
+                                                enabledLanguageCodes + lang.code
+                                            }
+                                            enabledLanguageCodes = updated
+                                            settings.enabledLanguageCodes = updated
+                                            if (activeLanguageMode != "auto" && !updated.contains(activeLanguageMode)) {
+                                                activeLanguageMode = "auto"
+                                                settings.activeLanguageMode = "auto"
+                                            }
+                                        }
+                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = lang.fullName,
+                                            color = NothingTextPrimary,
+                                            fontSize = 13.5.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            text = if (lang.isRomanized) "Voice trigger: \"Romanized ${lang.baseLanguageName}\"" else "Whisper ISO: ${lang.whisperIsoCode.uppercase()}",
+                                            color = NothingTextMuted,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .size(22.dp)
+                                            .clip(CircleShape)
+                                            .background(if (isChecked) Color(0xFFFF3B1F) else Color(0x22FFFFFF)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        if (isChecked) {
+                                            Text("✓", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(999.dp))
+                                .background(Color.White)
+                                .clickable { showLanguagePickerDialog = false }
+                                .padding(horizontal = 18.dp, vertical = 8.dp)
+                        ) {
+                            Text("Done", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        }
+                    }
+                )
+            }
+
+
+
+    if (showErrorDialog) {
             AlertDialog(
                 onDismissRequest = { showErrorDialog = false },
                 containerColor = NothingCard,
