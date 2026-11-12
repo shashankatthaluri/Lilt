@@ -816,37 +816,17 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 2b. Language & Script Selector Strip (Dynamic User-Selected Pool + Bounded Auto Mode)
-            Row(
+            // 2b. Language & Script Selector Strip
+            Text(
+                text = "LANGUAGE & SCRIPT MODE",
+                color = NothingTextMuted,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "LANGUAGE & SCRIPT MODE",
-                    color = NothingTextMuted,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.2.sp
-                )
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(Color(0x1AFFFFFF))
-                        .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(999.dp))
-                        .clickable { showLanguagePickerDialog = true }
-                        .padding(horizontal = 10.dp, vertical = 3.dp)
-                ) {
-                    Text(
-                        text = "+ Choose Languages (${enabledLanguageCodes.size})",
-                        color = NothingTextPrimary,
-                        fontSize = 10.5.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+            )
 
             Row(
                 modifier = Modifier
@@ -875,28 +855,7 @@ fun MainScreen(
                         }
                     )
                 }
-                TonePill(
-                    label = "+ Add",
-                    isActive = false,
-                    modifier = Modifier.width(76.dp),
-                    onClick = { showLanguagePickerDialog = true }
-                )
             }
-
-            val poolSummary = enabledLanguageCodes.mapNotNull { SettingsManager.findLanguageByCode(it)?.shortLabel }.joinToString(", ")
-            Text(
-                text = if (activeLanguageMode == "auto") {
-                    "Auto locks strictly to: $poolSummary · Say \"Romanized Telugu\" or \"Romanized Hindi\" to force Latin script."
-                } else {
-                    val currentObj = SettingsManager.findLanguageByCode(activeLanguageMode)
-                    "Locked to ${currentObj?.fullName ?: activeLanguageMode} · Say \"Romanized <Language>\" anytime to switch script."
-                },
-                color = NothingTextMuted,
-                fontSize = 10.5.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 4.dp)
-            )
 
             Spacer(modifier = Modifier.height(14.dp))
 
@@ -2358,793 +2317,7 @@ fun MainScreen(
             }
 
             } // end history tab
-            // ── SETTINGS TAB ─────────────────────────────────
-            if (currentTab == "settings") {
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "S E T T I N G S",
-                color = NothingTextPrimary,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 3.sp,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Text(
-                text = "Universal Liquid Glass theme, engine, integrations & privacy",
-                color = NothingTextMuted,
-                fontSize = 12.sp,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 5. Languages & Voice Recognition Section
-            Text(
-                text = "LANGUAGES & VOICE DIRECTIVES",
-                color = NothingTextMuted,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.2.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 4.dp)
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = NothingCard)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
-                        .padding(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .size(42.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(NothingCardElevated)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Translate,
-                                    contentDescription = "Language",
-                                    tint = NothingTextPrimary,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(14.dp))
-                            Column {
-                                Text(
-                                    text = "Spoken Languages (${enabledLanguageCodes.size} Selected)",
-                                    color = NothingTextPrimary,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    text = "Auto Mode restricts recognition strictly to this pool",
-                                    color = NothingTextMuted,
-                                    fontSize = 12.sp
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // Selected Language Pills
-                    val enabledLangObjs = enabledLanguageCodes.mapNotNull { SettingsManager.findLanguageByCode(it) }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        TonePill(
-                            label = "Auto (${enabledLanguageCodes.size})",
-                            isActive = activeLanguageMode == "auto",
-                            modifier = Modifier.width(96.dp),
-                            onClick = {
-                                activeLanguageMode = "auto"
-                                settings.activeLanguageMode = "auto"
-                            }
-                        )
-                        enabledLangObjs.forEach { lang ->
-                            TonePill(
-                                label = lang.shortLabel,
-                                isActive = activeLanguageMode == lang.code,
-                                modifier = Modifier.width(96.dp),
-                                onClick = {
-                                    activeLanguageMode = lang.code
-                                    settings.activeLanguageMode = lang.code
-                                }
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    // Button to open the full Language Picker Dialog
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(Color(0x1AFF3B1F))
-                            .border(1.dp, Color(0x66FF3B1F), RoundedCornerShape(14.dp))
-                            .clickable { showLanguagePickerDialog = true }
-                            .padding(vertical = 12.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = null,
-                                tint = NothingRed,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "CHOOSE LANGUAGES & SCRIPTS",
-                                color = NothingRed,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.sp
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = "Voice Directive: Say \"Romanized Telugu\", \"Romanized Hindi\", or \"Romanized <Language>\" right before speaking to automatically output in Latin script.",
-                        color = NothingTextMuted,
-                        fontSize = 11.5.sp,
-                        lineHeight = 16.sp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            // 6. System Integration Surfaces
-            Text(
-                text = "SYSTEM INTEGRATION",
-                color = NothingTextMuted,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.2.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 4.dp)
-            )
-
-            // Voice Keyboard IME
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = NothingCard)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
-                        .padding(16.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(NothingCardElevated)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Keyboard,
-                                contentDescription = "Keyboard",
-                                tint = NothingTextPrimary,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(14.dp))
-
-                        Column {
-                            Text(
-                                text = "Lilt Voice Keyboard",
-                                color = NothingTextPrimary,
-                                fontSize = 15.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                text = "Hold Space to Speak (Push-to-Talk) or tap mic. Directly inserts text.",
-                                color = NothingTextMuted,
-                                fontSize = 12.sp
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(40.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(NothingCardElevated)
-                            .border(1.dp, NothingBorder, RoundedCornerShape(12.dp))
-                            .clickable {
-                                val intent = Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)
-                                context.startActivity(intent)
-                            }
-                    ) {
-                        Text(
-                            text = "Open Keyboard Settings",
-                            color = NothingTextPrimary,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Floating Glass Pill Overlay
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = NothingCard)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(NothingCardElevated)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.PictureInPicture,
-                            contentDescription = "Floating Pill",
-                            tint = NothingTextPrimary,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(14.dp))
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Floating Glass Circle",
-                            color = NothingTextPrimary,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = "Liquid glass circle. Pops up when clicking any text box. White: idle, Red: listening, Amber: transcribing, Green: copied.",
-                            color = NothingTextMuted,
-                            fontSize = 12.sp
-                        )
-                    }
-
-                    Switch(
-                        checked = isFloatingPillActive,
-                        onCheckedChange = { checked ->
-                            if (checked) {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {
-                                    val intent = Intent(
-                                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                                        Uri.parse("package:${context.packageName}")
-                                    )
-                                    context.startActivity(intent)
-                                } else {
-                                    settings.floatingPillEnabled = true
-                                    isFloatingPillActive = true
-                                    LiltOverlayService.start(context)
-                                }
-                            } else {
-                                settings.floatingPillEnabled = false
-                                isFloatingPillActive = false
-                                LiltOverlayService.stop(context)
-                            }
-                        },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = Color(0xFFD71921),
-                            checkedBorderColor = Color(0xFFE50914),
-                            uncheckedThumbColor = Color(0xFFA1A1AA),
-                            uncheckedTrackColor = NothingCardElevated,
-                            uncheckedBorderColor = Color(0xFF282933)
-                        )
-                    )
-                }
-            }
-
-            // Sub-option: Always-On Floating Circle
-            AnimatedVisibility(visible = isFloatingPillActive) {
-                Column {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .border(1.dp, Color(0xFF222228), RoundedCornerShape(16.dp)),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF141418))
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = "Always-On Floating Circle",
-                                    color = NothingTextPrimary,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    text = if (isAlwaysOnActive)
-                                        "Keep circle visible everywhere. Dictate anytime to clipboard."
-                                    else
-                                        "Only appears when the keyboard is open on screen.",
-                                    color = NothingTextMuted,
-                                    fontSize = 12.sp
-                                )
-                            }
-
-                            Switch(
-                                checked = isAlwaysOnActive,
-                                onCheckedChange = { checked ->
-                                    isAlwaysOnActive = checked
-                                    settings.floatingCircleContextualOnly = !checked
-                                    LiltOverlayService.setAlwaysOn(checked)
-                                },
-                                colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = Color(0xFFD71921),
-                            checkedBorderColor = Color(0xFFE50914),
-                            uncheckedThumbColor = Color(0xFFA1A1AA),
-                            uncheckedTrackColor = NothingCardElevated,
-                            uncheckedBorderColor = Color(0xFF282933)
-                        )
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Accessibility & Auto-Paste Card
-            val isAccessibilityActive = LiltAccessibilityService.isServiceRunning()
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = NothingCard)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, if (isAccessibilityActive) Color(0x3334C759) else Color(0x33FFA000), RoundedCornerShape(20.dp))
-                        .padding(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (isAccessibilityActive) Color(0xFF0F2916) else Color(0xFF2A1F0C))
-                        ) {
-                            Icon(
-                                imageVector = if (isAccessibilityActive) Icons.Default.CheckCircle else Icons.Default.Settings,
-                                contentDescription = "Accessibility",
-                                tint = if (isAccessibilityActive) Color(0xFF34C759) else Color(0xFFFFA000),
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(14.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "Accessibility & Auto-Paste",
-                                    color = NothingTextPrimary,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(if (isAccessibilityActive) Color(0xFF0F2916) else Color(0xFF2A1F0C))
-                                        .border(1.dp, if (isAccessibilityActive) Color(0x6634C759) else Color(0x66FFA000), RoundedCornerShape(8.dp))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Text(
-                                        text = if (isAccessibilityActive) "ACTIVE" else "NOT ENABLED",
-                                        color = if (isAccessibilityActive) Color(0xFF34C759) else Color(0xFFFFA000),
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                            Text(
-                                text = "Detects keyboard typing so the floating circle appears only when typing, and auto-pastes directly at the cursor.",
-                                color = NothingTextMuted,
-                                fontSize = 12.sp,
-                                lineHeight = 16.sp
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(44.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isAccessibilityActive) Color(0xFF1E1F27) else Color(0xFFD71921))
-                            .clickable {
-                                LiltAccessibilityService.openAccessibilitySettings(context)
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = if (isAccessibilityActive) "OPEN ACCESSIBILITY SETTINGS" else "ENABLE IN ACCESSIBILITY",
-                            color = Color.White,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.8.sp
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 7. Cloud AI Engine (Groq / OpenAI Feature Parity)
-            Text(
-                text = "CLOUD AI ENGINE (GROQ / OPENAI)",
-                color = NothingTextMuted,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.2.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 4.dp)
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = NothingCard)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
-                        .padding(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Color(0xFF181818))
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Cloud,
-                                contentDescription = "Cloud AI",
-                                tint = if (cloudAiEnabled) Color.White else NothingTextMuted,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(12.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "Ultra-Fast Cloud Polish",
-                                color = NothingTextPrimary,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                text = if (cloudAiEnabled) "Active • ~150ms latency via Groq Qwen 3.8" else "Disabled • Using on-device engine",
-                                color = if (cloudAiEnabled) NothingGreen else NothingTextMuted,
-                                fontSize = 11.sp
-                            )
-                        }
-
-                        Switch(
-                            checked = cloudAiEnabled,
-                            onCheckedChange = {
-                                cloudAiEnabled = it
-                                settings.cloudAiEnabled = it
-                            },
-                            colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = Color(0xFFD71921),
-                            checkedBorderColor = Color(0xFFE50914),
-                            uncheckedThumbColor = Color(0xFFA1A1AA),
-                            uncheckedTrackColor = NothingCardElevated,
-                            uncheckedBorderColor = Color(0xFF282933)
-                        )
-                        )
-                    }
-
-                    if (cloudAiEnabled) {
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        // Provider Selector
-                        Text(
-                            text = "PROVIDER",
-                            color = NothingTextMuted,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            listOf("groq" to "GROQ (ULTRA FAST)", "openai" to "OPENAI").forEach { (id, label) ->
-                                val isSelected = cloudProvider.lowercase() == id
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(36.dp)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(
-                                            if (isSelected) {
-                                                Brush.verticalGradient(
-                                                    if (LiltThemeState.isDark) listOf(Color(0xFF2C2F3C), Color(0xFF1B1D25)) else listOf(Color(0xFFFFFFFF), Color(0xFFEBEAE4))
-                                                )
-                                            } else {
-                                                Brush.verticalGradient(
-                                                    if (LiltThemeState.isDark) listOf(Color(0xFF121319), Color(0xFF0C0D12)) else listOf(Color(0xFFF7F6F2), Color(0xFFEFECE6))
-                                                )
-                                            }
-                                        )
-                                        .border(
-                                            width = 1.2.dp,
-                                            color = if (isSelected) Color(0x99FFFFFF) else NothingBorder,
-                                            shape = RoundedCornerShape(10.dp)
-                                        )
-                                        .clickable {
-                                            cloudProvider = id
-                                            settings.cloudProvider = id
-                                            if (id == "groq" && cloudModel.contains("gpt")) {
-                                                cloudModel = "qwen/qwen3.8-27b"
-                                                settings.cloudModel = cloudModel
-                                            } else if (id == "openai" && !cloudModel.contains("gpt")) {
-                                                cloudModel = "gpt-4o-mini"
-                                                settings.cloudModel = cloudModel
-                                            }
-                                        }
-                                ) {
-                                    Text(
-                                        text = label,
-                                        color = if (isSelected) Color.White else Color(0xFFA1A1AA),
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // Model Selector
-                        Text(
-                            text = "MODEL PRESETS & CUSTOM ID",
-                            color = NothingTextMuted,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        val models = if (cloudProvider.lowercase() == "openai") {
-                            listOf("gpt-4o-mini" to "GPT-4o Mini", "gpt-4o" to "GPT-4o")
-                        } else {
-                            listOf(
-                                "qwen/qwen3.8-27b" to "Qwen 3.8 27B (Ultra Fast)"
-                            )
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            models.forEach { (m, label) ->
-                                val isSelected = cloudModel == m
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(34.dp)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(
-                                            if (isSelected) {
-                                                Brush.verticalGradient(
-                                                    if (LiltThemeState.isDark) listOf(Color(0xFF2C2F3C), Color(0xFF1B1D25)) else listOf(Color(0xFFFFFFFF), Color(0xFFEBEAE4))
-                                                )
-                                            } else {
-                                                Brush.verticalGradient(
-                                                    if (LiltThemeState.isDark) listOf(Color(0xFF121319), Color(0xFF0C0D12)) else listOf(Color(0xFFF7F6F2), Color(0xFFEFECE6))
-                                                )
-                                            }
-                                        )
-                                        .border(
-                                            width = 1.2.dp,
-                                            color = if (isSelected) Color(0x99FFFFFF) else NothingBorder,
-                                            shape = RoundedCornerShape(10.dp)
-                                        )
-                                        .clickable {
-                                            cloudModel = m
-                                            settings.cloudModel = m
-                                        }
-                                ) {
-                                    Text(
-                                        text = label,
-                                        color = if (isSelected) Color.Black else Color(0xFFA1A1AA),
-                                        fontSize = 9.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        OutlinedTextField(
-                            value = cloudModel,
-                            onValueChange = {
-                                cloudModel = it
-                                settings.cloudModel = it
-                            },
-                            singleLine = true,
-                            label = { Text("Active Model ID", color = NothingTextMuted, fontSize = 10.sp) },
-                            textStyle = TextStyle(color = NothingTextPrimary, fontSize = 11.sp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color.White,
-                                unfocusedBorderColor = NothingBorder,
-                                focusedContainerColor = NothingCardElevated,
-                                unfocusedContainerColor = NothingCardElevated
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // API Key Input
-                        Text(
-                            text = "API KEY",
-                            color = NothingTextMuted,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        OutlinedTextField(
-                            value = cloudApiKey,
-                            onValueChange = {
-                                cloudApiKey = it
-                                settings.cloudApiKey = it
-                            },
-                            singleLine = true,
-                            visualTransformation = if (showApiKey) VisualTransformation.None else PasswordVisualTransformation('●'),
-                            textStyle = TextStyle(color = NothingTextPrimary, fontSize = 12.sp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color.White,
-                                unfocusedBorderColor = NothingBorder,
-                                focusedContainerColor = NothingCardElevated,
-                                unfocusedContainerColor = NothingCardElevated
-                            ),
-                            placeholder = { Text("Enter your API key", color = NothingTextMuted, fontSize = 12.sp) },
-                            trailingIcon = {
-                                IconButton(onClick = { showApiKey = !showApiKey }) {
-                                    Icon(
-                                        imageVector = if (showApiKey) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                        contentDescription = if (showApiKey) "Hide key" else "Show key",
-                                        tint = NothingTextMuted,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        // Test Connection Button & Result Badge
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(NothingCardElevated)
-                                    .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
-                                    .clickable(enabled = !cloudTesting && cloudApiKey.isNotBlank()) {
-                                        cloudTesting = true
-                                        cloudTestResult = "Testing connection…"
-                                        coroutineScope.launch {
-                                            val res = CloudCleanupEngine.testConnection(
-                                                provider = cloudProvider,
-                                                apiKey = cloudApiKey,
-                                                model = cloudModel
-                                            )
-                                            cloudTesting = false
-                                            cloudTestResult = if (res.isSuccess) {
-                                                val (latency, _) = res.getOrThrow()
-                                                "✓ Connected (${latency}ms)"
-                                            } else {
-                                                "✕ ${res.exceptionOrNull()?.message ?: "Failed"}"
-                                            }
-                                        }
-                                    }
-                                    .padding(horizontal = 14.dp, vertical = 8.dp)
-                            ) {
-                                Text(
-                                    text = if (cloudTesting) "TESTING…" else "TEST CONNECTION",
-                                    color = NothingTextPrimary,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.8.sp
-                                )
-                            }
-
-                            if (cloudTestResult.isNotBlank()) {
-                                Text(
-                                    text = cloudTestResult,
-                                    color = if (cloudTestResult.startsWith("✓")) NothingGreen else Color.White,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            } // end settings tab (part 1 - system integration + cloud AI)
-
+            
             // ── RULES TAB ─────────────────────────────────
             if (currentTab == "rules") {
 
@@ -3976,12 +3149,30 @@ fun MainScreen(
 
             } // end rules tab
 
-            // ── SETTINGS TAB (Part 2: Privacy, Preferences & Diagnostics) ──────────
+            // ── SETTINGS TAB (Consolidated Liquid Glass Architecture) ──────────
             if (currentTab == "settings") {
 
-            // 7. Acoustic DSP & Background Noise Reduction (Wispr Flow Parity)
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "ACOUSTIC DSP & NOISE REDUCTION",
+                text = "S E T T I N G S",
+                color = NothingTextPrimary,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 3.sp,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Text(
+                text = "Universal Liquid Glass theme, engine, integrations & privacy",
+                color = NothingTextMuted,
+                fontSize = 12.sp,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // ── MASTER CARD 1: SURFACES & FLOATING PILL ────────────────
+            Text(
+                text = "SURFACES & FLOATING PILL",
                 color = NothingTextMuted,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
@@ -4002,10 +3193,315 @@ fun MainScreen(
                         .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
                         .padding(16.dp)
                 ) {
+                    // Item 1: Floating Glass Circle
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(NothingCardElevated)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PictureInPicture,
+                                contentDescription = "Floating Pill",
+                                tint = NothingTextPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Floating Glass Circle",
+                                color = NothingTextPrimary,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "Overlay bubble over any app. Tap to dictate & auto-paste.",
+                                color = NothingTextMuted,
+                                fontSize = 11.5.sp
+                            )
+                        }
+
+                        Switch(
+                            checked = isFloatingPillActive,
+                            onCheckedChange = { checked ->
+                                if (checked) {
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {
+                                        val intent = Intent(
+                                            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                            Uri.parse("package:${context.packageName}")
+                                        )
+                                        context.startActivity(intent)
+                                    } else {
+                                        settings.floatingPillEnabled = true
+                                        isFloatingPillActive = true
+                                        LiltOverlayService.start(context)
+                                    }
+                                } else {
+                                    settings.floatingPillEnabled = false
+                                    isFloatingPillActive = false
+                                    LiltOverlayService.stop(context)
+                                }
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = Color(0xFFD71921),
+                                checkedBorderColor = Color(0xFFE50914),
+                                uncheckedThumbColor = Color(0xFFA1A1AA),
+                                uncheckedTrackColor = NothingCardElevated,
+                                uncheckedBorderColor = Color(0xFF282933)
+                            )
+                        )
+                    }
+
+                    AnimatedVisibility(visible = isFloatingPillActive) {
+                        Column {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(NothingCardElevated)
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Always-On Mode",
+                                        color = NothingTextPrimary,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Text(
+                                        text = if (isAlwaysOnActive) "Pill stays visible everywhere" else "Pill appears only when keyboard is open",
+                                        color = NothingTextMuted,
+                                        fontSize = 11.sp
+                                    )
+                                }
+                                Switch(
+                                    checked = isAlwaysOnActive,
+                                    onCheckedChange = { checked ->
+                                        isAlwaysOnActive = checked
+                                        settings.floatingCircleContextualOnly = !checked
+                                        LiltOverlayService.setAlwaysOn(checked)
+                                    },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = Color(0xFFD71921),
+                                        checkedBorderColor = Color(0xFFE50914),
+                                        uncheckedThumbColor = Color(0xFFA1A1AA),
+                                        uncheckedTrackColor = NothingCard,
+                                        uncheckedBorderColor = Color(0xFF282933)
+                                    )
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x1AFFFFFF)))
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Item 2: Auto-Paste Service (Accessibility)
+                    val isAccessibilityActive = LiltAccessibilityService.isServiceRunning()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isAccessibilityActive) Color(0x2234C759) else Color(0x22FFA000))
+                            ) {
+                                Icon(
+                                    imageVector = if (isAccessibilityActive) Icons.Default.Check else Icons.Default.Warning,
+                                    contentDescription = null,
+                                    tint = if (isAccessibilityActive) Color(0xFF34C759) else Color(0xFFFFA000),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(14.dp))
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "Auto-Paste Service",
+                                        color = NothingTextPrimary,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = if (isAccessibilityActive) "ACTIVE" else "DISABLED",
+                                        color = if (isAccessibilityActive) Color(0xFF34C759) else Color(0xFFFFA000),
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Text(
+                                    text = "Pastes dictation directly into any text input cursor.",
+                                    color = NothingTextMuted,
+                                    fontSize = 11.5.sp
+                                )
+                            }
+                        }
+                        if (!isAccessibilityActive) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(NothingCardElevated)
+                                    .border(1.dp, Color(0x33FFA000), RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                                        context.startActivity(intent)
+                                    }
+                                    .padding(horizontal = 10.dp, vertical = 6.dp)
+                            ) {
+                                Text(text = "ENABLE", color = Color(0xFFFFA000), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x1AFFFFFF)))
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Item 3: Voice Keyboard IME
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(NothingCardElevated)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Keyboard,
+                                    contentDescription = "Keyboard",
+                                    tint = NothingTextPrimary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(14.dp))
+                            Column {
+                                Text(
+                                    text = "Lilt Voice Keyboard (IME)",
+                                    color = NothingTextPrimary,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Hold spacebar to dictate inside any OEM keyboard.",
+                                    color = NothingTextMuted,
+                                    fontSize = 11.5.sp
+                                )
+                            }
+                        }
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(NothingCardElevated)
+                                .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
+                                .clickable {
+                                    val intent = Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)
+                                    context.startActivity(intent)
+                                }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text(text = "SETUP", color = NothingTextPrimary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // ── MASTER CARD 2: AUDIO DSP & LANGUAGES ──────────────────
+            Text(
+                text = "AUDIO DSP & LANGUAGES",
+                color = NothingTextMuted,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = NothingCard)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
+                        .padding(16.dp)
+                ) {
+                    // Row 1: Languages in Auto Mode
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Languages in Auto Mode",
+                                color = NothingTextPrimary,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            val summary = enabledLanguageCodes.mapNotNull { SettingsManager.findLanguageByCode(it)?.shortLabel }.joinToString(", ")
+                            Text(
+                                text = summary,
+                                color = NothingTextMuted,
+                                fontSize = 11.5.sp
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(NothingCardElevated)
+                                .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(8.dp))
+                                .clickable { showLanguagePickerDialog = true }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = "MANAGE (${enabledLanguageCodes.size})",
+                                color = NothingTextPrimary,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x1AFFFFFF)))
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Row 2: Audio DSP Noise Filtering
                     NothingSettingToggle(
                         icon = Icons.Default.Tune,
                         title = "Audio DSP Noise Filtering",
-                        subtitle = "High-pass 85Hz filter + adaptive soft-knee noise gate to silence AC hum, fan rumble, and table taps.",
+                        subtitle = "85Hz Butterworth filter + adaptive noise gate silences AC hum & fan rumble.",
                         checked = noiseReductionEnabled,
                         onCheckedChange = { checked ->
                             noiseReductionEnabled = checked
@@ -4014,128 +3510,79 @@ fun MainScreen(
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x1AFFFFFF)))
+                    Spacer(modifier = Modifier.height(14.dp))
 
+                    // Row 3: Hardware Multi-Mic Beamforming
                     NothingSettingToggle(
                         icon = Icons.Default.Mic,
-                        title = "Hardware Multi-Mic Beamforming",
-                        subtitle = "Activates device DSP acoustic echo canceler and directional voice recognition microphone.",
+                        title = "Hardware Beamforming",
+                        subtitle = "Directional multi-mic array and acoustic echo cancellation.",
                         checked = hardwareNoiseSuppression,
                         onCheckedChange = { checked ->
                             hardwareNoiseSuppression = checked
                             settings.hardwareNoiseSuppression = checked
                         }
                     )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            // 10. Storage & Privacy Controls
-            Text(
-                text = "AUDIO PRIVACY & STORAGE",
-                color = NothingTextMuted,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.2.sp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 4.dp)
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = NothingCard)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        text = "Zero Cloud Audio Policy",
-                        color = NothingTextPrimary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = "Choose whether audio is stored locally for replay or discarded entirely.",
-                        color = NothingTextMuted,
-                        fontSize = 12.sp
-                    )
 
                     Spacer(modifier = Modifier.height(14.dp))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x1AFFFFFF)))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        val isAudioMode = historyStorageMode == "audio_and_text"
-
-                        // Option 1: Audio & Text
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (isAudioMode) Color(0xFF221111) else Color(0xFF141414))
-                                .border(
-                                    1.dp,
-                                    if (isAudioMode) Color.White else NothingBorder,
-                                    RoundedCornerShape(12.dp)
-                                )
-                                .clickable {
-                                    historyStorageMode = "audio_and_text"
-                                    settings.historyStorageMode = "audio_and_text"
-                                }
-                                .padding(vertical = 12.dp, horizontal = 10.dp)
+                    // Row 4: Audio Privacy Policy
+                    Column {
+                        Text(
+                            text = "Audio Privacy Policy",
+                            color = NothingTextPrimary,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "Choose whether raw audio is retained locally for replay or discarded.",
+                            color = NothingTextMuted,
+                            fontSize = 11.5.sp
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = "Audio & Text",
-                                    color = if (isAudioMode) Color.White else NothingTextPrimary,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    text = "Save for replay",
-                                    color = NothingTextMuted,
-                                    fontSize = 10.sp
-                                )
+                            val isAudioMode = historyStorageMode == "audio_and_text"
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(if (isAudioMode) Color(0xFF221111) else Color(0xFF141414))
+                                    .border(1.dp, if (isAudioMode) Color.White else NothingBorder, RoundedCornerShape(10.dp))
+                                    .clickable {
+                                        historyStorageMode = "audio_and_text"
+                                        settings.historyStorageMode = "audio_and_text"
+                                    }
+                                    .padding(vertical = 10.dp)
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(text = "Audio & Text", color = if (isAudioMode) Color.White else NothingTextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(text = "Save for replay", color = NothingTextMuted, fontSize = 10.sp)
+                                }
                             }
-                        }
-
-                        // Option 2: Text Only
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (!isAudioMode) Color(0xFF14241B) else Color(0xFF141414))
-                                .border(
-                                    1.dp,
-                                    if (!isAudioMode) NothingGreen else NothingBorder,
-                                    RoundedCornerShape(12.dp)
-                                )
-                                .clickable {
-                                    historyStorageMode = "text_only"
-                                    settings.historyStorageMode = "text_only"
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(if (!isAudioMode) Color(0xFF14241B) else Color(0xFF141414))
+                                    .border(1.dp, if (!isAudioMode) NothingGreen else NothingBorder, RoundedCornerShape(10.dp))
+                                    .clickable {
+                                        historyStorageMode = "text_only"
+                                        settings.historyStorageMode = "text_only"
+                                    }
+                                    .padding(vertical = 10.dp)
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(text = "Text Only", color = if (!isAudioMode) NothingGreen else NothingTextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(text = "0 MB Audio / Private", color = NothingTextMuted, fontSize = 10.sp)
                                 }
-                                .padding(vertical = 12.dp, horizontal = 10.dp)
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = "Text Only",
-                                    color = if (!isAudioMode) NothingGreen else NothingTextPrimary,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    text = "0 MB Audio / Private",
-                                    color = NothingTextMuted,
-                                    fontSize = 10.sp
-                                )
                             }
                         }
                     }
@@ -4144,9 +3591,9 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 8. Cleanup & Formatting Preferences
+            // ── MASTER CARD 3: CLOUD AI ENGINE & CLEANUP ──────────────
             Text(
-                text = "CLEANUP PREFERENCES",
+                text = "CLOUD AI & CLEANUP PREFERENCES",
                 color = NothingTextMuted,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
@@ -4167,6 +3614,198 @@ fun MainScreen(
                         .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
                         .padding(16.dp)
                 ) {
+                    // Ultra-Fast Cloud Polish Toggle
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFF181818))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Cloud,
+                                contentDescription = "Cloud AI",
+                                tint = if (cloudAiEnabled) Color.White else NothingTextMuted,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Ultra-Fast Cloud Polish",
+                                color = NothingTextPrimary,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = if (cloudAiEnabled) "Active • ~150ms latency via Groq Qwen 3.8" else "Disabled • Using on-device engine",
+                                color = if (cloudAiEnabled) NothingGreen else NothingTextMuted,
+                                fontSize = 11.sp
+                            )
+                        }
+
+                        Switch(
+                            checked = cloudAiEnabled,
+                            onCheckedChange = {
+                                cloudAiEnabled = it
+                                settings.cloudAiEnabled = it
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = Color(0xFFD71921),
+                                checkedBorderColor = Color(0xFFE50914),
+                                uncheckedThumbColor = Color(0xFFA1A1AA),
+                                uncheckedTrackColor = NothingCardElevated,
+                                uncheckedBorderColor = Color(0xFF282933)
+                            )
+                        )
+                    }
+
+                    if (cloudAiEnabled) {
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Provider Selector
+                        Text(
+                            text = "PROVIDER",
+                            color = NothingTextMuted,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf("groq" to "GROQ (ULTRA FAST)", "openai" to "OPENAI").forEach { (id, label) ->
+                                val isSelected = cloudProvider.lowercase() == id
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(36.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (isSelected) Color(0xFF2A2D3A) else Color(0xFF141416))
+                                        .border(1.dp, if (isSelected) Color(0x99FFFFFF) else NothingBorder, RoundedCornerShape(10.dp))
+                                        .clickable {
+                                            cloudProvider = id
+                                            settings.cloudProvider = id
+                                            if (id == "groq" && cloudModel.contains("gpt")) {
+                                                cloudModel = "qwen/qwen3.8-27b"
+                                                settings.cloudModel = cloudModel
+                                            } else if (id == "openai" && !cloudModel.contains("gpt")) {
+                                                cloudModel = "gpt-4o-mini"
+                                                settings.cloudModel = cloudModel
+                                            }
+                                        }
+                                ) {
+                                    Text(
+                                        text = label,
+                                        color = if (isSelected) Color.White else Color(0xFFA1A1AA),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // API Key Input
+                        OutlinedTextField(
+                            value = cloudApiKey,
+                            onValueChange = {
+                                cloudApiKey = it
+                                settings.cloudApiKey = it
+                            },
+                            singleLine = true,
+                            visualTransformation = if (showApiKey) VisualTransformation.None else PasswordVisualTransformation('●'),
+                            textStyle = TextStyle(color = NothingTextPrimary, fontSize = 12.sp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color.White,
+                                unfocusedBorderColor = NothingBorder,
+                                focusedContainerColor = NothingCardElevated,
+                                unfocusedContainerColor = NothingCardElevated
+                            ),
+                            placeholder = { Text("Enter your API key", color = NothingTextMuted, fontSize = 12.sp) },
+                            trailingIcon = {
+                                IconButton(onClick = { showApiKey = !showApiKey }) {
+                                    Icon(
+                                        imageVector = if (showApiKey) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                        contentDescription = if (showApiKey) "Hide key" else "Show key",
+                                        tint = NothingTextMuted,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Test Connection Button & Result Badge
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(NothingCardElevated)
+                                    .border(1.dp, NothingBorder, RoundedCornerShape(8.dp))
+                                    .clickable(enabled = !cloudTesting && cloudApiKey.isNotBlank()) {
+                                        cloudTesting = true
+                                        cloudTestResult = "Testing connection…"
+                                        coroutineScope.launch {
+                                            val res = CloudCleanupEngine.testConnection(
+                                                provider = cloudProvider,
+                                                apiKey = cloudApiKey,
+                                                model = cloudModel
+                                            )
+                                            cloudTesting = false
+                                            cloudTestResult = if (res.isSuccess) {
+                                                val (latency, _) = res.getOrThrow()
+                                                "✓ Connected (${latency}ms)"
+                                            } else {
+                                                "✕ ${res.exceptionOrNull()?.message ?: "Failed"}"
+                                            }
+                                        }
+                                    }
+                                    .padding(horizontal = 14.dp, vertical = 8.dp)
+                            ) {
+                                Text(
+                                    text = if (cloudTesting) "TESTING…" else "TEST CONNECTION",
+                                    color = NothingTextPrimary,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.8.sp
+                                )
+                            }
+
+                            if (cloudTestResult.isNotBlank()) {
+                                Text(
+                                    text = cloudTestResult,
+                                    color = if (cloudTestResult.startsWith("✓")) NothingGreen else Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x1AFFFFFF)))
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Smart Reminders
                     NothingSettingToggle(
                         icon = Icons.Default.Schedule,
                         title = "Smart Reminders & Scheduling",
@@ -4193,7 +3832,10 @@ fun MainScreen(
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
+                    Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x1AFFFFFF)))
+                    Spacer(modifier = Modifier.height(14.dp))
 
+                    // Formatting Preferences List
                     NothingSettingToggle(
                         icon = Icons.Default.ContentCopy,
                         title = "Auto-Copy to Clipboard",
@@ -4203,14 +3845,6 @@ fun MainScreen(
                             autoCopyClipboard = checked
                             settings.autoCopyToClipboard = checked
                         }
-                    )
-
-                    NothingSettingToggle(
-                        icon = Icons.Default.AutoAwesome,
-                        title = "Stutter & Disfluency Collapse",
-                        subtitle = "Deletes repetitive hesitations and false starts.",
-                        checked = true,
-                        onCheckedChange = {}
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -4268,19 +3902,6 @@ fun MainScreen(
                     Spacer(modifier = Modifier.height(14.dp))
 
                     NothingSettingToggle(
-                        icon = Icons.Default.SpaceBar,
-                        title = "Automatic Trailing Space",
-                        subtitle = "Appends a space after auto-pasting so you can continue typing.",
-                        checked = trailingSpace,
-                        onCheckedChange = {
-                            trailingSpace = it
-                            settings.trailingSpace = it
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    NothingSettingToggle(
                         icon = Icons.Default.Vibration,
                         title = "Tactile Haptic Feedback",
                         subtitle = "Subtle vibration pulse on mic start, stop, and text paste.",
@@ -4295,7 +3916,7 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 9. One-Click Support & Error Reporting Hub
+            // ── MASTER CARD 4: SUPPORT & DIAGNOSTICS ──────────────────
             Text(
                 text = "SUPPORT & DIAGNOSTICS",
                 color = NothingTextMuted,
@@ -4434,7 +4055,7 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            } // end settings tab (part 2)
+            } // end settings tab
                 }
             }
 
