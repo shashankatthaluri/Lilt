@@ -1948,14 +1948,21 @@ fun MainScreen(
                                 ReminderCard(
                                     reminder = rem,
                                     searchQuery = queryClean,
+                                    isDissolving = rem.id in dissolvingIds,
                                     onComplete = {
                                         settings.completeReminder(rem.id)
                                         remindersList = settings.getReminders()
                                     },
                                     onDelete = {
-                                        ReminderScheduler.cancel(context, rem.id)
-                                        settings.deleteReminder(rem.id)
-                                        remindersList = settings.getReminders()
+                                        coroutineScope.launch {
+                                            dissolvingIds = setOf(rem.id)
+                                            view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                            delay(600)
+                                            ReminderScheduler.cancel(context, rem.id)
+                                            settings.deleteReminder(rem.id)
+                                            remindersList = settings.getReminders()
+                                            dissolvingIds = emptySet()
+                                        }
                                     }
                                 )
                                 Spacer(modifier = Modifier.height(10.dp))
@@ -2425,9 +2432,25 @@ fun MainScreen(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         voiceCommandsList.forEach { cmd ->
+                            val isCmdDissolving = cmd.id in dissolvingIds
+                            val cmdDustAnim by animateFloatAsState(
+                                targetValue = if (isCmdDissolving) 1f else 0f,
+                                animationSpec = tween(durationMillis = 600, easing = LinearOutSlowInEasing),
+                                label = "dustDisintegrationCmd_${cmd.id}"
+                            )
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .graphicsLayer {
+                                        if (isCmdDissolving) {
+                                            alpha = ((1f - cmdDustAnim) * (1f - cmdDustAnim)).coerceIn(0f, 1f)
+                                            scaleX = 1f + cmdDustAnim * 0.16f
+                                            scaleY = (1f - cmdDustAnim * 0.85f).coerceAtLeast(0.05f)
+                                            translationX = cmdDustAnim * 90f
+                                            translationY = -cmdDustAnim * 30f
+                                            rotationZ = cmdDustAnim * 6f
+                                        }
+                                    }
                                     .padding(vertical = 4.dp)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(NothingCard)
@@ -2474,8 +2497,14 @@ fun MainScreen(
                                         modifier = Modifier
                                             .size(16.dp)
                                             .clickable {
-                                                settings.deleteVoiceCommand(cmd.id)
-                                                voiceCommandsList = settings.getVoiceCommands()
+                                                coroutineScope.launch {
+                                                    dissolvingIds = setOf(cmd.id)
+                                                    view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                                    delay(600)
+                                                    settings.deleteVoiceCommand(cmd.id)
+                                                    voiceCommandsList = settings.getVoiceCommands()
+                                                    dissolvingIds = emptySet()
+                                                }
                                             }
                                     )
                                 }
@@ -3072,9 +3101,25 @@ fun MainScreen(
 
                         // Existing replacements list
                         replacementsList.forEach { rep ->
+                            val isRepDissolving = rep.id in dissolvingIds
+                            val repDustAnim by animateFloatAsState(
+                                targetValue = if (isRepDissolving) 1f else 0f,
+                                animationSpec = tween(durationMillis = 600, easing = LinearOutSlowInEasing),
+                                label = "dustDisintegrationRep_${rep.id}"
+                            )
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .graphicsLayer {
+                                        if (isRepDissolving) {
+                                            alpha = ((1f - repDustAnim) * (1f - repDustAnim)).coerceIn(0f, 1f)
+                                            scaleX = 1f + repDustAnim * 0.16f
+                                            scaleY = (1f - repDustAnim * 0.85f).coerceAtLeast(0.05f)
+                                            translationX = repDustAnim * 90f
+                                            translationY = -repDustAnim * 30f
+                                            rotationZ = repDustAnim * 6f
+                                        }
+                                    }
                                     .padding(vertical = 4.dp)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(NothingCard)
@@ -3108,8 +3153,14 @@ fun MainScreen(
                                     modifier = Modifier
                                         .size(16.dp)
                                         .clickable {
-                                            settings.deleteReplacement(rep.id)
-                                            replacementsList = settings.getReplacements()
+                                            coroutineScope.launch {
+                                                dissolvingIds = setOf(rep.id)
+                                                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                                delay(600)
+                                                settings.deleteReplacement(rep.id)
+                                                replacementsList = settings.getReplacements()
+                                                dissolvingIds = emptySet()
+                                            }
                                         }
                                 )
                             }
@@ -3189,9 +3240,25 @@ fun MainScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         snippetsList.forEach { snippet ->
+                            val isSnpDissolving = snippet.id in dissolvingIds
+                            val snpDustAnim by animateFloatAsState(
+                                targetValue = if (isSnpDissolving) 1f else 0f,
+                                animationSpec = tween(durationMillis = 600, easing = LinearOutSlowInEasing),
+                                label = "dustDisintegrationSnp_${snippet.id}"
+                            )
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .graphicsLayer {
+                                        if (isSnpDissolving) {
+                                            alpha = ((1f - snpDustAnim) * (1f - snpDustAnim)).coerceIn(0f, 1f)
+                                            scaleX = 1f + snpDustAnim * 0.16f
+                                            scaleY = (1f - snpDustAnim * 0.85f).coerceAtLeast(0.05f)
+                                            translationX = snpDustAnim * 90f
+                                            translationY = -snpDustAnim * 30f
+                                            rotationZ = snpDustAnim * 6f
+                                        }
+                                    }
                                     .padding(vertical = 4.dp)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(NothingCard)
@@ -3219,8 +3286,14 @@ fun MainScreen(
                                     modifier = Modifier
                                         .size(16.dp)
                                         .clickable {
-                                            settings.deleteSnippet(snippet.id)
-                                            snippetsList = settings.getSnippets()
+                                            coroutineScope.launch {
+                                                dissolvingIds = setOf(snippet.id)
+                                                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                                delay(600)
+                                                settings.deleteSnippet(snippet.id)
+                                                snippetsList = settings.getSnippets()
+                                                dissolvingIds = emptySet()
+                                            }
                                         }
                                 )
                             }
@@ -4822,6 +4895,7 @@ fun TonePill(
 fun ReminderCard(
     reminder: com.lilt.mobile.data.ReminderItem,
     searchQuery: String = "",
+    isDissolving: Boolean = false,
     onComplete: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -4831,8 +4905,25 @@ fun ReminderCard(
     val formattedTime = timeFormat.format(java.util.Date(reminder.eventEpochMs))
     val leadStr = if (reminder.leadMinutes >= 60) "${reminder.leadMinutes / 60}h" else "${reminder.leadMinutes}m"
 
+    val dustAnim by animateFloatAsState(
+        targetValue = if (isDissolving) 1f else 0f,
+        animationSpec = tween(durationMillis = 600, easing = LinearOutSlowInEasing),
+        label = "dustDisintegrationReminder"
+    )
+
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                if (isDissolving) {
+                    alpha = ((1f - dustAnim) * (1f - dustAnim)).coerceIn(0f, 1f)
+                    scaleX = 1f + dustAnim * 0.16f
+                    scaleY = (1f - dustAnim * 0.85f).coerceAtLeast(0.05f)
+                    translationX = dustAnim * 90f
+                    translationY = -dustAnim * 30f
+                    rotationZ = dustAnim * 6f
+                }
+            },
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isCompleted) NothingCard else NothingCardElevated
