@@ -4361,7 +4361,7 @@ fun MainScreen(
                 }
             }
 
-            // Universal Mobile Footer
+            // Clean Brand Footer
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = "L I L T   •   V O I C E ,   R E F I N E D",
@@ -4372,7 +4372,7 @@ fun MainScreen(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Raw thought, polished instantly  •  Universal Edition",
+                    text = "Raw thought, polished instantly",
                     color = Color(0xFF666666),
                     fontSize = 10.5.sp
                 )
