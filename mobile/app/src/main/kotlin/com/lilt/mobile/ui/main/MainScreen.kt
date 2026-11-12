@@ -4310,10 +4310,10 @@ fun MainScreen(
                 }
             }
 
-            // Footer
+            // Universal Mobile Footer
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "L I L T   •   N O T H I N G   O S",
+                    text = "L I L T   •   V O I C E   A I",
                     color = NothingTextMuted,
                     fontSize = 11.sp,
                     letterSpacing = 2.sp,
@@ -4321,8 +4321,8 @@ fun MainScreen(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Built for Nothing Phone (4a)  •  Voice Engine v1.0  •  Nothing OS",
-                    color = Color(0xFF444444),
+                    text = "Universal Mobile Voice Engine v1.0  •  AMOLED Edition",
+                    color = Color(0xFF555555),
                     fontSize = 10.sp
                 )
             }
