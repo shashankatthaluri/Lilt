@@ -173,6 +173,7 @@ import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.heightIn
@@ -1210,9 +1211,10 @@ fun MainScreen(
                         OutlinedTextField(
                             value = liveStudioText,
                             onValueChange = { liveStudioText = it },
+                            readOnly = true,
                             placeholder = {
                                 Text(
-                                    text = "Tap the microphone above and speak. Your live transcript and polished output will stream right into this text box...",
+                                    text = "Tap the microphone above and speak. Your live transcript and polished output will stream right into this showcase…",
                                     color = Color(0xFF52525B),
                                     fontSize = 13.sp,
                                     lineHeight = 18.sp
@@ -1227,11 +1229,11 @@ fun MainScreen(
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedContainerColor = NothingCardElevated,
                                 unfocusedContainerColor = NothingCardElevated,
-                                focusedBorderColor = Color(0x80FFFFFF),
+                                focusedBorderColor = Color(0x60FFFFFF),
                                 unfocusedBorderColor = NothingBorder,
                                 focusedTextColor = NothingTextPrimary,
                                 unfocusedTextColor = Color(0xFFE4E4E7),
-                                cursorColor = Color(0xFFD71921)
+                                cursorColor = Color.Transparent
                             ),
                             textStyle = LocalTextStyle.current.copy(
                                 fontSize = 14.sp,
@@ -4397,38 +4399,53 @@ fun MainScreen(
                 shadowElevation = 24.dp,
                 border = BorderStroke(1.2.dp, LiltGlassSpecularBorderBrush)
             ) {
+                val pinInteractionSource = remember { MutableInteractionSource() }
+                val isPinPressed by pinInteractionSource.collectIsPressedAsState()
+
+                val noteInteractionSource = remember { MutableInteractionSource() }
+                val isNotePressed by noteInteractionSource.collectIsPressedAsState()
+
+                val deleteInteractionSource = remember { MutableInteractionSource() }
+                val isDeletePressed by deleteInteractionSource.collectIsPressedAsState()
+
+                val cancelInteractionSource = remember { MutableInteractionSource() }
+                val isCancelPressed by cancelInteractionSource.collectIsPressedAsState()
+
                 Row(
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Badge counter
+                    // Minimalist Frosted Badge Counter
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .height(36.dp)
                             .clip(RoundedCornerShape(18.dp))
-                            .background(Color(0x26FFB800))
-                            .border(1.dp, Color(0x66FFB800), RoundedCornerShape(18.dp))
-                            .padding(horizontal = 10.dp)
+                            .background(Color(0x18FFFFFF))
+                            .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(18.dp))
+                            .padding(horizontal = 11.dp)
                     ) {
                         Text(
                             text = "${selectedIds.size}",
-                            color = Color(0xFFFFB800),
+                            color = Color.White,
                             fontSize = 12.5.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
 
-                    // 1. PIN Action
+                    // 1. PIN Action (Resting monochrome, ignites Nothing Crimson on click/press)
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(38.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFF221618))
-                            .border(1.dp, Color(0x4DD71921), CircleShape)
-                            .clickable {
+                            .background(if (isPinPressed) Color(0x33D71921) else Color(0x12FFFFFF))
+                            .border(1.dp, if (isPinPressed) Color(0xFFD71921) else Color(0x22FFFFFF), CircleShape)
+                            .clickable(
+                                interactionSource = pinInteractionSource,
+                                indication = null
+                            ) {
                                 view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                                 val anyUnpinned = historyItems.any { it.id in selectedIds && !it.isPinned }
                                 settings.setPinnedStateMultiple(selectedIds, anyUnpinned)
@@ -4445,20 +4462,23 @@ fun MainScreen(
                         Icon(
                             imageVector = Icons.Default.PushPin,
                             contentDescription = "Pin",
-                            tint = Color(0xFFD71921),
+                            tint = if (isPinPressed) Color(0xFFD71921) else Color(0xFFA1A1AA),
                             modifier = Modifier.size(17.dp)
                         )
                     }
 
-                    // 2. NOTE Action
+                    // 2. NOTE Action (Resting monochrome, ignites Warm Amber on click/press)
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(38.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFF241E14))
-                            .border(1.dp, Color(0x66FFB800), CircleShape)
-                            .clickable {
+                            .background(if (isNotePressed) Color(0x33FFB800) else Color(0x12FFFFFF))
+                            .border(1.dp, if (isNotePressed) Color(0xFFFFB800) else Color(0x22FFFFFF), CircleShape)
+                            .clickable(
+                                interactionSource = noteInteractionSource,
+                                indication = null
+                            ) {
                                 view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                                 val anyNotNote = historyItems.any { it.id in selectedIds && !it.isNote }
                                 settings.setNoteStateMultiple(selectedIds, anyNotNote)
@@ -4475,20 +4495,26 @@ fun MainScreen(
                         Icon(
                             imageVector = Icons.Default.Bookmark,
                             contentDescription = "Notes",
-                            tint = Color(0xFFFFB800),
+                            tint = if (isNotePressed) Color(0xFFFFB800) else Color(0xFFA1A1AA),
                             modifier = Modifier.size(17.dp)
                         )
                     }
 
-                    // 3. DELETE (Thanos Snap) Action
+                    // 3. DELETE Action (Resting monochrome, ignites Intense Red on click/press)
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(38.dp)
                             .clip(CircleShape)
-                            .background(Brush.horizontalGradient(listOf(Color(0xFFD71921), Color(0xFFB51219))))
-                            .border(1.dp, Color(0x66FFFFFF), CircleShape)
-                            .clickable {
+                            .background(
+                                if (isDeletePressed) Brush.horizontalGradient(listOf(Color(0xFFD71921), Color(0xFFB51219)))
+                                else Brush.linearGradient(listOf(Color(0x14FFFFFF), Color(0x12FFFFFF)))
+                            )
+                            .border(1.dp, if (isDeletePressed) Color(0xFFFFFFFF) else Color(0x22FFFFFF), CircleShape)
+                            .clickable(
+                                interactionSource = deleteInteractionSource,
+                                indication = null
+                            ) {
                                 coroutineScope.launch {
                                     dissolvingIds = selectedIds
                                     view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
@@ -4505,19 +4531,23 @@ fun MainScreen(
                         Icon(
                             imageVector = Icons.Default.DeleteOutline,
                             contentDescription = "Delete",
-                            tint = Color.White,
+                            tint = if (isDeletePressed) Color.White else Color(0xFFA1A1AA),
                             modifier = Modifier.size(18.dp)
                         )
                     }
 
-                    // 4. CANCEL / CLOSE Action
+                    // 4. CANCEL / CLOSE Action (Resting subtle slate, highlights on click/press)
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .size(34.dp)
                             .clip(CircleShape)
-                            .background(Color(0x22FFFFFF))
-                            .clickable {
+                            .background(if (isCancelPressed) Color(0x2EFFFFFF) else Color(0x0EFFFFFF))
+                            .border(1.dp, if (isCancelPressed) Color(0x40FFFFFF) else Color(0x16FFFFFF), CircleShape)
+                            .clickable(
+                                interactionSource = cancelInteractionSource,
+                                indication = null
+                            ) {
                                 view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                                 isMultiSelect = false
                                 selectedIds = emptySet()
@@ -4526,7 +4556,7 @@ fun MainScreen(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Cancel",
-                            tint = Color(0xFFA1A1AA),
+                            tint = if (isCancelPressed) Color.White else Color(0xFF71717A),
                             modifier = Modifier.size(16.dp)
                         )
                     }
