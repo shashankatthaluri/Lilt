@@ -207,16 +207,17 @@ class SpeechEngine(private val context: Context) {
         val clean = trimmed.lowercase().replace(Regex("[^a-z0-9 ]"), "").trim()
         if (clean.isEmpty()) return true
 
+        // Only filter true Whisper video/subtitle boilerplate hallucinations generated on near-silence
         val knownHallucinations = setOf(
-            "thank you", "thank you for watching", "thanks for watching",
-            "thank you very much", "subtitles by", "subtitles", "amara org",
-            "amaraorg", "bye", "you", "english telugu", "tenglish in roman",
-            "spoken strictly in english", "spoken strictly in english telugu or hindi only",
-            "repu meeting undi", "aap kaise ho", "kya chal raha hai", "ela unnaru",
-            "bagunnara", "cheppandi"
+            "thank you for watching", "thanks for watching",
+            "subtitles by", "subtitles", "amara org",
+            "amaraorg", "please subscribe", "subscribe to my channel",
+            "transcribed by", "translated by",
+            "english telugu", "tenglish in roman",
+            "spoken strictly in english", "spoken strictly in english telugu or hindi only"
         )
         if (clean in knownHallucinations) return true
-        if (clean.startsWith("thank you") || clean.startsWith("thanks for watching") || clean.startsWith("subtitles")) return true
+        if (clean.startsWith("thanks for watching") || clean.startsWith("thank you for watching") || clean.startsWith("subtitles by")) return true
         return false
     }
 
@@ -252,8 +253,8 @@ class SpeechEngine(private val context: Context) {
             rawPcm
         }
         // 16000 samples/sec * 2 bytes = 32000 bytes/sec
-        // Minimum ~500ms of audio (16000 bytes) required for human speech
-        if (pcmData.size < 16000) {
+        // Minimum ~250ms of audio (8000 bytes) required for quick human speech
+        if (pcmData.size < 8000) {
             DiagnosticLogger.log(tag, "Recording too short: ${pcmData.size} bytes (${pcmData.size / 32}ms). No speech detected.")
             listener?.onNoSpeechDetected()
             listener?.onStopped()
@@ -281,7 +282,7 @@ class SpeechEngine(private val context: Context) {
 
             if ((i + 1) % frameSize == 0) {
                 val avgFrameAmp = currentFrameEnergy / frameSize
-                if (avgFrameAmp > 900) {
+                if (avgFrameAmp > 300) {
                     speechFramesCount++
                 }
                 currentFrameEnergy = 0.0
@@ -291,8 +292,8 @@ class SpeechEngine(private val context: Context) {
         val rms = if (numSamples > 0) Math.sqrt(sumSquares / numSamples) else 0.0
         DiagnosticLogger.log(tag, "VAD Energy Check: bytes=${pcmData.size}, maxAmp=$maxAmplitude, rms=$rms, speechFrames=$speechFramesCount")
 
-        // If audio energy indicates ambient room noise, mic hiss, or silence:
-        if (maxAmplitude < 1500 || rms < 250.0 || speechFramesCount < 3) {
+        // If audio energy indicates absolute room silence or pure low-level mic hiss:
+        if (maxAmplitude < 400 || (rms < 50.0 && speechFramesCount < 2)) {
             DiagnosticLogger.log(tag, "No active vocal speech detected (maxAmp=$maxAmplitude, rms=$rms, speechFrames=$speechFramesCount). Dismissed.")
             listener?.onNoSpeechDetected()
             listener?.onStopped()
@@ -441,8 +442,9 @@ class SpeechEngine(private val context: Context) {
                 val durationSec = (pcmData.size / 32000).coerceAtLeast(1)
                 val isNote = isNoteTrigger(rawText, cleanedText, settings.activeTone)
                 val contact = ContactExtractor.extract(cleanedText, rawText)
+                val textToPreserve = cleanedText.ifBlank { rawText }
                 val item = DictationItem(
-                    cleanedText = cleanedText,
+                    cleanedText = textToPreserve,
                     rawText = rawText,
                     durationSeconds = durationSec,
                     tone = if (isNote) "notes" else settings.activeTone,
@@ -451,8 +453,8 @@ class SpeechEngine(private val context: Context) {
                     contactPhone = contact?.formattedDisplayPhone
                 )
                 settings.addHistory(item)
-                copyToClipboardIfEnabled(cleanedText)
-                checkAndScheduleReminder(cleanedText, rawText)
+                copyToClipboardIfEnabled(textToPreserve)
+                checkAndScheduleReminder(textToPreserve, rawText)
 
                 listener?.onFinalResult(cleanedText = cleanedText, rawText = rawText)
                 listener?.onStopped()

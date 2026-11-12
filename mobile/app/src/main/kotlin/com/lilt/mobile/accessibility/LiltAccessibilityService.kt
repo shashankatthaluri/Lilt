@@ -51,6 +51,11 @@ class LiltAccessibilityService : AccessibilityService() {
             }
             AccessibilityEvent.TYPE_VIEW_FOCUSED,
             AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                event.source?.let { source ->
+                    if (source.isEditable && !event.isPassword) {
+                        lastFocusedNode = source
+                    }
+                }
                 checkKeyboardVisibility()
                 handler.removeCallbacks(recheckRunnable)
                 handler.postDelayed(recheckRunnable, 180)
@@ -106,6 +111,7 @@ class LiltAccessibilityService : AccessibilityService() {
         if (instance == this) {
             instance = null
         }
+        lastFocusedNode = null
         super.onDestroy()
     }
 
@@ -143,6 +149,9 @@ class LiltAccessibilityService : AccessibilityService() {
         var instance: LiltAccessibilityService? = null
             private set
 
+        @Volatile
+        private var lastFocusedNode: AccessibilityNodeInfo? = null
+
         fun isServiceRunning(): Boolean = instance != null
 
         fun openAccessibilitySettings(context: Context) {
@@ -154,6 +163,7 @@ class LiltAccessibilityService : AccessibilityService() {
 
         /**
          * Directly pastes or injects text into the active focused input field in any app.
+         * Searches across active window, all application windows, and fallback cached nodes.
          */
         fun autoPasteText(text: String): Boolean {
             val service = instance
@@ -162,26 +172,74 @@ class LiltAccessibilityService : AccessibilityService() {
                 return false
             }
             return try {
-                val root = service.rootInActiveWindow ?: run {
-                    DiagnosticLogger.logError(TAG, "autoPasteText: rootInActiveWindow is null")
+                // Collect candidate window root nodes (active window + any application windows)
+                val candidateRoots = mutableListOf<AccessibilityNodeInfo>()
+                try {
+                    service.rootInActiveWindow?.let { candidateRoots.add(it) }
+                } catch (_: Exception) {}
+
+                try {
+                    for (w in service.windows) {
+                        if (w.type == AccessibilityWindowInfo.TYPE_APPLICATION || w.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD) {
+                            w.root?.let { r ->
+                                if (!candidateRoots.any { it == r }) {
+                                    candidateRoots.add(r)
+                                }
+                            }
+                        }
+                    }
+                } catch (_: Exception) {}
+
+                var targetNode: AccessibilityNodeInfo? = null
+
+                // 1. Check for standard INPUT focus across candidate roots
+                for (root in candidateRoots) {
+                    targetNode = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
+                    if (targetNode != null && targetNode.isEditable) break
+                }
+
+                // 2. Check for focused/selected editable within hierarchy
+                if (targetNode == null) {
+                    for (root in candidateRoots) {
+                        targetNode = findFocusedEditable(root)
+                        if (targetNode != null) break
+                    }
+                }
+
+                // 3. Fallback to cached last focused editable node
+                if (targetNode == null) {
+                    try {
+                        val cached = lastFocusedNode
+                        if (cached != null && cached.refresh() && cached.isVisibleToUser && cached.isEditable) {
+                            targetNode = cached
+                        }
+                    } catch (_: Exception) {}
+                }
+
+                // 4. Fallback to any visible editable in the application window
+                if (targetNode == null) {
+                    for (root in candidateRoots) {
+                        targetNode = findAnyEditable(root)
+                        if (targetNode != null) break
+                    }
+                }
+
+                if (targetNode == null) {
+                    DiagnosticLogger.logError(TAG, "autoPasteText: no focused or visible editable found in windows")
                     return false
                 }
-                val targetNode = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
-                    ?: findFocusedEditable(root)
-                    ?: run {
-                        DiagnosticLogger.logError(TAG, "autoPasteText: no focused editable found in active window")
-                        return false
-                    }
 
-                // Method 1: ACTION_PASTE (Respects app's native paste formatting)
+                // Method 1: ACTION_PASTE (Respects app's native paste formatting & triggers IME listeners)
                 var success = targetNode.performAction(AccessibilityNodeInfo.ACTION_PASTE)
 
-                // Method 2: Fallback to ACTION_SET_TEXT if paste action isn't handled
+                // Method 2: Fallback to ACTION_SET_TEXT if paste action isn't handled or returned false
                 if (!success) {
+                    val existing = targetNode.text?.toString() ?: ""
+                    val textToInject = if (existing.isNotBlank()) "$existing $text" else text
                     val arguments = Bundle().apply {
                         putCharSequence(
                             AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
-                            text
+                            textToInject
                         )
                     }
                     success = targetNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
@@ -203,6 +261,19 @@ class LiltAccessibilityService : AccessibilityService() {
             for (i in 0 until node.childCount) {
                 val child = node.getChild(i)
                 val match = findFocusedEditable(child)
+                if (match != null) return match
+            }
+            return null
+        }
+
+        private fun findAnyEditable(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
+            if (node == null) return null
+            if (node.isEditable && node.isVisibleToUser) {
+                return node
+            }
+            for (i in 0 until node.childCount) {
+                val child = node.getChild(i)
+                val match = findAnyEditable(child)
                 if (match != null) return match
             }
             return null

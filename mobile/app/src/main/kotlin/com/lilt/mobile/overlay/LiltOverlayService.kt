@@ -26,6 +26,7 @@ import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -164,14 +165,28 @@ class LiltOverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
                     circleState.value = CircleState.SUCCESS
                     triggerHaptic(60)
 
-                    // 1. Copy to system clipboard
+                    val textToDeliver = cleanedText.ifBlank { rawText }
+                    if (textToDeliver.isBlank()) {
+                        DiagnosticLogger.log("LiltOverlayService", "onFinalResult received blank text")
+                        mainHandler.postDelayed({
+                            circleState.value = CircleState.IDLE
+                        }, 500)
+                        return
+                    }
+
+                    // 1. Copy to system clipboard immediately
                     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-                    val clip = ClipData.newPlainText("Lilt Voice Dictation", cleanedText)
+                    val clip = ClipData.newPlainText("Lilt Voice Dictation", textToDeliver)
                     clipboard?.setPrimaryClip(clip)
 
-                    // 2. Direct Auto-Paste via Accessibility Service
-                    val didAutoPaste = LiltAccessibilityService.autoPasteText(cleanedText)
-                    DiagnosticLogger.log("LiltOverlayService", "Auto-paste result: $didAutoPaste")
+                    // 2. Direct Auto-Paste via Accessibility Service with slight dispatch delay for clipboard sync
+                    mainHandler.postDelayed({
+                        val didAutoPaste = LiltAccessibilityService.autoPasteText(textToDeliver)
+                        DiagnosticLogger.log("LiltOverlayService", "Auto-paste result: $didAutoPaste")
+                        if (!didAutoPaste) {
+                            Toast.makeText(applicationContext, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+                        }
+                    }, 50)
 
                     // 3. Keep Green success dot for 1.2s, then smoothly fade out
                     mainHandler.postDelayed({
@@ -199,6 +214,7 @@ class LiltOverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
                     DiagnosticLogger.logError("LiltOverlayService", "Dictation error: $error")
                     circleState.value = CircleState.IDLE
                     triggerHaptic(80)
+                    Toast.makeText(applicationContext, "Lilt: $error", Toast.LENGTH_SHORT).show()
 
                     if (settings.floatingCircleContextualOnly) {
                         mainHandler.postDelayed({
@@ -316,7 +332,9 @@ class LiltOverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
             var dragStartX = 0
             var dragStartY = 0
             var isPushToTalk = false
+            var touchDownTime = 0L
             var lastTapTime = 0L
+            val longPressTimeout = 450L
 
             val holdToTalkRunnable = Runnable {
                 if (!isUserDragging) {
@@ -339,9 +357,10 @@ class LiltOverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
                         initialTouchY = event.rawY
                         isUserDragging = false
                         isPushToTalk = false
+                        touchDownTime = System.currentTimeMillis()
 
-                        // Start hold timer for push-to-talk (280ms)
-                        mainHandler.postDelayed(holdToTalkRunnable, 280)
+                        // Start hold timer for push-to-talk (450ms)
+                        mainHandler.postDelayed(holdToTalkRunnable, longPressTimeout)
                         true
                     }
                     MotionEvent.ACTION_MOVE -> {
@@ -363,19 +382,23 @@ class LiltOverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
                     MotionEvent.ACTION_UP -> {
                         mainHandler.removeCallbacks(holdToTalkRunnable)
                         val now = System.currentTimeMillis()
+                        val pressDuration = now - touchDownTime
 
                         if (isPushToTalk) {
-                            // Released after holding: stop listening and transcribe
                             isPushToTalk = false
-                            triggerHaptic(30)
-                            if (speechEngine.isListening) {
-                                speechEngine.stopListening()
+                            if (pressDuration >= longPressTimeout) {
+                                // Sustained hold release: finish dictation and process
+                                triggerHaptic(30)
+                                if (speechEngine.isListening) {
+                                    speechEngine.stopListening()
+                                }
+                            } else {
+                                // Touch transitioned near threshold: keep recording in toggle mode
+                                triggerHaptic(40)
                             }
                         } else if (!isUserDragging) {
-                            // Check for double-tap to dismiss
-                            if (now - lastTapTime < 320) {
-                                hideCircleGracefully()
-                            } else {
+                            // Normal deliberate tap: toggle recording with debounce protection
+                            if (now - lastTapTime > 180) {
                                 lastTapTime = now
                                 toggleRecord()
                             }
@@ -400,7 +423,9 @@ class LiltOverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
                         mainHandler.removeCallbacks(holdToTalkRunnable)
                         if (isPushToTalk) {
                             isPushToTalk = false
-                            speechEngine.stopListening()
+                            if (speechEngine.isListening) {
+                                speechEngine.stopListening()
+                            }
                         }
                         isUserDragging = false
                         true
