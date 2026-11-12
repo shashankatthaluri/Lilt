@@ -174,6 +174,7 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.heightIn
@@ -940,14 +941,14 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-                        // 4. Interactive Live Dictation Studio Card
+            // 4. Interactive Live Dictation Studio Card (The Obsidian Soundstage: Masterwork Edition)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clearFocusOnTap(focusManager),
-                shape = RoundedCornerShape(24.dp),
+                shape = RoundedCornerShape(26.dp),
                 colors = CardDefaults.cardColors(containerColor = NothingCard),
-                border = BorderStroke(1.dp, LiltGlassSpecularBorderBrush)
+                border = BorderStroke(1.2.dp, LiltGlassSpecularBorderBrush)
             ) {
                 Column(
                     modifier = Modifier
@@ -957,52 +958,62 @@ fun MainScreen(
                         .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(
-                        text = "LIVE SPEECH STUDIO",
-                        color = NothingTextSecondary,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp
-                    )
+                    // Studio Telemetry Header Bar
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        // Monospace Audio Telemetry Badge
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0x18FFFFFF))
+                                .border(1.dp, Color(0x22FFFFFF), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 9.dp, vertical = 4.5.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isRecording) Color(0xFFD71921) else Color(0xFF71717A))
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (isRecording) "LIVE RECORDING // 16 kHz" else "STUDIO // 16 kHz PCM",
+                                color = if (isRecording) Color(0xFFFF6B6B) else Color(0xFFA1A1AA),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
+                            )
+                        }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                        // Neural Engine Model Badge
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0x18FFFFFF))
+                                .border(1.dp, Color(0x22FFFFFF), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 9.dp, vertical = 4.5.dp)
+                        ) {
+                            Text(
+                                text = "WHISPER + QWEN",
+                                color = Color(0xFFA1A1AA),
+                                fontSize = 9.5.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 0.8.sp
+                            )
+                        }
+                    }
 
-                    // Pulse transition
-                    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-                    val pulseScale by infiniteTransition.animateFloat(
-                        initialValue = 1f,
-                        targetValue = if (isRecording) 1.15f else 1f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(500, easing = FastOutSlowInEasing),
-                            repeatMode = RepeatMode.Reverse
-                        ),
-                        label = "pulseScale"
-                    )
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                    // Waveform bars
-                    val barH1 by infiniteTransition.animateFloat(
-                        initialValue = 8f, targetValue = if (isRecording) 28f else 8f,
-                        animationSpec = infiniteRepeatable(tween(220, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "h1"
-                    )
-                    val barH2 by infiniteTransition.animateFloat(
-                        initialValue = 14f, targetValue = if (isRecording) 38f else 14f,
-                        animationSpec = infiniteRepeatable(tween(310, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "h2"
-                    )
-                    val barH3 by infiniteTransition.animateFloat(
-                        initialValue = 10f, targetValue = if (isRecording) 32f else 10f,
-                        animationSpec = infiniteRepeatable(tween(260, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "h3"
-                    )
-                    val barH4 by infiniteTransition.animateFloat(
-                        initialValue = 18f, targetValue = if (isRecording) 44f else 18f,
-                        animationSpec = infiniteRepeatable(tween(360, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "h4"
-                    )
-                    val barH5 by infiniteTransition.animateFloat(
-                        initialValue = 12f, targetValue = if (isRecording) 30f else 12f,
-                        animationSpec = infiniteRepeatable(tween(290, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "h5"
-                    )
+                    val infiniteTransition = rememberInfiniteTransition(label = "soundstage")
 
                     val micPulseScale by animateFloatAsState(
-                        targetValue = if (isRecording) 1.08f else 1.0f,
+                        targetValue = if (isRecording) 1.06f else 1.0f,
                         animationSpec = spring(
                             dampingRatio = 0.65f,
                             stiffness = Spring.StiffnessMediumLow
@@ -1010,7 +1021,6 @@ fun MainScreen(
                         label = "mic_pulse"
                     )
 
-                    // Signature Liquid Glass Floating Circle Orb (Parity with Lilt Floating Edge Pill)
                     val studioRippleScale by infiniteTransition.animateFloat(
                         initialValue = 0.9f,
                         targetValue = if (isRecording) 1.55f else 1.0f,
@@ -1024,25 +1034,45 @@ fun MainScreen(
                         label = "studioRippleAlpha"
                     )
 
+                    // 16-Bar Precision Dot-Matrix Equalizer Spectrum Animation
+                    val s0 by infiniteTransition.animateFloat(initialValue = 4f, targetValue = if (isRecording) 14f else 4f, animationSpec = infiniteRepeatable(tween(210, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "s0")
+                    val s1 by infiniteTransition.animateFloat(initialValue = 5f, targetValue = if (isRecording) 22f else 5f, animationSpec = infiniteRepeatable(tween(330, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "s1")
+                    val s2 by infiniteTransition.animateFloat(initialValue = 6f, targetValue = if (isRecording) 18f else 6f, animationSpec = infiniteRepeatable(tween(260, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "s2")
+                    val s3 by infiniteTransition.animateFloat(initialValue = 4f, targetValue = if (isRecording) 28f else 4f, animationSpec = infiniteRepeatable(tween(190, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "s3")
+                    val s4 by infiniteTransition.animateFloat(initialValue = 7f, targetValue = if (isRecording) 25f else 7f, animationSpec = infiniteRepeatable(tween(290, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "s4")
+                    val s5 by infiniteTransition.animateFloat(initialValue = 8f, targetValue = if (isRecording) 34f else 8f, animationSpec = infiniteRepeatable(tween(340, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "s5")
+                    val s6 by infiniteTransition.animateFloat(initialValue = 6f, targetValue = if (isRecording) 32f else 6f, animationSpec = infiniteRepeatable(tween(240, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "s6")
+                    val s7 by infiniteTransition.animateFloat(initialValue = 8f, targetValue = if (isRecording) 36f else 8f, animationSpec = infiniteRepeatable(tween(310, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "s7")
+                    val s8 by infiniteTransition.animateFloat(initialValue = 8f, targetValue = if (isRecording) 35f else 8f, animationSpec = infiniteRepeatable(tween(270, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "s8")
+                    val s9 by infiniteTransition.animateFloat(initialValue = 7f, targetValue = if (isRecording) 31f else 7f, animationSpec = infiniteRepeatable(tween(350, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "s9")
+                    val s10 by infiniteTransition.animateFloat(initialValue = 6f, targetValue = if (isRecording) 27f else 6f, animationSpec = infiniteRepeatable(tween(230, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "s10")
+                    val s11 by infiniteTransition.animateFloat(initialValue = 5f, targetValue = if (isRecording) 24f else 5f, animationSpec = infiniteRepeatable(tween(280, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "s11")
+                    val s12 by infiniteTransition.animateFloat(initialValue = 6f, targetValue = if (isRecording) 20f else 6f, animationSpec = infiniteRepeatable(tween(320, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "s12")
+                    val s13 by infiniteTransition.animateFloat(initialValue = 4f, targetValue = if (isRecording) 26f else 4f, animationSpec = infiniteRepeatable(tween(200, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "s13")
+                    val s14 by infiniteTransition.animateFloat(initialValue = 5f, targetValue = if (isRecording) 16f else 5f, animationSpec = infiniteRepeatable(tween(300, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "s14")
+                    val s15 by infiniteTransition.animateFloat(initialValue = 4f, targetValue = if (isRecording) 12f else 4f, animationSpec = infiniteRepeatable(tween(250, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "s15")
+                    val spectrumHeights = listOf(s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15)
+
+                    // Bespoke Micro-Drilled Glass Audio Dial (Concept 1 + Concept 3)
                     Box(
                         contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(108.dp)
+                        modifier = Modifier.size(114.dp)
                     ) {
-                        // Ambient Breathing Aurora Halo while recording
+                        // Expanding Acoustic Wave Aura (Recording)
                         if (isRecording) {
                             Box(
                                 modifier = Modifier
-                                    .size(92.dp)
+                                    .size(106.dp)
                                     .graphicsLayer {
                                         scaleX = studioRippleScale
                                         scaleY = studioRippleScale
                                         alpha = studioRippleAlpha
                                     }
-                                    .border(2.dp, Brush.radialGradient(listOf(Color(0xFFFF3B30), Color(0x44D71921))), CircleShape)
+                                    .border(2.dp, Brush.radialGradient(listOf(Color(0xFFFF3B30), Color(0x33D71921))), CircleShape)
                             )
                         }
 
-                        // Outer Translucent Liquid Glass Ring
+                        // Outer Rotary Bezel with Glass Specular Ring
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
@@ -1050,21 +1080,21 @@ fun MainScreen(
                                     scaleX = micPulseScale
                                     scaleY = micPulseScale
                                 }
-                                .size(84.dp)
+                                .size(90.dp)
                                 .clip(CircleShape)
                                 .background(
                                     Brush.radialGradient(
                                         colors = if (isRecording) {
-                                            listOf(Color(0x88D71921), Color(0x442B0D11), Color(0x6614141A))
+                                            listOf(Color(0x55D71921), Color(0x331E0A0D), Color(0x8812141C))
                                         } else {
-                                            listOf(Color(0x55282B38), Color(0x8812141C))
+                                            listOf(Color(0x442C2F3D), Color(0x66181A24), Color(0x990F1017))
                                         }
                                     )
                                 )
                                 .border(
                                     width = 1.5.dp,
                                     brush = if (isRecording) {
-                                        Brush.sweepGradient(listOf(Color(0xFFFF5252), Color(0xFFD71921), Color(0x88FF5252), Color(0xFFFF5252)))
+                                        Brush.sweepGradient(listOf(Color(0xFFFF5252), Color(0xFFD71921), Color(0x66FF5252), Color(0xFFFF5252)))
                                     } else {
                                         LiltGlassSpecularBorderBrush
                                     },
@@ -1087,31 +1117,41 @@ fun MainScreen(
                                     }
                                 }
                         ) {
-                            // Inner Radiant Core
+                            // Inner Brushed Acoustic Disc (Dieter Rams / Teenage Engineering Core)
                             Box(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
-                                    .size(54.dp)
+                                    .size(62.dp)
                                     .clip(CircleShape)
                                     .background(
                                         if (isRecording) {
-                                            Brush.verticalGradient(listOf(Color(0xFFFF3333), Color(0xFFC01018)))
+                                            Brush.radialGradient(listOf(Color(0xFFFF2A2A), Color(0xFF8E0E14)))
                                         } else {
-                                            Brush.verticalGradient(listOf(Color(0xFF262A36), Color(0xFF161822)))
+                                            Brush.radialGradient(listOf(Color(0xFF2C303E), Color(0xFF191B24)))
                                         }
                                     )
                                     .border(
                                         1.dp,
                                         if (isRecording) Brush.verticalGradient(listOf(Color(0x99FFFFFF), Color(0x33FF6B6B)))
-                                        else Brush.verticalGradient(listOf(Color(0x40FFFFFF), Color(0x15FFFFFF))),
+                                        else Brush.verticalGradient(listOf(Color(0x30FFFFFF), Color(0x10FFFFFF))),
                                         CircleShape
                                     )
                             ) {
+                                // Precision Tally LED at top of disc
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopCenter)
+                                        .padding(top = 5.dp)
+                                        .size(4.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isRecording) Color.White else Color(0xFFD71921))
+                                )
+
                                 Icon(
                                     imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic,
                                     contentDescription = "Dictate",
                                     tint = Color.White,
-                                    modifier = Modifier.size(26.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
                         }
@@ -1119,137 +1159,181 @@ fun MainScreen(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    if (isRecording) {
-                        // Live Audio Waveform Bars
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(3.dp),
-                            modifier = Modifier.height(30.dp)
-                        ) {
-                            Box(modifier = Modifier.width(3.dp).height(barH1.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xFF888888)))
-                            Box(modifier = Modifier.width(3.dp).height(barH2.dp).clip(RoundedCornerShape(2.dp)).background(Color.White))
-                            Box(modifier = Modifier.width(3.dp).height(barH4.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xFF888888)))
-                            Box(modifier = Modifier.width(3.dp).height(barH3.dp).clip(RoundedCornerShape(2.dp)).background(Color.White))
-                            Box(modifier = Modifier.width(3.dp).height(barH5.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xFF888888)))
+                    // 16-Bar Dot-Matrix Spectrum Equalizer
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(3.5.dp),
+                        modifier = Modifier
+                            .height(38.dp)
+                            .padding(vertical = 2.dp)
+                    ) {
+                        spectrumHeights.forEachIndexed { idx, barState ->
+                            val isHotCenter = idx in 5..10
+                            val barColor = if (isRecording) {
+                                if (isHotCenter) Color(0xFFD71921) else Color(0xEEFFFFFF)
+                            } else {
+                                Color(0x30FFFFFF)
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .width(3.dp)
+                                    .height(barState.dp)
+                                    .clip(RoundedCornerShape(1.5.dp))
+                                    .background(barColor)
+                            )
                         }
-                    } else {
-                        Text(
-                            text = "Tap microphone to test live speech cleanup",
-                            color = NothingTextMuted,
-                            fontSize = 12.sp
-                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Interactive Live Speech Sandbox Text Box
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                    // Seamless Typographic Output Canvas (Concept 3: Zero nested input box!)
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        color = Color(0x12FFFFFF),
+                        border = BorderStroke(1.dp, Color(0x1EFFFFFF))
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(6.dp)
-                                        .clip(CircleShape)
-                                        .background(
-                                            if (isRecording) Color(0xFFFF3B30)
-                                            else if (liveStudioText.isNotBlank()) Color(0xFF00E676)
-                                            else Color(0xFF71717A)
-                                        )
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = if (isRecording) "RECORDING & TRANSCRIBING…"
-                                           else if (testCleaned.isNotBlank()) "POLISHED SPEECH RESULT"
-                                           else "LIVE SPEECH OUTPUT BOX",
-                                    color = if (isRecording) Color(0xFFFF6B6B)
-                                            else if (testCleaned.isNotBlank()) Color(0xFF00E676)
-                                            else NothingTextMuted,
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.sp
-                                )
+                            // Canvas Status Header
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .clip(CircleShape)
+                                            .background(
+                                                if (isRecording) Color(0xFFFF3B30)
+                                                else if (liveStudioText.isNotBlank()) Color(0xFF00E676)
+                                                else Color(0xFF71717A)
+                                            )
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = if (isRecording) "RECORDING & TRANSCRIBING…"
+                                               else if (testCleaned.isNotBlank()) "POLISHED OUTPUT"
+                                               else "READY TO RECORD // BUFFER 01",
+                                        color = if (isRecording) Color(0xFFFF6B6B)
+                                                else if (testCleaned.isNotBlank()) Color(0xFF00E676)
+                                                else NothingTextMuted,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        letterSpacing = 1.sp
+                                    )
+                                }
+
+                                if (liveStudioText.isNotBlank()) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        // Copy Pill Chip
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(Color(0x18FFFFFF))
+                                                .border(1.dp, Color(0x28FFFFFF), RoundedCornerShape(12.dp))
+                                                .clickable {
+                                                    view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                                    clipboard?.setPrimaryClip(ClipData.newPlainText("Lilt Output", liveStudioText))
+                                                    Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                                }
+                                                .padding(horizontal = 9.dp, vertical = 4.dp)
+                                        ) {
+                                            Text(
+                                                text = "COPY",
+                                                color = Color.White,
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                letterSpacing = 0.8.sp
+                                            )
+                                        }
+
+                                        // Clear Pill Chip
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(Color(0x10FFFFFF))
+                                                .border(1.dp, Color(0x1EFFFFFF), RoundedCornerShape(12.dp))
+                                                .clickable {
+                                                    view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                                    liveStudioText = ""
+                                                    testCleaned = ""
+                                                    testTranscript = ""
+                                                }
+                                                .padding(horizontal = 9.dp, vertical = 4.dp)
+                                        ) {
+                                            Text(
+                                                text = "CLEAR",
+                                                color = Color(0xFFA1A1AA),
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                letterSpacing = 0.8.sp
+                                            )
+                                        }
+                                    }
+                                }
                             }
 
-                            if (liveStudioText.isNotBlank()) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            // Text Content Area (Wrapped in SelectionContainer for easy select/copy)
+                            SelectionContainer {
+                                if (liveStudioText.isBlank()) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 12.dp),
+                                        horizontalAlignment = Alignment.Start
+                                    ) {
+                                        Text(
+                                            text = "Tap the studio dial to start real-time neural dictation.",
+                                            color = Color(0xFF63636B),
+                                            fontSize = 13.5.sp,
+                                            lineHeight = 20.sp,
+                                            fontWeight = FontWeight.Normal
+                                        )
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            text = "Spoken thoughts will stream here, stripped of fillers & polished live.",
+                                            color = Color(0xFF3F3F46),
+                                            fontSize = 11.5.sp,
+                                            lineHeight = 17.sp
+                                        )
+                                    }
+                                } else {
                                     Text(
-                                        text = "Clear",
-                                        color = Color(0xFFA1A1AA),
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        modifier = Modifier.clickable {
-                                            liveStudioText = ""
-                                            testCleaned = ""
-                                            testTranscript = ""
-                                        }
-                                    )
-                                    Text(text = "•", color = Color(0xFF3F3F46), fontSize = 11.sp)
-                                    Text(
-                                        text = "Copy",
+                                        text = liveStudioText,
                                         color = NothingTextPrimary,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.clickable {
-                                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-                                            clipboard?.setPrimaryClip(ClipData.newPlainText("Lilt Output", liveStudioText))
-                                            Toast.makeText(context, "Copied to clipboard!", Toast.LENGTH_SHORT).show()
-                                        }
+                                        fontSize = 14.5.sp,
+                                        lineHeight = 22.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 4.dp)
                                     )
                                 }
                             }
-                        }
 
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        OutlinedTextField(
-                            value = liveStudioText,
-                            onValueChange = { liveStudioText = it },
-                            readOnly = true,
-                            placeholder = {
+                            if (testTranscript.isNotBlank() && testTranscript != liveStudioText && testCleaned.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x18FFFFFF)))
+                                Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Tap the microphone above and speak. Your live transcript and polished output will stream right into this showcase…",
-                                    color = Color(0xFF52525B),
-                                    fontSize = 13.sp,
-                                    lineHeight = 18.sp
+                                    text = "Raw spoken: $testTranscript",
+                                    color = Color(0xFF71717A),
+                                    fontSize = 11.sp,
+                                    fontStyle = FontStyle.Italic
                                 )
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 120.dp, max = 220.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = NothingCardElevated,
-                                unfocusedContainerColor = NothingCardElevated,
-                                focusedBorderColor = Color(0x60FFFFFF),
-                                unfocusedBorderColor = NothingBorder,
-                                focusedTextColor = NothingTextPrimary,
-                                unfocusedTextColor = Color(0xFFE4E4E7),
-                                cursorColor = Color.Transparent
-                            ),
-                            textStyle = LocalTextStyle.current.copy(
-                                fontSize = 14.sp,
-                                lineHeight = 20.sp
-                            )
-                        )
-
-                        if (testTranscript.isNotBlank() && testTranscript != liveStudioText && testCleaned.isNotBlank()) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Raw spoken: $testTranscript",
-                                color = Color(0xFF71717A),
-                                fontSize = 11.sp,
-                                fontStyle = FontStyle.Italic,
-                                modifier = Modifier.padding(horizontal = 4.dp)
-                            )
+                            }
                         }
                     }
                 }
