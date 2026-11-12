@@ -121,6 +121,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -198,6 +203,16 @@ import com.lilt.mobile.ui.theme.NothingTextMuted
 import com.lilt.mobile.ui.theme.NothingTextPrimary
 import com.lilt.mobile.ui.theme.NothingTextSecondary
 
+/**
+ * Automatically dismisses soft keyboard and clears blinking cursor focus when the user touches outside
+ * any active text field, interactive card, or blank container.
+ */
+fun Modifier.clearFocusOnTap(focusManager: FocusManager): Modifier = this.pointerInput(Unit) {
+    detectTapGestures(onTap = {
+        focusManager.clearFocus()
+    })
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
@@ -206,6 +221,7 @@ fun MainScreen(
 ) {
     val context = LocalContext.current
     val view = LocalView.current
+    val focusManager = LocalFocusManager.current
     val settings = remember { SettingsManager.getInstance(context) }
 
     var isRecording by remember { mutableStateOf(false) }
@@ -360,8 +376,16 @@ fun MainScreen(
     var activeTab by remember { mutableStateOf("dictate") } // "dictate", "history", "rules", "settings"
     val mainScrollState = rememberScrollState()
 
-    // Apple HIG: Switching tabs or sub-tabs automatically resets view to top and refreshes history
+    // Automatically clear cursor focus whenever the user scrolls
+    LaunchedEffect(mainScrollState.isScrollInProgress) {
+        if (mainScrollState.isScrollInProgress) {
+            focusManager.clearFocus()
+        }
+    }
+
+    // Apple HIG: Switching tabs or sub-tabs automatically resets view to top, clears focus and refreshes history
     LaunchedEffect(activeTab) {
+        focusManager.clearFocus()
         if (mainScrollState.value != 0) {
             mainScrollState.scrollTo(0)
         }
@@ -383,6 +407,7 @@ fun MainScreen(
         }
     }
     LaunchedEffect(historySubTab) {
+        focusManager.clearFocus()
         mainScrollState.scrollTo(0)
     }
 
@@ -496,7 +521,11 @@ fun MainScreen(
             }
         }
     ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clearFocusOnTap(focusManager)
+        ) {
             // Layer 1: Adaptive Liquid Glass Ambient Mesh Backdrop (Dark Aurora / Light Quartz)
             LiquidGlassAmbientBackdrop(isDark = LiltThemeState.isDark)
 
@@ -505,6 +534,7 @@ fun MainScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
                     .verticalScroll(mainScrollState)
+                    .clearFocusOnTap(focusManager)
                     .padding(horizontal = 20.dp, vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -911,7 +941,9 @@ fun MainScreen(
 
                         // 4. Interactive Live Dictation Studio Card
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clearFocusOnTap(focusManager),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = NothingCard),
                 border = BorderStroke(1.dp, LiltGlassSpecularBorderBrush)
@@ -920,6 +952,7 @@ fun MainScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(LiltGlassCardBrush)
+                        .clearFocusOnTap(focusManager)
                         .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -1189,6 +1222,8 @@ fun MainScreen(
                                 .fillMaxWidth()
                                 .heightIn(min = 120.dp, max = 220.dp),
                             shape = RoundedCornerShape(16.dp),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedContainerColor = NothingCardElevated,
                                 unfocusedContainerColor = NothingCardElevated,
@@ -1222,7 +1257,9 @@ fun MainScreen(
 
             // Smart Voice Commands Trigger Card
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clearFocusOnTap(focusManager),
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = NothingCard),
                 border = BorderStroke(1.dp, LiltGlassSpecularBorderBrush)
@@ -1231,6 +1268,7 @@ fun MainScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(LiltGlassCardBrush)
+                        .clearFocusOnTap(focusManager)
                         .padding(14.dp)
                 ) {
                     Row(
@@ -1507,6 +1545,8 @@ fun MainScreen(
                         onValueChange = { historySearchQuery = it },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus() }),
                         textStyle = TextStyle(
                             color = NothingTextPrimary,
                             fontSize = 13.5.sp,
@@ -1534,6 +1574,7 @@ fun MainScreen(
                                 .clickable {
                                     view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                                     historySearchQuery = ""
+                                    focusManager.clearFocus()
                                 }
                         ) {
                             Icon(
@@ -1569,6 +1610,7 @@ fun MainScreen(
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.clickable {
                             historySearchQuery = ""
+                            focusManager.clearFocus()
                         }
                     )
                 }
@@ -2521,7 +2563,9 @@ fun MainScreen(
 
                         // ⚡ INTERACTIVE TEST SANDBOX (Glass Master Card with Specular Outline)
                         Card(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clearFocusOnTap(focusManager),
                             shape = RoundedCornerShape(24.dp),
                             colors = CardDefaults.cardColors(containerColor = NothingCard),
                             border = BorderStroke(1.2.dp, LiltGlassSpecularBorderBrush)
@@ -2530,6 +2574,7 @@ fun MainScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .background(LiltGlassCardBrush)
+                                    .clearFocusOnTap(focusManager)
                                     .padding(18.dp)
                             ) {
                                 Row(
@@ -2806,6 +2851,8 @@ fun MainScreen(
                                     label = { Text("Input speech to test", color = NothingTextMuted, fontSize = 11.sp) },
                                     textStyle = TextStyle(color = NothingTextPrimary, fontSize = 12.sp),
                                     shape = RoundedCornerShape(14.dp),
+                                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedBorderColor = Color.White,
                                         unfocusedBorderColor = Color(0x33FFFFFF),
@@ -3939,6 +3986,8 @@ fun MainScreen(
                                 settings.cloudModel = it
                             },
                             singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                             textStyle = TextStyle(color = NothingTextPrimary, fontSize = 12.sp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Color.White,
@@ -3968,6 +4017,8 @@ fun MainScreen(
                                 settings.setApiKeyForProvider(cloudProvider, it)
                             },
                             singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                             visualTransformation = if (showApiKey) VisualTransformation.None else PasswordVisualTransformation('●'),
                             textStyle = TextStyle(color = NothingTextPrimary, fontSize = 12.sp),
                             colors = OutlinedTextFieldDefaults.colors(
