@@ -149,6 +149,7 @@ import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.ui.platform.LocalView
 import android.view.HapticFeedbackConstants
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -1232,59 +1233,107 @@ fun MainScreen(
                         .background(LiltGlassCardBrush)
                         .padding(14.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(7.dp)
+                                    .clip(CircleShape)
+                                    .background(NothingRed)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "SMART VOICE COMMANDS",
+                                color = NothingTextPrimary,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.1.sp
+                            )
+                        }
                         Box(
                             modifier = Modifier
-                                .size(6.dp)
-                                .clip(CircleShape)
-                                .background(Color.White)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "SMART VOICE COMMANDS",
-                            color = NothingTextMuted,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0x1AD71921))
+                                .border(1.dp, Color(0x33D71921), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 7.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "AUTO-DETECT",
+                                color = NothingRed,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.8.sp
+                            )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
-                        text = "Speak these prefixes to format your speech on the fly:",
+                        text = "Speak these opening prefixes to format your speech on the fly:",
                         color = NothingTextMuted,
                         fontSize = 11.sp
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     listOf(
                         "\"Write the email...\"" to "Email format with Subject & [Placeholders]",
                         "\"Write it raw...\"" to "Exact words verbatim + punctuation (no rephrasing)",
-                        "\"Write it casual...\"" to "Warm, relaxed, or playful joke tone",
-                        "\"Make a list...\"" to "Clean bullet points with '• '"
+                        "\"Write it casual...\"" to "Warm, relaxed, or playful conversational tone",
+                        "\"Make a list...\"" to "Clean markdown bullet points with '• '"
                     ).forEach { (trigger, desc) ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 3.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(NothingCard)
-                                .padding(horizontal = 8.dp, vertical = 6.dp),
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFF13151D))
+                                .border(1.dp, Color(0x22FFFFFF), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 8.dp, vertical = 7.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            // Fixed-width trigger pill badge: perfectly aligned across all rows
+                            Box(
+                                modifier = Modifier
+                                    .width(126.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0xFF1D202C))
+                                    .border(1.dp, Color(0x2EFFFFFF), RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 7.dp, vertical = 4.dp),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                Text(
+                                    text = trigger,
+                                    color = Color.White,
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
                             Text(
-                                text = trigger,
-                                color = Color(0xFFA1A1AA),
+                                text = "→",
+                                color = NothingRed,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
                             Text(
-                                text = "→ $desc",
+                                text = desc,
                                 color = NothingTextSecondary,
-                                fontSize = 10.sp
+                                fontSize = 10.5.sp,
+                                lineHeight = 14.sp,
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }
