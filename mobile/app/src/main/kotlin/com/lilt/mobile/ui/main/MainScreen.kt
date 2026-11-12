@@ -214,6 +214,13 @@ fun Modifier.clearFocusOnTap(focusManager: FocusManager): Modifier = this.pointe
     })
 }
 
+enum class LiveStudioState {
+    IDLE,
+    RECORDING,
+    TRANSCRIBING,
+    SUCCESS
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
@@ -225,6 +232,8 @@ fun MainScreen(
     val focusManager = LocalFocusManager.current
     val settings = remember { SettingsManager.getInstance(context) }
 
+    var studioState by remember { mutableStateOf(LiveStudioState.IDLE) }
+    var studioAudioRms by remember { mutableFloatStateOf(0f) }
     var isRecording by remember { mutableStateOf(false) }
     var testTranscript by remember { mutableStateOf("Tap the microphone to test live voice cleanup.") }
     var testCleaned by remember { mutableStateOf("") }
@@ -317,16 +326,17 @@ fun MainScreen(
             listener = object : SpeechEngine.Listener {
                 override fun onReady() {
                     isRecording = true
-                    liveStudioText = "Listening… speak naturally."
+                    studioState = LiveStudioState.RECORDING
+                    liveStudioText = ""
                     testTranscript = ""
                     testCleaned = ""
                 }
 
-                override fun onBeginningOfSpeech() {
-                    liveStudioText = "Listening…"
-                }
+                override fun onBeginningOfSpeech() {}
 
-                override fun onRmsChanged(rmsdB: Float) {}
+                override fun onRmsChanged(rmsdB: Float) {
+                    studioAudioRms = rmsdB
+                }
 
                 override fun onPartialResult(partialText: String) {
                     testTranscript = partialText
@@ -334,34 +344,58 @@ fun MainScreen(
                 }
 
                 override fun onEndOfSpeech() {
-                    liveStudioText = "Transcribing with Whisper & polishing with Qwen…"
+                    studioState = LiveStudioState.TRANSCRIBING
+                    isRecording = false
+                    studioAudioRms = 0f
                 }
 
                 override fun onFinalResult(cleanedText: String, rawText: String) {
                     isRecording = false
+                    studioState = LiveStudioState.SUCCESS
+                    studioAudioRms = 0f
+                    val textToDeliver = cleanedText.ifBlank { rawText }
                     testTranscript = rawText
-                    testCleaned = cleanedText
-                    liveStudioText = cleanedText
+                    testCleaned = textToDeliver
+                    liveStudioText = textToDeliver
+
+                    // 1. Copy to clipboard
+                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                    clipboard?.setPrimaryClip(ClipData.newPlainText("Lilt Output", textToDeliver))
+                    Toast.makeText(context, "Copied to clipboard", Toast.LENGTH_SHORT).show()
+
                     historyItems = settings.getHistory()
                     wordsProcessed = settings.wordsProcessed
                     hesitationsRemoved = settings.hesitationsRemoved
+
+                    // Return to IDLE after 1.6 seconds
+                    coroutineScope.launch {
+                        delay(1600)
+                        if (studioState == LiveStudioState.SUCCESS) {
+                            studioState = LiveStudioState.IDLE
+                        }
+                    }
                 }
 
                 override fun onNoSpeechDetected() {
                     isRecording = false
-                    liveStudioText = ""
+                    studioState = LiveStudioState.IDLE
+                    studioAudioRms = 0f
                 }
 
                 override fun onError(error: String) {
                     isRecording = false
-                    liveStudioText = error
-                    testTranscript = error
-                    liveAlertMessage = error
+                    studioState = LiveStudioState.IDLE
+                    studioAudioRms = 0f
+                    Toast.makeText(context, "Lilt: $error", Toast.LENGTH_SHORT).show()
                     DiagnosticLogger.logError("SpeechEngine", error)
                 }
 
                 override fun onStopped() {
                     isRecording = false
+                    studioAudioRms = 0f
+                    if (studioState == LiveStudioState.RECORDING) {
+                        studioState = LiveStudioState.TRANSCRIBING
+                    }
                 }
             }
         }
@@ -967,78 +1001,68 @@ fun MainScreen(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Pulse transition
-                    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-                    val pulseScale by infiniteTransition.animateFloat(
-                        initialValue = 1f,
-                        targetValue = if (isRecording) 1.15f else 1f,
-                        animationSpec = infiniteRepeatable(
-                            animation = tween(500, easing = FastOutSlowInEasing),
-                            repeatMode = RepeatMode.Reverse
-                        ),
-                        label = "pulseScale"
+                    // Pulse & Ripple transitions
+                    val infiniteTransition = rememberInfiniteTransition(label = "studio_fx")
+
+                    // Voice-reactive ripple based strictly on audio decibels heard (NOT a continuous loop)
+                    val voiceRippleScale by animateFloatAsState(
+                        targetValue = if (studioState == LiveStudioState.RECORDING && studioAudioRms > 2f) {
+                            1f + (studioAudioRms.coerceIn(0f, 30f) / 30f)
+                        } else 1f,
+                        animationSpec = spring(dampingRatio = 0.55f, stiffness = Spring.StiffnessMediumLow),
+                        label = "voiceRippleScale"
+                    )
+                    val voiceRippleAlpha by animateFloatAsState(
+                        targetValue = if (studioState == LiveStudioState.RECORDING && studioAudioRms > 2f) {
+                            (studioAudioRms.coerceIn(0f, 30f) / 30f).coerceIn(0.2f, 0.75f)
+                        } else 0f,
+                        animationSpec = spring(dampingRatio = 0.65f, stiffness = Spring.StiffnessMediumLow),
+                        label = "voiceRippleAlpha"
                     )
 
-                    // Waveform bars
-                    val barH1 by infiniteTransition.animateFloat(
-                        initialValue = 8f, targetValue = if (isRecording) 28f else 8f,
-                        animationSpec = infiniteRepeatable(tween(220, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "h1"
+                    // Continuous rippling effect while transcribing (yellow dot state)
+                    val transcribingRippleScale by infiniteTransition.animateFloat(
+                        initialValue = 0.95f,
+                        targetValue = if (studioState == LiveStudioState.TRANSCRIBING) 1.55f else 1.0f,
+                        animationSpec = infiniteRepeatable(tween(900, easing = LinearOutSlowInEasing), RepeatMode.Restart),
+                        label = "transcribingRippleScale"
                     )
-                    val barH2 by infiniteTransition.animateFloat(
-                        initialValue = 14f, targetValue = if (isRecording) 38f else 14f,
-                        animationSpec = infiniteRepeatable(tween(310, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "h2"
-                    )
-                    val barH3 by infiniteTransition.animateFloat(
-                        initialValue = 10f, targetValue = if (isRecording) 32f else 10f,
-                        animationSpec = infiniteRepeatable(tween(260, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "h3"
-                    )
-                    val barH4 by infiniteTransition.animateFloat(
-                        initialValue = 18f, targetValue = if (isRecording) 44f else 18f,
-                        animationSpec = infiniteRepeatable(tween(360, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "h4"
-                    )
-                    val barH5 by infiniteTransition.animateFloat(
-                        initialValue = 12f, targetValue = if (isRecording) 30f else 12f,
-                        animationSpec = infiniteRepeatable(tween(290, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "h5"
-                    )
-
-                    val micPulseScale by animateFloatAsState(
-                        targetValue = if (isRecording) 1.08f else 1.0f,
-                        animationSpec = spring(
-                            dampingRatio = 0.65f,
-                            stiffness = Spring.StiffnessMediumLow
-                        ),
-                        label = "mic_pulse"
-                    )
-
-                    // Signature Liquid Glass Floating Circle Orb (Parity with Lilt Floating Edge Pill)
-                    val studioRippleScale by infiniteTransition.animateFloat(
-                        initialValue = 0.9f,
-                        targetValue = if (isRecording) 1.55f else 1.0f,
-                        animationSpec = infiniteRepeatable(tween(1100, easing = LinearOutSlowInEasing), RepeatMode.Restart),
-                        label = "studioRippleScale"
-                    )
-                    val studioRippleAlpha by infiniteTransition.animateFloat(
-                        initialValue = 0.65f,
-                        targetValue = if (isRecording) 0.0f else 0.0f,
-                        animationSpec = infiniteRepeatable(tween(1100, easing = LinearOutSlowInEasing), RepeatMode.Restart),
-                        label = "studioRippleAlpha"
+                    val transcribingRippleAlpha by infiniteTransition.animateFloat(
+                        initialValue = 0.7f,
+                        targetValue = if (studioState == LiveStudioState.TRANSCRIBING) 0.0f else 0.0f,
+                        animationSpec = infiniteRepeatable(tween(900, easing = LinearOutSlowInEasing), RepeatMode.Restart),
+                        label = "transcribingRippleAlpha"
                     )
 
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.size(108.dp)
                     ) {
-                        // Ambient Breathing Aurora Halo while recording
-                        if (isRecording) {
+                        // Voice-Reactive Red Ripple (only replicates when voice is heard)
+                        if (studioState == LiveStudioState.RECORDING) {
                             Box(
                                 modifier = Modifier
                                     .size(92.dp)
                                     .graphicsLayer {
-                                        scaleX = studioRippleScale
-                                        scaleY = studioRippleScale
-                                        alpha = studioRippleAlpha
+                                        scaleX = voiceRippleScale
+                                        scaleY = voiceRippleScale
+                                        alpha = voiceRippleAlpha
                                     }
-                                    .border(2.dp, Brush.radialGradient(listOf(Color(0xFFFF3B30), Color(0x44D71921))), CircleShape)
+                                    .border(2.dp, Brush.radialGradient(listOf(Color(0xFFFF3B30), Color(0x33D71921))), CircleShape)
+                            )
+                        }
+
+                        // Continuous Yellow Ripple (Active during transcribing)
+                        if (studioState == LiveStudioState.TRANSCRIBING) {
+                            Box(
+                                modifier = Modifier
+                                    .size(92.dp)
+                                    .graphicsLayer {
+                                        scaleX = transcribingRippleScale
+                                        scaleY = transcribingRippleScale
+                                        alpha = transcribingRippleAlpha
+                                    }
+                                    .border(2.dp, Brush.radialGradient(listOf(Color(0xFFFFB800), Color(0x33FFB800))), CircleShape)
                             )
                         }
 
@@ -1046,27 +1070,25 @@ fun MainScreen(
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
-                                .graphicsLayer {
-                                    scaleX = micPulseScale
-                                    scaleY = micPulseScale
-                                }
                                 .size(84.dp)
                                 .clip(CircleShape)
                                 .background(
                                     Brush.radialGradient(
-                                        colors = if (isRecording) {
-                                            listOf(Color(0x88D71921), Color(0x442B0D11), Color(0x6614141A))
-                                        } else {
-                                            listOf(Color(0x55282B38), Color(0x8812141C))
+                                        colors = when (studioState) {
+                                            LiveStudioState.RECORDING -> listOf(Color(0x88D71921), Color(0x442B0D11), Color(0x6614141A))
+                                            LiveStudioState.TRANSCRIBING -> listOf(Color(0x66FFB800), Color(0x333A2A0C), Color(0x6614141A))
+                                            LiveStudioState.SUCCESS -> listOf(Color(0x6600E676), Color(0x330B3019), Color(0x6614141A))
+                                            LiveStudioState.IDLE -> listOf(Color(0x55282B38), Color(0x8812141C))
                                         }
                                     )
                                 )
                                 .border(
                                     width = 1.5.dp,
-                                    brush = if (isRecording) {
-                                        Brush.sweepGradient(listOf(Color(0xFFFF5252), Color(0xFFD71921), Color(0x88FF5252), Color(0xFFFF5252)))
-                                    } else {
-                                        LiltGlassSpecularBorderBrush
+                                    brush = when (studioState) {
+                                        LiveStudioState.RECORDING -> Brush.sweepGradient(listOf(Color(0xFFFF5252), Color(0xFFD71921), Color(0x88FF5252), Color(0xFFFF5252)))
+                                        LiveStudioState.TRANSCRIBING -> Brush.sweepGradient(listOf(Color(0xFFFFD54F), Color(0xFFFFB800), Color(0x66FFD54F), Color(0xFFFFD54F)))
+                                        LiveStudioState.SUCCESS -> Brush.sweepGradient(listOf(Color(0xFF69F0AE), Color(0xFF00E676), Color(0x6669F0AE), Color(0xFF69F0AE)))
+                                        LiveStudioState.IDLE -> LiltGlassSpecularBorderBrush
                                     },
                                     shape = CircleShape
                                 )
@@ -1079,65 +1101,71 @@ fun MainScreen(
                                     ) {
                                         permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                                     } else {
-                                        if (isRecording) {
+                                        if (studioState == LiveStudioState.RECORDING) {
+                                            studioState = LiveStudioState.TRANSCRIBING
                                             speechEngine.stopListening()
-                                        } else {
+                                        } else if (studioState == LiveStudioState.IDLE || studioState == LiveStudioState.SUCCESS) {
                                             speechEngine.startListening()
                                         }
                                     }
                                 }
                         ) {
-                            // Inner Radiant Core
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .size(54.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        if (isRecording) {
-                                            Brush.verticalGradient(listOf(Color(0xFFFF3333), Color(0xFFC01018)))
-                                        } else {
-                                            Brush.verticalGradient(listOf(Color(0xFF262A36), Color(0xFF161822)))
-                                        }
+                            // Inside the Circle: Only Red Dot when recording, Yellow Dot when transcribing, Green Dot on success, Mic when idle
+                            when (studioState) {
+                                LiveStudioState.RECORDING -> {
+                                    // ONLY a dynamic Red Dot inside the circle
+                                    val dynamicRedDotSize = (15 + (studioAudioRms.coerceIn(0f, 30f) / 6f)).dp
+                                    Box(
+                                        modifier = Modifier
+                                            .size(dynamicRedDotSize)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFFFF2A2A))
                                     )
-                                    .border(
-                                        1.dp,
-                                        if (isRecording) Brush.verticalGradient(listOf(Color(0x99FFFFFF), Color(0x33FF6B6B)))
-                                        else Brush.verticalGradient(listOf(Color(0x40FFFFFF), Color(0x15FFFFFF))),
-                                        CircleShape
+                                }
+
+                                LiveStudioState.TRANSCRIBING -> {
+                                    // Yellow / Amber Dot inside the circle
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFFFFB800))
                                     )
-                            ) {
-                                Icon(
-                                    imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic,
-                                    contentDescription = "Dictate",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(26.dp)
-                                )
+                                }
+
+                                LiveStudioState.SUCCESS -> {
+                                    // Green Dot inside the circle
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFF00E676))
+                                    )
+                                }
+
+                                LiveStudioState.IDLE -> {
+                                    Icon(
+                                        imageVector = Icons.Default.Mic,
+                                        contentDescription = "Dictate",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(26.dp)
+                                    )
+                                }
                             }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    if (isRecording) {
-                        // Live Audio Waveform Bars
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(3.dp),
-                            modifier = Modifier.height(30.dp)
-                        ) {
-                            Box(modifier = Modifier.width(3.dp).height(barH1.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xFF888888)))
-                            Box(modifier = Modifier.width(3.dp).height(barH2.dp).clip(RoundedCornerShape(2.dp)).background(Color.White))
-                            Box(modifier = Modifier.width(3.dp).height(barH4.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xFF888888)))
-                            Box(modifier = Modifier.width(3.dp).height(barH3.dp).clip(RoundedCornerShape(2.dp)).background(Color.White))
-                            Box(modifier = Modifier.width(3.dp).height(barH5.dp).clip(RoundedCornerShape(2.dp)).background(Color(0xFF888888)))
-                        }
-                    } else {
+                    // No wave form under the circle
+                    if (studioState == LiveStudioState.IDLE) {
                         Text(
                             text = "Tap microphone to test live speech cleanup",
                             color = NothingTextMuted,
                             fontSize = 12.sp
                         )
+                    } else {
+                        Spacer(modifier = Modifier.height(4.dp))
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -1154,23 +1182,21 @@ fun MainScreen(
                                     modifier = Modifier
                                         .size(6.dp)
                                         .clip(CircleShape)
-                                        .background(
-                                            if (isRecording) Color(0xFFFF3B30)
-                                            else if (liveStudioText.isNotBlank()) Color(0xFF00E676)
-                                            else Color(0xFF71717A)
-                                        )
+                                        .background(Color(0xFF71717A))
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
+                                // NO change of text color above the text box - constant grey as normal
                                 Text(
-                                    text = if (isRecording) "RECORDING & TRANSCRIBING…"
-                                           else if (testCleaned.isNotBlank()) "POLISHED SPEECH RESULT"
-                                           else "LIVE SPEECH OUTPUT BOX",
-                                    color = if (isRecording) Color(0xFFFF6B6B)
-                                            else if (testCleaned.isNotBlank()) Color(0xFF00E676)
-                                            else NothingTextMuted,
-                                    fontSize = 10.sp,
+                                    text = when (studioState) {
+                                        LiveStudioState.RECORDING -> "Recording, please speak"
+                                        LiveStudioState.TRANSCRIBING -> "Transcribing…"
+                                        LiveStudioState.SUCCESS -> "Transcribed & copied to clipboard"
+                                        LiveStudioState.IDLE -> if (liveStudioText.isNotBlank()) "Polished speech result" else "Live speech output box"
+                                    },
+                                    color = Color(0xFF71717A),
+                                    fontSize = 10.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.sp
+                                    letterSpacing = 0.8.sp
                                 )
                             }
 
