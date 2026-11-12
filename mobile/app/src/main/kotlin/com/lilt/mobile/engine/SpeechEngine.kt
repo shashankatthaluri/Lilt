@@ -64,6 +64,7 @@ class SpeechEngine(private val context: Context) {
         fun onStopped()
         fun onEndOfSpeech() {}
         fun onNoSpeechDetected() {}
+        fun onReminderDetected(reminder: ParsedReminder, originalText: String) {}
     }
 
     fun startListening(language: String = settings.getRecognitionLanguageTag()) {
@@ -708,26 +709,41 @@ class SpeechEngine(private val context: Context) {
 
     private fun checkAndScheduleReminder(cleanedText: String, rawText: String) {
         if (!settings.smartRemindersEnabled) return
-        val parsed = TemporalParser.parse(cleanedText) ?: TemporalParser.parse(rawText) ?: return
+        val textToScan = cleanedText.ifBlank { rawText }
+        val parsed = TemporalParser.parse(textToScan) ?: TemporalParser.parse(rawText) ?: return
 
-        val reminder = com.lilt.mobile.data.ReminderItem(
-            title = parsed.title,
-            originalText = cleanedText,
-            eventEpochMs = parsed.eventEpochMs,
-            triggerEpochMs = parsed.triggerEpochMs,
-            leadMinutes = parsed.leadMinutes
-        )
-        settings.addReminder(reminder)
-        com.lilt.mobile.reminder.ReminderScheduler.schedule(context, reminder)
+        if (settings.smartRemindersAskFirst) {
+            // Safe opt-in mode: notify the listener to prompt the user (MainScreen chip or background action notification)
+            mainHandler.post {
+                listener?.onReminderDetected(parsed, textToScan)
+            }
+        } else {
+            // Auto-schedule ONLY when explicit directive is used
+            if (parsed.isExplicit) {
+                val reminder = com.lilt.mobile.data.ReminderItem(
+                    title = parsed.title,
+                    originalText = textToScan,
+                    eventEpochMs = parsed.eventEpochMs,
+                    triggerEpochMs = parsed.triggerEpochMs,
+                    leadMinutes = parsed.leadMinutes
+                )
+                settings.addReminder(reminder)
+                com.lilt.mobile.reminder.ReminderScheduler.schedule(context, reminder)
 
-        val timeStr = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()).format(java.util.Date(parsed.eventEpochMs))
-        val leadStr = if (parsed.leadMinutes >= 60) "${parsed.leadMinutes / 60}h" else "${parsed.leadMinutes}m"
-        mainHandler.post {
-            android.widget.Toast.makeText(
-                context,
-                "⏰ Reminder set: ${parsed.title} at $timeStr ($leadStr alert)",
-                android.widget.Toast.LENGTH_LONG
-            ).show()
+                val timeStr = java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()).format(java.util.Date(parsed.eventEpochMs))
+                val leadStr = if (parsed.leadMinutes >= 60) "${parsed.leadMinutes / 60}h" else "${parsed.leadMinutes}m"
+                mainHandler.post {
+                    android.widget.Toast.makeText(
+                        context,
+                        "⏰ Reminder set: ${parsed.title} at $timeStr ($leadStr alert)",
+                        android.widget.Toast.LENGTH_LONG
+                    ).show()
+                }
+            } else {
+                mainHandler.post {
+                    listener?.onReminderDetected(parsed, textToScan)
+                }
+            }
         }
     }
 

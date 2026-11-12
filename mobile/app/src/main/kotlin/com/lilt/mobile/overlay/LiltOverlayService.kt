@@ -228,6 +228,16 @@ class LiltOverlayService : Service(), LifecycleOwner, SavedStateRegistryOwner {
                         circleState.value = CircleState.TRANSCRIBING
                     }
                 }
+
+                override fun onReminderDetected(reminder: com.lilt.mobile.engine.ParsedReminder, originalText: String) {
+                    if (settings.smartRemindersEnabled) {
+                        com.lilt.mobile.reminder.ReminderSuggestionHelper.showSuggestionNotification(
+                            this@LiltOverlayService,
+                            reminder,
+                            originalText
+                        )
+                    }
+                }
             }
         }
 

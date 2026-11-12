@@ -6,7 +6,8 @@ data class ParsedReminder(
     val title: String,
     val eventEpochMs: Long,
     val triggerEpochMs: Long,
-    val leadMinutes: Int
+    val leadMinutes: Int,
+    val isExplicit: Boolean = false
 )
 
 /**
@@ -165,11 +166,15 @@ object TemporalParser {
         }
 
         val cleanTitle = extractCleanTitle(originalText)
+        val explicitRegex = Regex("(?i)^\\s*(?:please\\s+)?(?:remind\\s+(?:me\\s+)?|set\\s+(?:a\\s+)?(?:reminder|alarm)|alert\\s+me|schedule\\s+(?:a\\s+)?reminder|gurtu\\s+chey|yaad\\s+dilana)\\b")
+        val isExplicit = explicitRegex.containsMatchIn(originalText)
+
         return ParsedReminder(
             title = cleanTitle,
             eventEpochMs = eventEpochMs,
             triggerEpochMs = triggerEpochMs,
-            leadMinutes = leadMinutes
+            leadMinutes = leadMinutes,
+            isExplicit = isExplicit
         )
     }
 

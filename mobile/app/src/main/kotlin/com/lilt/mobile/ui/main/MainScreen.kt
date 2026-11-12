@@ -165,6 +165,8 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.core.spring
@@ -266,7 +268,10 @@ fun MainScreen(
     var historyItems by remember { mutableStateOf(settings.getHistory()) }
     var remindersList by remember { mutableStateOf(settings.getReminders()) }
     var smartRemindersEnabled by remember { mutableStateOf(settings.smartRemindersEnabled) }
+    var smartRemindersAskFirst by remember { mutableStateOf(settings.smartRemindersAskFirst) }
     var silentAlarmsEnabled by remember { mutableStateOf(settings.silentAlarmsEnabled) }
+    var detectedReminder by remember { mutableStateOf<com.lilt.mobile.engine.ParsedReminder?>(null) }
+    var reminderScheduledFeedback by remember { mutableStateOf<String?>(null) }
     var historySearchQuery by remember { mutableStateOf("") }
     var autoCopyClipboard by remember { mutableStateOf(settings.autoCopyToClipboard) }
     var historySubTab by remember { mutableStateOf("recent") } // "recent" or "notes"
@@ -330,6 +335,8 @@ fun MainScreen(
                     liveStudioText = ""
                     testTranscript = ""
                     testCleaned = ""
+                    detectedReminder = null
+                    reminderScheduledFeedback = null
                 }
 
                 override fun onBeginningOfSpeech() {}
@@ -395,6 +402,12 @@ fun MainScreen(
                     studioAudioRms = 0f
                     if (studioState == LiveStudioState.RECORDING) {
                         studioState = LiveStudioState.TRANSCRIBING
+                    }
+                }
+
+                override fun onReminderDetected(reminder: com.lilt.mobile.engine.ParsedReminder, originalText: String) {
+                    if (settings.smartRemindersEnabled) {
+                        detectedReminder = reminder
                     }
                 }
             }
@@ -1276,6 +1289,183 @@ fun MainScreen(
                                 fontStyle = FontStyle.Italic,
                                 modifier = Modifier.padding(horizontal = 4.dp)
                             )
+                        }
+
+                        // Interactive Smart Reminder Confirmation Card
+                        AnimatedVisibility(
+                            visible = detectedReminder != null || reminderScheduledFeedback != null,
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically()
+                        ) {
+                            Column {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(Color(0xFF141416))
+                                        .border(
+                                            1.dp,
+                                            if (reminderScheduledFeedback != null) Color(0x6600E676) else Color(0x40FFB800),
+                                            RoundedCornerShape(16.dp)
+                                        )
+                                        .padding(14.dp)
+                                ) {
+                                    if (reminderScheduledFeedback != null) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(28.dp)
+                                                    .clip(CircleShape)
+                                                    .background(Color(0x2600E676)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Check,
+                                                    contentDescription = null,
+                                                    tint = Color(0xFF00E676),
+                                                    modifier = Modifier.size(16.dp)
+                                                )
+                                            }
+                                            Column {
+                                                Text(
+                                                    text = "Reminder Scheduled",
+                                                    color = Color(0xFF00E676),
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Text(
+                                                    text = reminderScheduledFeedback ?: "",
+                                                    color = Color(0xFFA1A1AA),
+                                                    fontSize = 11.sp
+                                                )
+                                            }
+                                        }
+                                    } else {
+                                        detectedReminder?.let { parsed ->
+                                            val timeFormat = java.text.SimpleDateFormat("EEE, MMM d • h:mm a", java.util.Locale.getDefault())
+                                            val timeStr = timeFormat.format(java.util.Date(parsed.eventEpochMs))
+                                            val leadStr = if (parsed.leadMinutes >= 60) "${parsed.leadMinutes / 60}h" else "${parsed.leadMinutes}m"
+
+                                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                                Row(
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                                ) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(32.dp)
+                                                            .clip(CircleShape)
+                                                            .background(Color(0x26FFB800)),
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Default.Alarm,
+                                                            contentDescription = null,
+                                                            tint = Color(0xFFFFB800),
+                                                            modifier = Modifier.size(18.dp)
+                                                        )
+                                                    }
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text(
+                                                            text = "Set reminder for \"${parsed.title}\"?",
+                                                            color = Color.White,
+                                                            fontSize = 12.5.sp,
+                                                            fontWeight = FontWeight.SemiBold,
+                                                            maxLines = 1,
+                                                            overflow = TextOverflow.Ellipsis
+                                                        )
+                                                        Text(
+                                                            text = "$timeStr ($leadStr advance alert)",
+                                                            color = Color(0xFFA1A1AA),
+                                                            fontSize = 11.sp
+                                                        )
+                                                    }
+                                                }
+
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    // Dismiss Button
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .weight(1f)
+                                                            .height(34.dp)
+                                                            .clip(RoundedCornerShape(10.dp))
+                                                            .background(Color(0x1AFFFFFF))
+                                                            .clickable {
+                                                                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                                                detectedReminder = null
+                                                            },
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Text(
+                                                            text = "Dismiss",
+                                                            color = Color(0xFFA1A1AA),
+                                                            fontSize = 11.5.sp,
+                                                            fontWeight = FontWeight.Medium
+                                                        )
+                                                    }
+
+                                                    // Confirm Button
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .weight(1f)
+                                                            .height(34.dp)
+                                                            .clip(RoundedCornerShape(10.dp))
+                                                            .background(Color(0xFFD71921))
+                                                            .clickable {
+                                                                view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                                                                val reminder = com.lilt.mobile.data.ReminderItem(
+                                                                    title = parsed.title,
+                                                                    originalText = liveStudioText.ifBlank { parsed.title },
+                                                                    eventEpochMs = parsed.eventEpochMs,
+                                                                    triggerEpochMs = parsed.triggerEpochMs,
+                                                                    leadMinutes = parsed.leadMinutes
+                                                                )
+                                                                settings.addReminder(reminder)
+                                                                com.lilt.mobile.reminder.ReminderScheduler.schedule(context, reminder)
+                                                                remindersList = settings.getReminders()
+
+                                                                reminderScheduledFeedback = "$timeStr ($leadStr alert)"
+                                                                detectedReminder = null
+
+                                                                coroutineScope.launch {
+                                                                    delay(3000)
+                                                                    reminderScheduledFeedback = null
+                                                                }
+                                                            },
+                                                        contentAlignment = Alignment.Center
+                                                    ) {
+                                                        Row(
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.Check,
+                                                                contentDescription = null,
+                                                                tint = Color.White,
+                                                                modifier = Modifier.size(14.dp)
+                                                            )
+                                                            Text(
+                                                                text = "Set Reminder",
+                                                                color = Color.White,
+                                                                fontSize = 11.5.sp,
+                                                                fontWeight = FontWeight.Bold
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -4138,7 +4328,7 @@ fun MainScreen(
                     NothingSettingToggle(
                         icon = Icons.Default.Schedule,
                         title = "Smart Reminders & Scheduling",
-                        subtitle = "Detects meetings, calls & deadlines in speech and automatically schedules alert notifications.",
+                        subtitle = "Detects meetings, calls & deadlines in speech to schedule alerts.",
                         checked = smartRemindersEnabled,
                         onCheckedChange = { checked ->
                             smartRemindersEnabled = checked
@@ -4147,6 +4337,18 @@ fun MainScreen(
                     )
 
                     if (smartRemindersEnabled) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        NothingSettingToggle(
+                            icon = Icons.Default.Tune,
+                            title = "Ask Before Scheduling",
+                            subtitle = "Prompts you to confirm detected reminders instead of auto-scheduling alerts.",
+                            checked = smartRemindersAskFirst,
+                            onCheckedChange = { checked ->
+                                smartRemindersAskFirst = checked
+                                settings.smartRemindersAskFirst = checked
+                            }
+                        )
+
                         Spacer(modifier = Modifier.height(14.dp))
                         NothingSettingToggle(
                             icon = if (silentAlarmsEnabled) Icons.Default.NotificationsOff else Icons.Default.Alarm,

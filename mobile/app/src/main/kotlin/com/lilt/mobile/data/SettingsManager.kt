@@ -487,6 +487,10 @@ class SettingsManager(context: Context) {
         get() = prefs.getBoolean(KEY_SMART_REMINDERS, true)
         set(value) = prefs.edit().putBoolean(KEY_SMART_REMINDERS, value).apply()
 
+    var smartRemindersAskFirst: Boolean
+        get() = prefs.getBoolean(KEY_SMART_REMINDERS_ASK_FIRST, true)
+        set(value) = prefs.edit().putBoolean(KEY_SMART_REMINDERS_ASK_FIRST, value).apply()
+
     var defaultReminderLeadMinutes: Int
         get() = prefs.getInt(KEY_REMINDER_LEAD_MINUTES, 30)
         set(value) = prefs.edit().putInt(KEY_REMINDER_LEAD_MINUTES, value).apply()
@@ -755,6 +759,7 @@ class SettingsManager(context: Context) {
         private const val KEY_SNIPPETS_JSON = "snippets_items_json"
         private const val KEY_VOICE_COMMANDS_JSON = "voice_commands_items_json"
         private const val KEY_SMART_REMINDERS = "smart_reminders_enabled"
+        private const val KEY_SMART_REMINDERS_ASK_FIRST = "smart_reminders_ask_first"
         private const val KEY_REMINDER_LEAD_MINUTES = "reminder_lead_minutes"
         private const val KEY_SILENT_ALARMS_ENABLED = "silent_alarms_enabled"
         private const val KEY_AUTO_COPY_CLIPBOARD = "auto_copy_to_clipboard"

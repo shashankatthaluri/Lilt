@@ -25,10 +25,15 @@ class ReminderReceiver : BroadcastReceiver() {
         const val ACTION_FIRE_REMINDER = "com.lilt.mobile.ACTION_FIRE_REMINDER"
         const val ACTION_MARK_DONE = "com.lilt.mobile.ACTION_MARK_DONE"
         const val ACTION_SNOOZE = "com.lilt.mobile.ACTION_SNOOZE"
+        const val ACTION_CONFIRM_REMINDER = "com.lilt.mobile.ACTION_CONFIRM_REMINDER"
+        const val ACTION_DISMISS_SUGGESTION = "com.lilt.mobile.ACTION_DISMISS_SUGGESTION"
 
         const val EXTRA_REMINDER_ID = "extra_reminder_id"
         const val EXTRA_TITLE = "extra_title"
         const val EXTRA_EVENT_TIME = "extra_event_time"
+        const val EXTRA_TRIGGER_TIME = "extra_trigger_time"
+        const val EXTRA_ORIGINAL_TEXT = "extra_original_text"
+        const val EXTRA_NOTIF_ID = "extra_notif_id"
         const val EXTRA_LEAD_MINUTES = "extra_lead_minutes"
         const val EXTRA_SNOOZE_MINUTES = "extra_snooze_minutes"
         const val EXTRA_IS_SILENT = "extra_is_silent"
@@ -38,8 +43,50 @@ class ReminderReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action ?: return
-        val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID) ?: return
         val settings = SettingsManager.getInstance(context)
+
+        when (action) {
+            ACTION_CONFIRM_REMINDER -> {
+                val title = intent.getStringExtra(EXTRA_TITLE) ?: "Reminder"
+                val originalText = intent.getStringExtra(EXTRA_ORIGINAL_TEXT) ?: title
+                val eventTime = intent.getLongExtra(EXTRA_EVENT_TIME, 0L)
+                val leadMinutes = intent.getIntExtra(EXTRA_LEAD_MINUTES, 30)
+                val triggerTime = intent.getLongExtra(EXTRA_TRIGGER_TIME, eventTime - (leadMinutes * 60 * 1000L))
+                val notifId = intent.getIntExtra(EXTRA_NOTIF_ID, 0)
+
+                val reminder = com.lilt.mobile.data.ReminderItem(
+                    title = title,
+                    originalText = originalText,
+                    eventEpochMs = eventTime,
+                    triggerEpochMs = triggerTime,
+                    leadMinutes = leadMinutes
+                )
+                settings.addReminder(reminder)
+                ReminderScheduler.schedule(context, reminder)
+
+                val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                if (notifId != 0) {
+                    nm.cancel(notifId)
+                }
+
+                val timeStr = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date(eventTime))
+                val leadStr = if (leadMinutes >= 60) "${leadMinutes / 60}h" else "${leadMinutes}m"
+                Toast.makeText(context, "⏰ Reminder set: $title at $timeStr ($leadStr alert)", Toast.LENGTH_SHORT).show()
+                DiagnosticLogger.log("ReminderReceiver", "User confirmed & scheduled reminder: $title at $timeStr")
+                return
+            }
+            ACTION_DISMISS_SUGGESTION -> {
+                val notifId = intent.getIntExtra(EXTRA_NOTIF_ID, 0)
+                val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                if (notifId != 0) {
+                    nm.cancel(notifId)
+                }
+                DiagnosticLogger.log("ReminderReceiver", "User dismissed reminder suggestion notifId=$notifId")
+                return
+            }
+        }
+
+        val reminderId = intent.getStringExtra(EXTRA_REMINDER_ID) ?: return
 
         when (action) {
             ACTION_FIRE_REMINDER -> {

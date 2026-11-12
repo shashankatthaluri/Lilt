@@ -162,6 +162,16 @@ class LiltInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
                 override fun onStopped() {
                     isRecordingState.value = false
                 }
+
+                override fun onReminderDetected(reminder: com.lilt.mobile.engine.ParsedReminder, originalText: String) {
+                    if (settings.smartRemindersEnabled) {
+                        com.lilt.mobile.reminder.ReminderSuggestionHelper.showSuggestionNotification(
+                            this@LiltInputMethodService,
+                            reminder,
+                            originalText
+                        )
+                    }
+                }
             }
         }
     }
