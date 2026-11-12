@@ -226,6 +226,32 @@ object CloudCleanupEngine {
         return TenglishNormalizationEngine.normalize(text)
     }
 
+    fun formatEmailSpacing(text: String): String {
+        val trimmed = text.trim()
+        if (!trimmed.startsWith("Subject:", ignoreCase = true) &&
+            !trimmed.contains("\nSubject:", ignoreCase = true)) {
+            return text
+        }
+
+        var t = trimmed.replace("\r\n", "\n")
+        // Collapse 3 or more consecutive newlines down to 2
+        t = t.replace(Regex("\n{3,}"), "\n\n")
+
+        // Ensure exactly one blank line after "Subject: ..."
+        t = t.replace(Regex("(?i)^(Subject:[^\n]*)\n(?!\n)"), "$1\n\n")
+
+        // Ensure exactly one blank line after Salutation (Hi ..., Dear ..., Hello ..., etc.)
+        t = t.replace(Regex("(?im)^((?:Hi|Dear|Hello|Hey)\\b[^\n]*,)\n(?!\n)"), "$1\n\n")
+
+        // Ensure exactly one blank line before Sign-off (Best regards, Sincerely, Thanks, etc.)
+        t = t.replace(Regex("(?im)(?<!\n\n)\n((?:Best regards|Warm regards|Kind regards|Regards|Sincerely|Thanks|Best|Cheers),)"), "\n\n$1")
+
+        // Ensure exactly ONE newline between Sign-off and Name (no blank line in signature block)
+        t = t.replace(Regex("(?im)^((?:Best regards|Warm regards|Kind regards|Regards|Sincerely|Thanks|Best|Cheers),)\n\n+([^\n]+)"), "$1\n$2")
+
+        return t.trim()
+    }
+
     data class LanguageDirectiveResult(
         val strippedText: String,
         val effectiveLanguageMode: String,
@@ -419,6 +445,7 @@ object CloudCleanupEngine {
         result = fixUnnaturalTitleCase(result)
         result = fixErroneousQuestionMarks(result)
         result = ensureQuestionMarks(result)
+        result = formatEmailSpacing(result)
         return result
     }
 
@@ -707,17 +734,25 @@ Carefully inspect the opening utterance of the user's transcript for voice forma
 1. EMAIL MODE:
    - Triggers: Starts with or contains phrases like "write the email", "write an email", "draft an email", "email to", "send an email to", "compose an email".
    - Actions:
-     * STRIP the command phrase itself (never repeat "write the email" in the output).
-     * Structure the message in clean email format:
-       Subject: [Concise, relevant subject based on content]
+     * STRIP the command phrase, recipient intro ("to [Name] saying/that"), and conversational filler.
+     * Extract the intended recipient name if spoken (e.g. "Write the email to Alex saying..." -> Recipient is Alex -> "Hi Alex,").
+     * Structure the message in clean, professional email format with EXACTLY one blank line between sections:
 
-       Hi [Recipient Name or 'there' if unstated],
+Subject: Concise, specific subject line based on content (DO NOT wrap subject in brackets)
 
-       [Clear, well-paragraphed email body]
+Hi [Recipient Name or 'there' if unstated],
 
-       Best regards,
-       [Your Name]
-     * For any critical email detail that was not spoken (such as recipient name, date/time, project name, or sign-off name), insert clean bracketed placeholders like [Recipient Name], [Date], [Project Name], or [Your Name] so the user can easily fill them in.
+[Clear, professional email body in 1-2 well-written paragraphs. State the purpose clearly and courteously.]
+
+Best regards,
+[Your Name]
+
+     * STRICT SPACING RULES:
+       - There MUST be exactly ONE blank line between "Subject: ..." and "Hi ...,".
+       - There MUST be exactly ONE blank line between "Hi ...," and the body paragraph.
+       - There MUST be exactly ONE blank line between the body paragraph and "Best regards,".
+       - Use a SINGLE newline between "Best regards," and "[Your Name]" (no blank line in the signature block).
+       - Never output multiple consecutive blank lines.
 
 2. RAW / VERBATIM MODE:
    - Triggers: Starts with "write it raw", "write raw", "raw text", "verbatim", "exact words", "don't change anything".

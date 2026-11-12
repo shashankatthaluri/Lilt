@@ -77,7 +77,11 @@ object LiltCore {
 
         if (emailPrefix != null) {
             var stripped = trimmed.substring(emailPrefix.length).trimStart(' ', ',', ':', '-')
-            if (emailPrefix == "email to") {
+            val toMatch = Regex("(?i)^to\\s+([a-zA-Z]+)(?:\\s+(?:saying|that|telling|about|regarding)?\\s+|\\s*,\\s*)").find(stripped)
+            if (toMatch != null) {
+                emailRecipient = toMatch.groupValues[1].replaceFirstChar { it.uppercaseChar() }
+                stripped = stripped.substring(toMatch.range.last + 1).trim()
+            } else if (emailPrefix == "email to") {
                 val parts = stripped.split(" ", limit = 2)
                 emailRecipient = parts.getOrNull(0)?.replaceFirstChar { it.uppercaseChar() }
                 stripped = parts.getOrNull(1) ?: ""
@@ -140,10 +144,15 @@ object LiltCore {
             else -> cleaned
         }
 
-        // If Email Mode was triggered, structure into email format with placeholders
+        // If Email Mode was triggered, structure into email format with clean professional spacing
         if (isEmailMode) {
             val recipientName = emailRecipient ?: "[Recipient Name]"
-            val subjectLine = "Subject: [Subject Line]"
+            val subjectTitle = when {
+                cleaned.contains("demo", ignoreCase = true) && cleaned.contains("postponed", ignoreCase = true) -> "Demo Postponed Update"
+                cleaned.contains("meeting", ignoreCase = true) -> "Meeting Update"
+                else -> "[Subject Line]"
+            }
+            val subjectLine = "Subject: $subjectTitle"
             cleaned = "$subjectLine\n\nHi $recipientName,\n\n${cleaned.trim()}\n\nBest regards,\n[Your Name]"
         }
 

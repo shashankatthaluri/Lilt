@@ -3009,6 +3009,7 @@ fun MainScreen(
                                                     }
 
                                                     result = settings.applyReplacementsAndSnippets(result)
+                                                    result = CloudCleanupEngine.formatEmailSpacing(result)
                                                     sandboxOutput = result
                                                     sandboxLoading = false
                                                     sandboxLangOverride = null
@@ -3061,8 +3062,8 @@ fun MainScreen(
                                         Text(
                                             text = sandboxOutput,
                                             color = NothingTextPrimary,
-                                            fontSize = 12.5.sp,
-                                            lineHeight = 18.sp
+                                            fontSize = 13.sp,
+                                            lineHeight = 21.sp
                                         )
                                     }
                                 } else {
