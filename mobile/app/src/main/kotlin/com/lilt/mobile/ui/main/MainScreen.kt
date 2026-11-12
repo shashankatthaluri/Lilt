@@ -2838,9 +2838,9 @@ fun MainScreen(
 
                                 Spacer(modifier = Modifier.height(14.dp))
 
-                                // Section 1: Standard Voice Format Presets
+                                // Unified Sample Formatting Presets
                                 Text(
-                                    text = "FORMAT PRESETS",
+                                    text = "SAMPLE PROMPTS",
                                     color = NothingTextSecondary,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
@@ -2849,21 +2849,23 @@ fun MainScreen(
                                 Spacer(modifier = Modifier.height(6.dp))
 
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     listOf(
                                         Triple(Icons.AutoMirrored.Filled.Send, "Email", "Write the email to Alex saying the demo is postponed to Thursday at 2 PM"),
-                                        Triple(Icons.Default.Edit, "Raw", "Write it raw honestly the server was bugging out yesterday but we fixed it"),
+                                        Triple(Icons.Default.AutoAwesome, "Notes", "Meeting notes team aligned on Q4 goals Shiva is leading Android launch by Friday"),
                                         Triple(Icons.Default.CheckCircle, "List", "Make a list buy organic milk finish mobile build deploy to prod"),
-                                        Triple(Icons.Default.AutoAwesome, "Notes", "Meeting notes team aligned on Q4 goals Shiva is leading Android launch by Friday")
+                                        Triple(Icons.Default.Edit, "Raw", "Write it raw honestly the server was bugging out yesterday but we fixed it"),
+                                        Triple(Icons.Default.Translate, "Tenglish", "Write the email to Rahul repu morning 10 AM ki quick sprint catchup undi please be on time")
                                     ).forEach { (icon, label, phrase) ->
                                         val isSelected = sandboxSelectedPreset == label
                                         Box(
                                             contentAlignment = Alignment.Center,
                                             modifier = Modifier
-                                                .weight(1f)
-                                                .height(42.dp)
+                                                .height(38.dp)
                                                 .clip(RoundedCornerShape(12.dp))
                                                 .background(
                                                     if (isSelected) {
@@ -2889,6 +2891,7 @@ fun MainScreen(
                                                     sandboxOutput = ""
                                                     sandboxLangOverride = null
                                                 }
+                                                .padding(horizontal = 14.dp)
                                         ) {
                                             Row(
                                                 verticalAlignment = Alignment.CenterVertically,
@@ -2901,157 +2904,21 @@ fun MainScreen(
                                                             .clip(CircleShape)
                                                             .background(Color(0xFFD71921))
                                                     )
-                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Spacer(modifier = Modifier.width(5.dp))
                                                 }
                                                 Icon(
                                                     imageVector = icon,
                                                     contentDescription = null,
                                                     tint = if (isSelected) Color.White else NothingTextSecondary,
-                                                    modifier = Modifier.size(12.dp)
+                                                    modifier = Modifier.size(13.dp)
                                                 )
-                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Spacer(modifier = Modifier.width(5.dp))
                                                 Text(
                                                     text = label,
                                                     color = if (isSelected) Color.White else NothingTextSecondary,
-                                                    fontSize = 11.sp,
-                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                // Section 2: Bilingual & Code-Switching Presets
-                                Text(
-                                    text = "MULTILINGUAL / CODE-SWITCHING",
-                                    color = NothingTextSecondary,
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 1.sp
-                                )
-                                Spacer(modifier = Modifier.height(6.dp))
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    listOf(
-                                        Triple("Auto: Tenglish", "auto", "Write the email to Rahul repu morning 10 AM ki quick sprint catchup undi please be on time"),
-                                        Triple("Auto: English", "auto", "Write the email to Sarah regarding the quarterly product roadmap review next Tuesday")
-                                    ).forEach { (label, mode, phrase) ->
-                                        val isSelected = sandboxSelectedPreset == label
-                                        Box(
-                                            contentAlignment = Alignment.Center,
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .height(42.dp)
-                                                .clip(RoundedCornerShape(12.dp))
-                                                .background(
-                                                    if (isSelected) {
-                                                        Brush.verticalGradient(
-                                                            listOf(Color(0xFF28241A), Color(0xFF18150E))
-                                                        )
-                                                    } else {
-                                                        SolidColor(Color(0xFF151412))
-                                                    }
-                                                )
-                                                .border(
-                                                    width = if (isSelected) 1.2.dp else 1.dp,
-                                                    color = if (isSelected) Color(0xFFFFB800) else Color(0x33FFB800),
-                                                    shape = RoundedCornerShape(12.dp)
-                                                )
-                                                .clickable {
-                                                    sandboxSelectedPreset = label
-                                                    sandboxLangOverride = mode
-                                                    sandboxInput = phrase
-                                                    sandboxOutput = ""
-                                                }
-                                        ) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                if (isSelected) {
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .size(5.dp)
-                                                            .clip(CircleShape)
-                                                            .background(Color(0xFFFFB800))
-                                                    )
-                                                    Spacer(modifier = Modifier.width(5.dp))
-                                                } else {
-                                                    Icon(
-                                                        imageVector = Icons.Default.FlashOn,
-                                                        contentDescription = null,
-                                                        tint = Color(0xCCFFB800),
-                                                        modifier = Modifier.size(12.dp)
-                                                    )
-                                                    Spacer(modifier = Modifier.width(4.dp))
-                                                }
-                                                Text(
-                                                    text = label,
-                                                    color = if (isSelected) Color.White else Color(0xFFFFCC66),
                                                     fontSize = 11.5.sp,
-                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(6.dp))
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    listOf(
-                                        Triple("Telugu Email", "te_roman", "Write the email to Suresh repu 11 AM ki client demo undi prepare avvamani cheppu"),
-                                        Triple("Telugu Raw", "te_roman", "Write it raw nenu ippude office ki reach ayyanu repu morning call matladam"),
-                                        Triple("Telugu Casual", "te_roman", "Write it casual bhojanam chesara inkenti visheshalu weekend plan enti")
-                                    ).forEach { (label, mode, phrase) ->
-                                        val isSelected = sandboxSelectedPreset == label
-                                        Box(
-                                            contentAlignment = Alignment.Center,
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .height(42.dp)
-                                                .clip(RoundedCornerShape(12.dp))
-                                                .background(
-                                                    if (isSelected) {
-                                                        Brush.verticalGradient(
-                                                            listOf(Color(0xFF2E1518), Color(0xFF190C0E))
-                                                        )
-                                                    } else {
-                                                        SolidColor(Color(0xFF181012))
-                                                    }
-                                                )
-                                                .border(
-                                                    width = if (isSelected) 1.2.dp else 1.dp,
-                                                    color = if (isSelected) Color(0xFFD71921) else Color(0x33D71921),
-                                                    shape = RoundedCornerShape(12.dp)
-                                                )
-                                                .clickable {
-                                                    sandboxSelectedPreset = label
-                                                    sandboxLangOverride = mode
-                                                    sandboxInput = phrase
-                                                    sandboxOutput = ""
-                                                }
-                                        ) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                if (isSelected) {
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .size(5.dp)
-                                                            .clip(CircleShape)
-                                                            .background(Color(0xFFD71921))
-                                                    )
-                                                    Spacer(modifier = Modifier.width(4.dp))
-                                                }
-                                                Text(
-                                                    text = label,
-                                                    color = if (isSelected) Color.White else Color(0xFFD48B90),
-                                                    fontSize = 11.sp,
-                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                    maxLines = 1
                                                 )
                                             }
                                         }
@@ -3066,8 +2933,9 @@ fun MainScreen(
                                         sandboxInput = it
                                         sandboxSelectedPreset = null
                                     },
-                                    label = { Text("Input speech to test", color = NothingTextMuted, fontSize = 11.sp) },
-                                    textStyle = TextStyle(color = NothingTextPrimary, fontSize = 12.sp),
+                                    label = { Text("Input prompt to test", color = NothingTextMuted, fontSize = 11.sp) },
+                                    placeholder = { Text("Type any spoken phrase or tap a sample prompt above…", color = Color(0xFF52525B), fontSize = 12.sp) },
+                                    textStyle = TextStyle(color = NothingTextPrimary, fontSize = 12.5.sp),
                                     shape = RoundedCornerShape(14.dp),
                                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                                     keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
