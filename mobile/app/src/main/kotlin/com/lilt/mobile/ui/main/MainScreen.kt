@@ -208,7 +208,7 @@ fun MainScreen(
     val settings = remember { SettingsManager.getInstance(context) }
 
     var isRecording by remember { mutableStateOf(false) }
-    var testTranscript by remember { mutableStateOf("Tap the red microphone to test live voice cleanup.") }
+    var testTranscript by remember { mutableStateOf("Tap the microphone to test live voice cleanup.") }
     var testCleaned by remember { mutableStateOf("") }
     var liveStudioText by remember { mutableStateOf("") }
     var isFloatingPillActive by remember { mutableStateOf(settings.floatingPillEnabled) }
@@ -231,6 +231,7 @@ fun MainScreen(
 
     // Diagnostic & One-Click Support State
     var showErrorDialog by remember { mutableStateOf(false) }
+    var showClearHistoryDialog by remember { mutableStateOf(false) }
     var errorReportUserNote by remember { mutableStateOf("") }
     var liveAlertMessage by remember { mutableStateOf<String?>(null) }
 
@@ -532,10 +533,11 @@ fun MainScreen(
                             letterSpacing = 3.sp
                         )
                         Text(
-                            text = "Liquid Glass Voice Engine",
+                            text = "Speak at the speed of thought",
                             color = NothingTextSecondary,
                             fontSize = 11.sp,
-                            letterSpacing = 0.5.sp
+                            letterSpacing = 0.4.sp,
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
@@ -973,54 +975,111 @@ fun MainScreen(
                         label = "mic_pulse"
                     )
 
-                    // Liquid Glass Siri / VisionOS Orb Container
+                    // Signature Liquid Glass Floating Circle Orb (Parity with Lilt Floating Edge Pill)
+                    val studioRippleScale by infiniteTransition.animateFloat(
+                        initialValue = 0.9f,
+                        targetValue = if (isRecording) 1.55f else 1.0f,
+                        animationSpec = infiniteRepeatable(tween(1100, easing = LinearOutSlowInEasing), RepeatMode.Restart),
+                        label = "studioRippleScale"
+                    )
+                    val studioRippleAlpha by infiniteTransition.animateFloat(
+                        initialValue = 0.65f,
+                        targetValue = if (isRecording) 0.0f else 0.0f,
+                        animationSpec = infiniteRepeatable(tween(1100, easing = LinearOutSlowInEasing), RepeatMode.Restart),
+                        label = "studioRippleAlpha"
+                    )
+
                     Box(
                         contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .graphicsLayer {
-                                scaleX = micPulseScale
-                                scaleY = micPulseScale
-                            }
-                            .size(82.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (isRecording) {
-                                    Brush.radialGradient(listOf(Color(0xFFFF2A2A), Color(0xFFB70E17)))
-                                } else {
-                                    Brush.radialGradient(listOf(Color(0xFF2A2E3D), Color(0xFF12141C)))
+                        modifier = Modifier.size(108.dp)
+                    ) {
+                        // Ambient Breathing Aurora Halo while recording
+                        if (isRecording) {
+                            Box(
+                                modifier = Modifier
+                                    .size(92.dp)
+                                    .graphicsLayer {
+                                        scaleX = studioRippleScale
+                                        scaleY = studioRippleScale
+                                        alpha = studioRippleAlpha
+                                    }
+                                    .border(2.dp, Brush.radialGradient(listOf(Color(0xFFFF3B30), Color(0x44D71921))), CircleShape)
+                            )
+                        }
+
+                        // Outer Translucent Liquid Glass Ring
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .graphicsLayer {
+                                    scaleX = micPulseScale
+                                    scaleY = micPulseScale
                                 }
-                            )
-                            .border(
-                                1.5.dp,
-                                brush = if (isRecording) {
-                                    Brush.linearGradient(listOf(Color(0xFFFF6B6B), Color(0x66FF2A2A)))
-                                } else {
-                                    Brush.verticalGradient(listOf(Color(0x66FFFFFF), Color(0x15FFFFFF)))
-                                },
-                                shape = CircleShape
-                            )
-                            .clickable {
-                                if (ContextCompat.checkSelfPermission(
-                                        context,
-                                        Manifest.permission.RECORD_AUDIO
-                                    ) != PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                                } else {
-                                    if (isRecording) {
-                                        speechEngine.stopListening()
+                                .size(84.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.radialGradient(
+                                        colors = if (isRecording) {
+                                            listOf(Color(0x88D71921), Color(0x442B0D11), Color(0x6614141A))
+                                        } else {
+                                            listOf(Color(0x55282B38), Color(0x8812141C))
+                                        }
+                                    )
+                                )
+                                .border(
+                                    width = 1.5.dp,
+                                    brush = if (isRecording) {
+                                        Brush.sweepGradient(listOf(Color(0xFFFF5252), Color(0xFFD71921), Color(0x88FF5252), Color(0xFFFF5252)))
                                     } else {
-                                        speechEngine.startListening()
+                                        LiltGlassSpecularBorderBrush
+                                    },
+                                    shape = CircleShape
+                                )
+                                .clickable {
+                                    view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                    if (ContextCompat.checkSelfPermission(
+                                            context,
+                                            Manifest.permission.RECORD_AUDIO
+                                        ) != PackageManager.PERMISSION_GRANTED
+                                    ) {
+                                        permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                                    } else {
+                                        if (isRecording) {
+                                            speechEngine.stopListening()
+                                        } else {
+                                            speechEngine.startListening()
+                                        }
                                     }
                                 }
+                        ) {
+                            // Inner Radiant Core
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(54.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (isRecording) {
+                                            Brush.verticalGradient(listOf(Color(0xFFFF3333), Color(0xFFC01018)))
+                                        } else {
+                                            Brush.verticalGradient(listOf(Color(0xFF262A36), Color(0xFF161822)))
+                                        }
+                                    )
+                                    .border(
+                                        1.dp,
+                                        if (isRecording) Brush.verticalGradient(listOf(Color(0x99FFFFFF), Color(0x33FF6B6B)))
+                                        else Brush.verticalGradient(listOf(Color(0x40FFFFFF), Color(0x15FFFFFF))),
+                                        CircleShape
+                                    )
+                            ) {
+                                Icon(
+                                    imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic,
+                                    contentDescription = "Dictate",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(26.dp)
+                                )
                             }
-                    ) {
-                        Icon(
-                            imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic,
-                            contentDescription = "Dictate",
-                            tint = Color.White,
-                            modifier = Modifier.size(34.dp)
-                        )
+                        }
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -1040,7 +1099,7 @@ fun MainScreen(
                         }
                     } else {
                         Text(
-                            text = "Tap red microphone to test live speech cleanup",
+                            text = "Tap microphone to test live speech cleanup",
                             color = NothingTextMuted,
                             fontSize = 12.sp
                         )
@@ -1119,7 +1178,7 @@ fun MainScreen(
                             onValueChange = { liveStudioText = it },
                             placeholder = {
                                 Text(
-                                    text = "Tap the red microphone above and speak. Your live transcript and polished output will stream right into this text box...",
+                                    text = "Tap the microphone above and speak. Your live transcript and polished output will stream right into this text box...",
                                     color = Color(0xFF52525B),
                                     fontSize = 13.sp,
                                     lineHeight = 18.sp
@@ -1263,106 +1322,28 @@ fun MainScreen(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (isMultiSelect) {
-                        // "Select All" / "Deselect All" Pill
-                        val isAllSelected = selectedIds.size == historyItems.size && historyItems.isNotEmpty()
+                    if (historyItems.isNotEmpty()) {
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
-                                .height(34.dp)
-                                .clip(RoundedCornerShape(17.dp))
-                                .background(if (isAllSelected) Color(0x22FFB800) else Color(0xFF16161C))
-                                .border(
-                                    1.dp,
-                                    if (isAllSelected) Color(0x88FFB800) else Color(0x28FFFFFF),
-                                    RoundedCornerShape(17.dp)
-                                )
+                                .height(36.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(Color(0x14FFFFFF))
+                                .border(1.dp, Color(0x2EFFFFFF), RoundedCornerShape(18.dp))
                                 .clickable {
                                     view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-                                    selectedIds = if (isAllSelected) emptySet() else historyItems.map { it.id }.toSet()
+                                    showClearHistoryDialog = true
                                 }
-                                .padding(horizontal = 13.dp)
-                        ) {
-                            Text(
-                                text = if (isAllSelected) "Deselect All" else "Select All",
-                                color = if (isAllSelected) Color(0xFFFFB800) else Color(0xFFE4E4E7),
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                letterSpacing = 0.2.sp
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        // "Done" Primary Pill (High-contrast Nothing OS stark white pill)
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .height(34.dp)
-                                .clip(RoundedCornerShape(17.dp))
-                                .background(Color.White)
-                                .clickable {
-                                    view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-                                    isMultiSelect = false
-                                    selectedIds = emptySet()
-                                }
-                                .padding(horizontal = 15.dp)
+                                .padding(horizontal = 14.dp)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = null,
-                                    tint = Color.Black,
-                                    modifier = Modifier.size(13.dp)
+                                    imageVector = Icons.Default.DeleteOutline,
+                                    contentDescription = "Clear History",
+                                    tint = Color(0xFFA1A1AA),
+                                    modifier = Modifier.size(15.dp)
                                 )
-                                Spacer(modifier = Modifier.width(5.dp))
-                                Text(
-                                    text = "Done",
-                                    color = Color.Black,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.3.sp
-                                )
-                            }
-                        }
-                    } else {
-                        if (historyItems.isNotEmpty()) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .height(36.dp)
-                                    .clip(RoundedCornerShape(18.dp))
-                                    .background(Color(0x22FFFFFF))
-                                    .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(18.dp))
-                                    .clickable {
-                                        view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-                                        isMultiSelect = true
-                                        selectedIds = emptySet()
-                                    }
-                                    .padding(horizontal = 12.dp)
-                            ) {
-                                Text(
-                                    text = "Select",
-                                    color = NothingTextPrimary,
-                                    fontSize = 11.5.sp,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .height(36.dp)
-                                    .clip(RoundedCornerShape(18.dp))
-                                    .background(Color(0x14FFFFFF))
-                                    .border(1.dp, Color(0x22FFFFFF), RoundedCornerShape(18.dp))
-                                    .clickable {
-                                        view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-                                        settings.clearHistory()
-                                        historyItems = emptyList()
-                                    }
-                                    .padding(horizontal = 12.dp)
-                            ) {
+                                Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "Clear All",
                                     color = Color(0xFFA1A1AA),
@@ -1662,94 +1643,7 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Floating Multi-Select Action Bar (iOS 27 Liquid Glass Pill)
-            AnimatedVisibility(
-                visible = isMultiSelect && selectedIds.isNotEmpty(),
-                enter = slideInVertically { it } + fadeIn(),
-                exit = slideOutVertically { it } + fadeOut()
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 12.dp)
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(Color(0xF2121216))
-                        .border(1.dp, Color(0x38FFFFFF), RoundedCornerShape(22.dp))
-                        .padding(horizontal = 14.dp, vertical = 9.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Move to Notes
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFF221C14))
-                            .border(1.dp, Color(0x66FFB800), RoundedCornerShape(12.dp))
-                            .clickable {
-                                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-                                settings.setNoteStateMultiple(selectedIds, true)
-                                historyItems = settings.getHistory()
-                                Toast.makeText(context, "Moved ${selectedIds.size} items to Notes", Toast.LENGTH_SHORT).show()
-                                isMultiSelect = false
-                                selectedIds = emptySet()
-                            }
-                            .padding(horizontal = 14.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Bookmark,
-                            contentDescription = null,
-                            tint = Color(0xFFFFB800),
-                            modifier = Modifier.size(15.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Move to Notes",
-                            color = Color(0xFFFFB800),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
 
-                    // Avengers Thanos Snap Dust Delete
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFF2E1214))
-                            .border(1.dp, Color(0x88D71921), RoundedCornerShape(12.dp))
-                            .clickable {
-                                coroutineScope.launch {
-                                    dissolvingIds = selectedIds
-                                    view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                                    // Disintegration into dust over 600ms
-                                    delay(600)
-                                    settings.deleteMultipleHistory(selectedIds)
-                                    historyItems = settings.getHistory()
-                                    dissolvingIds = emptySet()
-                                    selectedIds = emptySet()
-                                    isMultiSelect = false
-                                    Toast.makeText(context, "Disintegrated selected items into dust", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                            .padding(horizontal = 14.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.DeleteOutline,
-                            contentDescription = null,
-                            tint = Color(0xFFD71921),
-                            modifier = Modifier.size(15.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Delete (${selectedIds.size})",
-                            color = Color(0xFFD71921),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
 
             // Instant 120 FPS hardware-accelerated crossfade between Recent and Notes
             AnimatedContent(
@@ -2627,23 +2521,7 @@ fun MainScreen(
                                         }
                                     }
 
-                                    if (sandboxSelectedPreset != null) {
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(8.dp))
-                                                .background(Color(0x26D71921))
-                                                .border(1.dp, Color(0x66D71921), RoundedCornerShape(8.dp))
-                                                .padding(horizontal = 8.dp, vertical = 3.dp)
-                                        ) {
-                                            Text(
-                                                text = sandboxSelectedPreset!!.uppercase(),
-                                                color = Color(0xFFD71921),
-                                                fontSize = 9.5.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                letterSpacing = 0.5.sp
-                                            )
-                                        }
-                                    }
+
                                 }
 
                                 Spacer(modifier = Modifier.height(14.dp))
@@ -4386,7 +4264,7 @@ fun MainScreen(
             // Universal Mobile Footer
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "L I L T   •   V O I C E   A I",
+                    text = "L I L T   •   V O I C E ,   R E F I N E D",
                     color = NothingTextMuted,
                     fontSize = 11.sp,
                     letterSpacing = 2.sp,
@@ -4394,13 +4272,166 @@ fun MainScreen(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Universal Mobile Voice Engine v1.0  •  AMOLED Edition",
-                    color = Color(0xFF555555),
-                    fontSize = 10.sp
+                    text = "Raw thought, polished instantly  •  Universal Edition",
+                    color = Color(0xFF666666),
+                    fontSize = 10.5.sp
                 )
             }
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(48.dp))
+        }
+
+        // Popping Floating Multi-Select Capsule (Docked bottom-right above navigation pill)
+        AnimatedVisibility(
+            visible = activeTab == "history" && isMultiSelect && selectedIds.isNotEmpty(),
+            enter = scaleIn(spring(dampingRatio = 0.65f, stiffness = Spring.StiffnessMediumLow)) + fadeIn(),
+            exit = scaleOut(spring(dampingRatio = 0.75f, stiffness = Spring.StiffnessMedium)) + fadeOut(),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .navigationBarsPadding()
+                .padding(end = 20.dp, bottom = 86.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(26.dp),
+                color = if (LiltThemeState.isDark) Color(0xF514151C) else Color(0xF8FBFBFD),
+                shadowElevation = 24.dp,
+                border = BorderStroke(1.2.dp, LiltGlassSpecularBorderBrush)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Badge counter
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .height(36.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(Color(0x26FFB800))
+                            .border(1.dp, Color(0x66FFB800), RoundedCornerShape(18.dp))
+                            .padding(horizontal = 10.dp)
+                    ) {
+                        Text(
+                            text = "${selectedIds.size}",
+                            color = Color(0xFFFFB800),
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    // 1. PIN Action
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF221618))
+                            .border(1.dp, Color(0x4DD71921), CircleShape)
+                            .clickable {
+                                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                val anyUnpinned = historyItems.any { it.id in selectedIds && !it.isPinned }
+                                settings.setPinnedStateMultiple(selectedIds, anyUnpinned)
+                                historyItems = settings.getHistory()
+                                Toast.makeText(
+                                    context,
+                                    if (anyUnpinned) "Pinned ${selectedIds.size} items" else "Unpinned ${selectedIds.size} items",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                isMultiSelect = false
+                                selectedIds = emptySet()
+                            }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PushPin,
+                            contentDescription = "Pin",
+                            tint = Color(0xFFD71921),
+                            modifier = Modifier.size(17.dp)
+                        )
+                    }
+
+                    // 2. NOTE Action
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF241E14))
+                            .border(1.dp, Color(0x66FFB800), CircleShape)
+                            .clickable {
+                                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                val anyNotNote = historyItems.any { it.id in selectedIds && !it.isNote }
+                                settings.setNoteStateMultiple(selectedIds, anyNotNote)
+                                historyItems = settings.getHistory()
+                                Toast.makeText(
+                                    context,
+                                    if (anyNotNote) "Moved ${selectedIds.size} to Notes" else "Removed ${selectedIds.size} from Notes",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                isMultiSelect = false
+                                selectedIds = emptySet()
+                            }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Bookmark,
+                            contentDescription = "Notes",
+                            tint = Color(0xFFFFB800),
+                            modifier = Modifier.size(17.dp)
+                        )
+                    }
+
+                    // 3. DELETE (Thanos Snap) Action
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(Brush.horizontalGradient(listOf(Color(0xFFD71921), Color(0xFFB51219))))
+                            .border(1.dp, Color(0x66FFFFFF), CircleShape)
+                            .clickable {
+                                coroutineScope.launch {
+                                    dissolvingIds = selectedIds
+                                    view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                    delay(600)
+                                    settings.deleteMultipleHistory(selectedIds)
+                                    historyItems = settings.getHistory()
+                                    dissolvingIds = emptySet()
+                                    selectedIds = emptySet()
+                                    isMultiSelect = false
+                                    Toast.makeText(context, "Disintegrated selected items into dust", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DeleteOutline,
+                            contentDescription = "Delete",
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    // 4. CANCEL / CLOSE Action
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(Color(0x22FFFFFF))
+                            .clickable {
+                                view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+                                isMultiSelect = false
+                                selectedIds = emptySet()
+                            }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Cancel",
+                            tint = Color(0xFFA1A1AA),
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+            }
         }
 
         // Diagnostic & Error Report Dialog
@@ -4668,6 +4699,116 @@ fun MainScreen(
                 }
             )
         }
+        // Clear History Confirmation & Scope Dialog
+        if (showClearHistoryDialog) {
+            AlertDialog(
+                onDismissRequest = { showClearHistoryDialog = false },
+                containerColor = if (LiltThemeState.isDark) Color(0xFF141418) else Color(0xFFFBFBFD),
+                shape = RoundedCornerShape(24.dp),
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x26D71921))
+                                .border(1.dp, Color(0x66D71921), CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DeleteOutline,
+                                contentDescription = null,
+                                tint = Color(0xFFD71921),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "Clear History",
+                                color = NothingTextPrimary,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Select how much history to wipe out",
+                                color = NothingTextMuted,
+                                fontSize = 11.5.sp
+                            )
+                        }
+                    }
+                },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(
+                            Triple("Last 30 Minutes", "Wipes dictations recorded in the past 30 min", 30L * 60 * 1000),
+                            Triple("Last 1 Hour", "Wipes dictations recorded in the past hour", 60L * 60 * 1000),
+                            Triple("Last 24 Hours", "Wipes all dictations from today", 24L * 60 * 60 * 1000),
+                            Triple("All Time (Complete Wipe)", "Permanently deletes all voice history & notes", -1L)
+                        ).forEach { (label, desc, durationMs) ->
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(if (durationMs == -1L) Color(0xFF221316) else NothingCardElevated)
+                                    .border(
+                                        1.dp,
+                                        if (durationMs == -1L) Color(0x66D71921) else Color(0x22FFFFFF),
+                                        RoundedCornerShape(14.dp)
+                                    )
+                                    .clickable {
+                                        view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                        if (durationMs == -1L) {
+                                            settings.clearHistory()
+                                            historyItems = emptyList()
+                                            Toast.makeText(context, "All history wiped out", Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            val cutoff = System.currentTimeMillis() - durationMs
+                                            settings.clearHistorySince(cutoff)
+                                            historyItems = settings.getHistory()
+                                            Toast.makeText(context, "Cleared $label", Toast.LENGTH_SHORT).show()
+                                        }
+                                        showClearHistoryDialog = false
+                                    }
+                                    .padding(horizontal = 14.dp, vertical = 12.dp)
+                            ) {
+                                Column {
+                                    Text(
+                                        text = label,
+                                        color = if (durationMs == -1L) Color(0xFFD71921) else NothingTextPrimary,
+                                        fontSize = 13.5.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = desc,
+                                        color = NothingTextMuted,
+                                        fontSize = 11.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {},
+                dismissButton = {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .height(36.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(NothingCardElevated)
+                            .clickable { showClearHistoryDialog = false }
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        Text("CANCEL", color = NothingTextMuted, fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            )
+        }
+
         } // end LiquidGlassAmbientBackdrop Box
     }
 }

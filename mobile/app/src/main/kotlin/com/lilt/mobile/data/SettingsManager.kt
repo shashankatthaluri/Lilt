@@ -407,6 +407,18 @@ class SettingsManager(context: Context) {
         saveHistory(emptyList())
     }
 
+    fun clearHistorySince(cutoffEpochMs: Long) {
+        val current = getHistory().filter { it.timestamp < cutoffEpochMs }
+        saveHistory(current)
+    }
+
+    fun setPinnedStateMultiple(ids: Set<String>, isPinned: Boolean) {
+        val current = getHistory().map {
+            if (it.id in ids) it.copy(isPinned = isPinned) else it
+        }
+        saveHistory(current)
+    }
+
     private fun saveHistory(items: List<DictationItem>) {
         cachedHistory = items
         val array = JSONArray()
