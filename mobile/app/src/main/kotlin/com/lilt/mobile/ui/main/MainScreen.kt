@@ -226,6 +226,8 @@ fun MainScreen(
     var trailingSpace by remember { mutableStateOf(settings.trailingSpace) }
     var hapticFeedback by remember { mutableStateOf(settings.hapticFeedback) }
     var historyStorageMode by remember { mutableStateOf(settings.historyStorageMode) }
+    var noiseReductionEnabled by remember { mutableStateOf(settings.noiseReductionEnabled) }
+    var hardwareNoiseSuppression by remember { mutableStateOf(settings.hardwareNoiseSuppression) }
 
     // Diagnostic & One-Click Support State
     var showErrorDialog by remember { mutableStateOf(false) }
@@ -3976,6 +3978,57 @@ fun MainScreen(
 
             // ── SETTINGS TAB (Part 2: Privacy, Preferences & Diagnostics) ──────────
             if (currentTab == "settings") {
+
+            // 7. Acoustic DSP & Background Noise Reduction (Wispr Flow Parity)
+            Text(
+                text = "ACOUSTIC DSP & NOISE REDUCTION",
+                color = NothingTextMuted,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.2.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 4.dp)
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = NothingCard)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
+                        .padding(16.dp)
+                ) {
+                    NothingSettingToggle(
+                        icon = Icons.Default.Tune,
+                        title = "Audio DSP Noise Filtering",
+                        subtitle = "High-pass 85Hz filter + adaptive soft-knee noise gate to silence AC hum, fan rumble, and table taps.",
+                        checked = noiseReductionEnabled,
+                        onCheckedChange = { checked ->
+                            noiseReductionEnabled = checked
+                            settings.noiseReductionEnabled = checked
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    NothingSettingToggle(
+                        icon = Icons.Default.Mic,
+                        title = "Hardware Multi-Mic Beamforming",
+                        subtitle = "Activates device DSP acoustic echo canceler and directional voice recognition microphone.",
+                        checked = hardwareNoiseSuppression,
+                        onCheckedChange = { checked ->
+                            hardwareNoiseSuppression = checked
+                            settings.hardwareNoiseSuppression = checked
+                        }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
 
             // 10. Storage & Privacy Controls
             Text(

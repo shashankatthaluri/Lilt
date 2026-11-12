@@ -46,6 +46,10 @@ class SpeechEngine(private val context: Context) {
     private val pcmBuffer = ByteArrayOutputStream()
     private var processingJob: Job? = null
 
+    // Hardware Audio Effects (Noise Suppression, Echo Cancellation)
+    private var noiseSuppressor: android.media.audiofx.NoiseSuppressor? = null
+    private var echoCanceler: android.media.audiofx.AcousticEchoCanceler? = null
+
     // System SpeechRecognizer fallback pipeline
     private var speechRecognizer: SpeechRecognizer? = null
     private var recognizerSafetyTimeoutRunnable: Runnable? = null
@@ -91,19 +95,57 @@ class SpeechEngine(private val context: Context) {
             val minBufSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
             val bufferSize = (minBufSize * 2).coerceAtLeast(4096)
 
-            audioRecord = AudioRecord(
-                MediaRecorder.AudioSource.MIC,
+            val primarySource = if (settings.hardwareNoiseSuppression) {
+                MediaRecorder.AudioSource.VOICE_RECOGNITION
+            } else {
+                MediaRecorder.AudioSource.MIC
+            }
+
+            var record = AudioRecord(
+                primarySource,
                 sampleRate,
                 channelConfig,
                 audioFormat,
                 bufferSize
             )
 
+            if (record.state != AudioRecord.STATE_INITIALIZED && primarySource != MediaRecorder.AudioSource.MIC) {
+                DiagnosticLogger.log(tag, "VOICE_RECOGNITION initialization failed, fallback to standard MIC")
+                record = AudioRecord(
+                    MediaRecorder.AudioSource.MIC,
+                    sampleRate,
+                    channelConfig,
+                    audioFormat,
+                    bufferSize
+                )
+            }
+            audioRecord = record
+
             if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
                 DiagnosticLogger.logError(tag, "AudioRecord failed to initialize")
                 // Fallback to system recognizer if AudioRecord fails initialization
                 startSystemSpeechRecognizer(settings.getRecognitionLanguageTag())
                 return
+            }
+
+            // Attach hardware acoustic effects if supported by device DSP
+            try {
+                val sessionId = audioRecord?.audioSessionId ?: 0
+                if (sessionId != 0 && settings.hardwareNoiseSuppression) {
+                    if (android.media.audiofx.NoiseSuppressor.isAvailable()) {
+                        noiseSuppressor = android.media.audiofx.NoiseSuppressor.create(sessionId)?.apply {
+                            enabled = true
+                        }
+                        DiagnosticLogger.log(tag, "Hardware NoiseSuppressor active on session $sessionId")
+                    }
+                    if (android.media.audiofx.AcousticEchoCanceler.isAvailable()) {
+                        echoCanceler = android.media.audiofx.AcousticEchoCanceler.create(sessionId)?.apply {
+                            enabled = true
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                DiagnosticLogger.log(tag, "Hardware audio effects note: ${e.message}")
             }
 
             pcmBuffer.reset()
@@ -186,6 +228,10 @@ class SpeechEngine(private val context: Context) {
         listener?.onEndOfSpeech()
 
         try {
+            noiseSuppressor?.release()
+            noiseSuppressor = null
+            echoCanceler?.release()
+            echoCanceler = null
             audioRecord?.stop()
             audioRecord?.release()
             audioRecord = null
@@ -198,7 +244,13 @@ class SpeechEngine(private val context: Context) {
             recordingThread = null
         } catch (_: Exception) {}
 
-        val pcmData = synchronized(pcmBuffer) { pcmBuffer.toByteArray() }
+        val rawPcm = synchronized(pcmBuffer) { pcmBuffer.toByteArray() }
+        val pcmData = if (settings.noiseReductionEnabled) {
+            DiagnosticLogger.log(tag, "Applying LiltAudioDSP (High-Pass + Soft-Knee Noise Gate + VAD)")
+            LiltAudioDSP.processPcm(rawPcm, sampleRate = 16000)
+        } else {
+            rawPcm
+        }
         // 16000 samples/sec * 2 bytes = 32000 bytes/sec
         // Minimum ~500ms of audio (16000 bytes) required for human speech
         if (pcmData.size < 16000) {

@@ -277,6 +277,14 @@ class SettingsManager(context: Context) {
         get() = prefs.getFloat(KEY_SILENCE_SECONDS, 1.5f)
         set(value) = prefs.edit().putFloat(KEY_SILENCE_SECONDS, value).apply()
 
+    var noiseReductionEnabled: Boolean
+        get() = prefs.getBoolean(KEY_NOISE_REDUCTION, true)
+        set(value) = prefs.edit().putBoolean(KEY_NOISE_REDUCTION, value).apply()
+
+    var hardwareNoiseSuppression: Boolean
+        get() = prefs.getBoolean(KEY_HARDWARE_NOISE_SUPPRESSION, true)
+        set(value) = prefs.edit().putBoolean(KEY_HARDWARE_NOISE_SUPPRESSION, value).apply()
+
     var historyStorageMode: String
         get() = prefs.getString(KEY_HISTORY_STORAGE_MODE, "text_only") ?: "text_only"
         set(value) = prefs.edit().putString(KEY_HISTORY_STORAGE_MODE, value).apply()
@@ -701,6 +709,8 @@ class SettingsManager(context: Context) {
         private const val KEY_SILENT_ALARMS_ENABLED = "silent_alarms_enabled"
         private const val KEY_AUTO_COPY_CLIPBOARD = "auto_copy_to_clipboard"
         private const val KEY_REMINDERS_JSON = "reminders_items_json"
+        private const val KEY_NOISE_REDUCTION = "noise_reduction_enabled"
+        private const val KEY_HARDWARE_NOISE_SUPPRESSION = "hardware_noise_suppression"
 
 
         val historyUpdatedFlow = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)

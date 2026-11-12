@@ -115,6 +115,11 @@ object CloudCleanupEngine {
                     dos.writeBytes(lineEnd)
                 }
 
+                // 4b. temperature = 0.0 (strictly deterministic, prevents greedy hallucination loops on noisy audio)
+                dos.writeBytes("$twoHyphens$boundary$lineEnd")
+                dos.writeBytes("Content-Disposition: form-data; name=\"temperature\"$lineEnd$lineEnd")
+                dos.writeBytes("0.0$lineEnd")
+
                 // 5. file
                 dos.writeBytes("$twoHyphens$boundary$lineEnd")
                 dos.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"audio.wav\"$lineEnd")
