@@ -106,9 +106,9 @@ val LiltGlassSpecularBorderBrush: Brush
     get() = if (LiltThemeState.isDark) {
         Brush.linearGradient(
             colors = listOf(
-                Color(0x66FFFFFF), // Bright top-left specular catch
-                Color(0x14FFFFFF), // Translucent mid-rim
-                Color(0x33FFFFFF)  // Subtle bottom-right caustic reflection
+                Color(0x66FFFFFF), // Bright top-left specular catch (40%)
+                Color(0x2EFFFFFF), // Crisp continuous mid/right rim (18% - never broken)
+                Color(0x45FFFFFF)  // Subtle bottom-right caustic reflection (27%)
             )
         )
     } else {

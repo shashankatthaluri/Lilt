@@ -279,6 +279,7 @@ fun MainScreen(
     var newCommandInstruction by remember { mutableStateOf("") }
 
     // Interactive Test Sandbox State
+    var sandboxSelectedPreset by remember { mutableStateOf<String?>("Email") }
     var sandboxInput by remember { mutableStateOf("Write the email to Alex saying the demo is postponed to Thursday at 2 PM") }
     var sandboxOutput by remember { mutableStateOf("") }
     var sandboxLoading by remember { mutableStateOf(false) }
@@ -359,7 +360,9 @@ fun MainScreen(
 
     // Apple HIG: Switching tabs or sub-tabs automatically resets view to top and refreshes history
     LaunchedEffect(activeTab) {
-        mainScrollState.scrollTo(0)
+        if (mainScrollState.value != 0) {
+            mainScrollState.scrollTo(0)
+        }
         if (activeTab == "history") {
             historyItems = settings.getHistory()
             remindersList = settings.getReminders()
@@ -385,114 +388,105 @@ fun MainScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = NothingBlack,
         bottomBar = {
-            Box(
+            Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .navigationBarsPadding()
-                    .padding(horizontal = 20.dp, vertical = 10.dp),
-                contentAlignment = Alignment.Center
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                color = if (LiltThemeState.isDark) Color(0xF20B0C10) else Color(0xF2FFFFFF),
+                shape = RoundedCornerShape(28.dp),
+                shadowElevation = 24.dp,
+                border = BorderStroke(
+                    width = 1.2.dp,
+                    brush = LiltGlassSpecularBorderBrush
+                )
             ) {
-                Surface(
-                    shape = RoundedCornerShape(32.dp),
-                    color = LiltNavGlassColor,
-                    shadowElevation = 20.dp,
-                    border = BorderStroke(
-                        width = 1.2.dp,
-                        brush = LiltNavBorderBrush
-                    ),
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(64.dp)
+                        .height(66.dp)
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceAround
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceAround
-                    ) {
-                        listOf(
-                            Triple("dictate", Icons.Default.Mic, "Dictate"),
-                            Triple("history", Icons.Default.History, "History"),
-                            Triple("rules", Icons.Default.Tune, "Rules"),
-                            Triple("settings", Icons.Default.Settings, "Settings")
-                        ).forEach { (tabId, icon, label) ->
-                            val isSelected = activeTab == tabId
-                            val animScale by animateFloatAsState(
-                                targetValue = if (isSelected) 1.05f else 1.0f,
-                                animationSpec = spring(
-                                    dampingRatio = 0.65f,
-                                    stiffness = Spring.StiffnessMediumLow
-                                ),
-                                label = "nav_tab_scale"
-                            )
+                    listOf(
+                        Triple("dictate", Icons.Default.Mic, "Dictate"),
+                        Triple("history", Icons.Default.History, "History"),
+                        Triple("rules", Icons.Default.Tune, "Rules"),
+                        Triple("settings", Icons.Default.Settings, "Settings")
+                    ).forEach { (tabId, icon, label) ->
+                        val isSelected = activeTab == tabId
+                        val animScale by animateFloatAsState(
+                            targetValue = if (isSelected) 1.05f else 1.0f,
+                            animationSpec = spring(
+                                dampingRatio = 0.65f,
+                                stiffness = Spring.StiffnessMediumLow
+                            ),
+                            label = "nav_tab_scale"
+                        )
 
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(50.dp)
-                                    .clip(RoundedCornerShape(25.dp))
-                                    .background(
-                                        if (isSelected) {
-                                            LiltNavSelectedBrush
-                                        } else {
-                                            SolidColor(Color.Transparent)
-                                        }
-                                    )
-                                    .border(
-                                        width = if (isSelected) 1.dp else 0.dp,
-                                        brush = if (isSelected) {
-                                            Brush.verticalGradient(
-                                                listOf(Color(0x66FFFFFF), Color(0x22FFFFFF))
-                                            )
-                                        } else {
-                                            Brush.verticalGradient(listOf(Color.Transparent, Color.Transparent))
-                                        },
-                                        shape = RoundedCornerShape(25.dp)
-                                    )
-                                    .clickable(
-                                        interactionSource = remember { MutableInteractionSource() },
-                                        indication = null
-                                    ) {
-                                        if (activeTab == tabId) {
-                                            if (tabId == "history") {
-                                                historyItems = settings.getHistory()
-                                                remindersList = settings.getReminders()
-                                            }
-                                            coroutineScope.launch {
-                                                mainScrollState.animateScrollTo(0)
-                                            }
-                                        } else {
-                                            activeTab = tabId
-                                            coroutineScope.launch {
-                                                mainScrollState.scrollTo(0)
-                                            }
-                                        }
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier.graphicsLayer {
-                                        scaleX = animScale
-                                        scaleY = animScale
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(50.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(
+                                    if (isSelected) {
+                                        LiltNavSelectedBrush
+                                    } else {
+                                        SolidColor(Color.Transparent)
                                     }
+                                )
+                                .border(
+                                    width = if (isSelected) 1.dp else 0.dp,
+                                    brush = if (isSelected) {
+                                        Brush.verticalGradient(
+                                            listOf(Color(0x66FFFFFF), Color(0x22FFFFFF))
+                                        )
+                                    } else {
+                                        Brush.verticalGradient(listOf(Color.Transparent, Color.Transparent))
+                                    },
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
                                 ) {
-                                    Icon(
-                                        imageVector = icon,
-                                        contentDescription = label,
-                                        tint = if (isSelected) LiltNavSelectedTint else LiltNavUnselectedTint,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.height(3.dp))
-                                    Text(
-                                        text = label.uppercase(),
-                                        fontSize = 11.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isSelected) LiltNavSelectedTint else LiltNavUnselectedTint,
-                                        letterSpacing = 0.6.sp
-                                    )
+                                    if (activeTab == tabId) {
+                                        if (tabId == "history") {
+                                            historyItems = settings.getHistory()
+                                            remindersList = settings.getReminders()
+                                        }
+                                        coroutineScope.launch {
+                                            mainScrollState.animateScrollTo(0)
+                                        }
+                                    } else {
+                                        activeTab = tabId
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.graphicsLayer {
+                                    scaleX = animScale
+                                    scaleY = animScale
                                 }
+                            ) {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = label,
+                                    tint = if (isSelected) LiltNavSelectedTint else LiltNavUnselectedTint,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.height(3.dp))
+                                Text(
+                                    text = label.uppercase(),
+                                    fontSize = 10.5.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) LiltNavSelectedTint else LiltNavUnselectedTint,
+                                    letterSpacing = 0.6.sp
+                                )
                             }
                         }
                     }
@@ -696,12 +690,8 @@ fun MainScreen(
             AnimatedContent(
                 targetState = activeTab,
                 transitionSpec = {
-                    (fadeIn(animationSpec = tween(280, easing = LinearOutSlowInEasing)) +
-                     scaleIn(initialScale = 0.96f, animationSpec = spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMediumLow))
-                    ).togetherWith(
-                     fadeOut(animationSpec = tween(180, easing = FastOutLinearInEasing)) +
-                     scaleOut(targetScale = 0.98f, animationSpec = tween(180))
-                    )
+                    fadeIn(animationSpec = tween(140, easing = LinearOutSlowInEasing))
+                        .togetherWith(fadeOut(animationSpec = tween(90, easing = FastOutLinearInEasing)))
                 },
                 label = "tab_liquid_transition"
             ) { currentTab ->
@@ -713,12 +703,13 @@ fun MainScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = NothingCard)
+                colors = CardDefaults.cardColors(containerColor = NothingCard),
+                border = BorderStroke(1.dp, LiltGlassSpecularBorderBrush)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(24.dp))
+                        .background(LiltGlassCardBrush)
                         .padding(18.dp)
                 ) {
                     Row(
@@ -832,7 +823,7 @@ fun MainScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TonePill(
                     label = "Auto (${enabledLanguageCodes.size})",
@@ -873,7 +864,7 @@ fun MainScreen(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 TonePill(
                     label = "Natural",
@@ -919,12 +910,13 @@ fun MainScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = NothingCard)
+                colors = CardDefaults.cardColors(containerColor = NothingCard),
+                border = BorderStroke(1.dp, LiltGlassSpecularBorderBrush)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(24.dp))
+                        .background(LiltGlassCardBrush)
                         .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -1172,12 +1164,13 @@ fun MainScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = NothingCard)
+                colors = CardDefaults.cardColors(containerColor = NothingCard),
+                border = BorderStroke(1.dp, LiltGlassSpecularBorderBrush)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(18.dp))
+                        .background(LiltGlassCardBrush)
                         .padding(14.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1758,19 +1751,12 @@ fun MainScreen(
                 }
             }
 
-            // Animated Switch between Recent and Notes with Apple-grade horizontal flow
+            // Instant 120 FPS hardware-accelerated crossfade between Recent and Notes
             AnimatedContent(
                 targetState = historySubTab,
                 transitionSpec = {
-                    if (targetState == "notes") {
-                        (slideInHorizontally { width -> width / 3 } + fadeIn()).togetherWith(
-                            slideOutHorizontally { width -> -width / 3 } + fadeOut()
-                        )
-                    } else {
-                        (slideInHorizontally { width -> -width / 3 } + fadeIn()).togetherWith(
-                            slideOutHorizontally { width -> width / 3 } + fadeOut()
-                        )
-                    }
+                    fadeIn(animationSpec = tween(120, easing = LinearOutSlowInEasing))
+                        .togetherWith(fadeOut(animationSpec = tween(80, easing = FastOutLinearInEasing)))
                 },
                 label = "HistorySubTabAnimation"
             ) { subTab ->
@@ -2354,12 +2340,13 @@ fun MainScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = NothingCard)
+                colors = CardDefaults.cardColors(containerColor = NothingCard),
+                border = BorderStroke(1.dp, LiltGlassSpecularBorderBrush)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
+                        .background(LiltGlassCardBrush)
                         .padding(16.dp)
                 ) {
                     // Sub-Tab Navigation Bar: Voice Commands, Dictionary, Snippets
@@ -2560,49 +2547,88 @@ fun MainScreen(
 
                         Spacer(modifier = Modifier.height(18.dp))
 
-                        // ⚡ INTERACTIVE TEST SANDBOX
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(NothingCard)
-                                .border(1.dp, NothingBorder, RoundedCornerShape(12.dp))
-                                .padding(12.dp)
+                        // ⚡ INTERACTIVE TEST SANDBOX (Glass Master Card with Specular Outline)
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(24.dp),
+                            colors = CardDefaults.cardColors(containerColor = NothingCard),
+                            border = BorderStroke(1.2.dp, LiltGlassSpecularBorderBrush)
                         ) {
-                            Column {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(LiltGlassCardBrush)
+                                    .padding(18.dp)
+                            ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.Default.FlashOn,
-                                            contentDescription = "Sandbox",
-                                            tint = NothingTextPrimary,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = "INTERACTIVE TEST SANDBOX",
-                                            color = NothingTextPrimary,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            letterSpacing = 0.8.sp
-                                        )
+                                        Box(
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier
+                                                .size(32.dp)
+                                                .clip(CircleShape)
+                                                .background(if (LiltThemeState.isDark) Color(0xFF1E202A) else Color(0xFFECECEC))
+                                                .border(1.dp, Color(0x33FFFFFF), CircleShape)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.FlashOn,
+                                                contentDescription = "Sandbox",
+                                                tint = Color(0xFFD71921),
+                                                modifier = Modifier.size(17.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column {
+                                            Text(
+                                                text = "INTERACTIVE TEST SANDBOX",
+                                                color = NothingTextPrimary,
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                letterSpacing = 1.sp
+                                            )
+                                            Text(
+                                                text = "Real-time cleanup & voice formatting preview",
+                                                color = NothingTextMuted,
+                                                fontSize = 10.5.sp
+                                            )
+                                        }
+                                    }
+
+                                    if (sandboxSelectedPreset != null) {
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(Color(0x26D71921))
+                                                .border(1.dp, Color(0x66D71921), RoundedCornerShape(8.dp))
+                                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                                        ) {
+                                            Text(
+                                                text = sandboxSelectedPreset!!.uppercase(),
+                                                color = Color(0xFFD71921),
+                                                fontSize = 9.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                letterSpacing = 0.5.sp
+                                            )
+                                        }
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(14.dp))
+
+                                // Section 1: Standard Voice Format Presets
                                 Text(
-                                    text = "Tap a preset or type to test voice commands in real-time:",
-                                    color = NothingTextMuted,
-                                    fontSize = 10.sp
+                                    text = "FORMAT PRESETS",
+                                    color = NothingTextSecondary,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
                                 )
+                                Spacer(modifier = Modifier.height(6.dp))
 
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                // Quick Preset Chips
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -2613,114 +2639,227 @@ fun MainScreen(
                                         Triple(Icons.Default.CheckCircle, "List", "Make a list buy organic milk finish mobile build deploy to prod"),
                                         Triple(Icons.Default.AutoAwesome, "Notes", "Meeting notes team aligned on Q4 goals Shiva is leading Android launch by Friday")
                                     ).forEach { (icon, label, phrase) ->
+                                        val isSelected = sandboxSelectedPreset == label
                                         Box(
                                             contentAlignment = Alignment.Center,
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .height(42.dp)
-                                                .clip(RoundedCornerShape(10.dp))
-                                                .background(NothingCardElevated)
-                                                .border(1.dp, Color(0xFF2C2C2C), RoundedCornerShape(10.dp))
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(
+                                                    if (isSelected) {
+                                                        Brush.verticalGradient(
+                                                            if (LiltThemeState.isDark) listOf(Color(0xFF282C3A), Color(0xFF141620)) else listOf(Color(0xFFFFFFFF), Color(0xFFF2F0EA))
+                                                        )
+                                                    } else {
+                                                        SolidColor(NothingCardElevated)
+                                                    }
+                                                )
+                                                .border(
+                                                    width = if (isSelected) 1.2.dp else 1.dp,
+                                                    brush = if (isSelected) {
+                                                        Brush.verticalGradient(listOf(Color(0x99FFFFFF), Color(0x66FFFFFF)))
+                                                    } else {
+                                                        SolidColor(Color(0x22FFFFFF))
+                                                    },
+                                                    shape = RoundedCornerShape(12.dp)
+                                                )
                                                 .clickable {
+                                                    sandboxSelectedPreset = label
                                                     sandboxInput = phrase
                                                     sandboxOutput = ""
+                                                    sandboxLangOverride = null
                                                 }
                                         ) {
-                                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Icon(imageVector = icon, contentDescription = null, tint = NothingTextPrimary, modifier = Modifier.size(13.dp))
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.Center
+                                            ) {
+                                                if (isSelected) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(5.dp)
+                                                            .clip(CircleShape)
+                                                            .background(Color(0xFFD71921))
+                                                    )
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                }
+                                                Icon(
+                                                    imageVector = icon,
+                                                    contentDescription = null,
+                                                    tint = if (isSelected) Color.White else NothingTextSecondary,
+                                                    modifier = Modifier.size(12.dp)
+                                                )
                                                 Spacer(modifier = Modifier.width(4.dp))
-                                                Text(text = label, color = NothingTextPrimary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                                Text(
+                                                    text = label,
+                                                    color = if (isSelected) Color.White else NothingTextSecondary,
+                                                    fontSize = 11.sp,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                                )
                                             }
                                         }
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(12.dp))
 
-                                // Auto / Bilingual Preset Chips
+                                // Section 2: Bilingual & Code-Switching Presets
+                                Text(
+                                    text = "MULTILINGUAL / CODE-SWITCHING",
+                                    color = NothingTextSecondary,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     listOf(
-                                        Pair("Auto: Tenglish", "Write the email to Rahul repu morning 10 AM ki quick sprint catchup undi please be on time"),
-                                        Pair("Auto: English", "Write the email to Sarah regarding the quarterly product roadmap review next Tuesday")
-                                    ).forEach { (label, phrase) ->
+                                        Triple("Auto: Tenglish", "auto", "Write the email to Rahul repu morning 10 AM ki quick sprint catchup undi please be on time"),
+                                        Triple("Auto: English", "auto", "Write the email to Sarah regarding the quarterly product roadmap review next Tuesday")
+                                    ).forEach { (label, mode, phrase) ->
+                                        val isSelected = sandboxSelectedPreset == label
                                         Box(
                                             contentAlignment = Alignment.Center,
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .height(42.dp)
-                                                .clip(RoundedCornerShape(10.dp))
-                                                .background(Color(0xFF1E1A14))
-                                                .border(1.dp, Color(0xFF4D3F22), RoundedCornerShape(10.dp))
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(
+                                                    if (isSelected) {
+                                                        Brush.verticalGradient(
+                                                            listOf(Color(0xFF28241A), Color(0xFF18150E))
+                                                        )
+                                                    } else {
+                                                        SolidColor(Color(0xFF151412))
+                                                    }
+                                                )
+                                                .border(
+                                                    width = if (isSelected) 1.2.dp else 1.dp,
+                                                    color = if (isSelected) Color(0xFFFFB800) else Color(0x33FFB800),
+                                                    shape = RoundedCornerShape(12.dp)
+                                                )
                                                 .clickable {
-                                                    sandboxLangOverride = "auto"
+                                                    sandboxSelectedPreset = label
+                                                    sandboxLangOverride = mode
                                                     sandboxInput = phrase
                                                     sandboxOutput = ""
                                                 }
                                         ) {
                                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Icon(imageVector = Icons.Default.FlashOn, contentDescription = null, tint = Color(0xFFFFCC66), modifier = Modifier.size(12.dp))
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Text(text = label, color = Color(0xFFFFCC66), fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold)
+                                                if (isSelected) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(5.dp)
+                                                            .clip(CircleShape)
+                                                            .background(Color(0xFFFFB800))
+                                                    )
+                                                    Spacer(modifier = Modifier.width(5.dp))
+                                                } else {
+                                                    Icon(
+                                                        imageVector = Icons.Default.FlashOn,
+                                                        contentDescription = null,
+                                                        tint = Color(0xCCFFB800),
+                                                        modifier = Modifier.size(12.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                }
+                                                Text(
+                                                    text = label,
+                                                    color = if (isSelected) Color.White else Color(0xFFFFCC66),
+                                                    fontSize = 11.5.sp,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                                )
                                             }
                                         }
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(6.dp))
 
-                                // Telugu / Tenglish Preset Chips
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     listOf(
-                                        Pair("Telugu Email", "Write the email to Suresh repu 11 AM ki client demo undi prepare avvamani cheppu"),
-                                        Pair("Telugu Raw", "Write it raw nenu ippude office ki reach ayyanu repu morning call matladam"),
-                                        Pair("Telugu Casual", "Write it casual bhojanam chesara inkenti visheshalu weekend plan enti")
-                                    ).forEach { (label, phrase) ->
+                                        Triple("Telugu Email", "te_roman", "Write the email to Suresh repu 11 AM ki client demo undi prepare avvamani cheppu"),
+                                        Triple("Telugu Raw", "te_roman", "Write it raw nenu ippude office ki reach ayyanu repu morning call matladam"),
+                                        Triple("Telugu Casual", "te_roman", "Write it casual bhojanam chesara inkenti visheshalu weekend plan enti")
+                                    ).forEach { (label, mode, phrase) ->
+                                        val isSelected = sandboxSelectedPreset == label
                                         Box(
                                             contentAlignment = Alignment.Center,
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .height(42.dp)
-                                                .clip(RoundedCornerShape(10.dp))
-                                                .background(Color(0xFF221618))
-                                                .border(1.dp, Color(0xFF3D1F23), RoundedCornerShape(10.dp))
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(
+                                                    if (isSelected) {
+                                                        Brush.verticalGradient(
+                                                            listOf(Color(0xFF2E1518), Color(0xFF190C0E))
+                                                        )
+                                                    } else {
+                                                        SolidColor(Color(0xFF181012))
+                                                    }
+                                                )
+                                                .border(
+                                                    width = if (isSelected) 1.2.dp else 1.dp,
+                                                    color = if (isSelected) Color(0xFFD71921) else Color(0x33D71921),
+                                                    shape = RoundedCornerShape(12.dp)
+                                                )
                                                 .clickable {
-                                                    sandboxLangOverride = "te_roman"
+                                                    sandboxSelectedPreset = label
+                                                    sandboxLangOverride = mode
                                                     sandboxInput = phrase
                                                     sandboxOutput = ""
                                                 }
                                         ) {
                                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(Color(0xFFD71921)))
-                                                Spacer(modifier = Modifier.width(5.dp))
-                                                Text(text = label, color = Color(0xFFA1A1AA), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                                if (isSelected) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(5.dp)
+                                                            .clip(CircleShape)
+                                                            .background(Color(0xFFD71921))
+                                                    )
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                }
+                                                Text(
+                                                    text = label,
+                                                    color = if (isSelected) Color.White else Color(0xFFD48B90),
+                                                    fontSize = 11.sp,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                                )
                                             }
                                         }
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.height(10.dp))
+                                Spacer(modifier = Modifier.height(14.dp))
 
                                 OutlinedTextField(
                                     value = sandboxInput,
-                                    onValueChange = { sandboxInput = it },
+                                    onValueChange = {
+                                        sandboxInput = it
+                                        sandboxSelectedPreset = null
+                                    },
                                     label = { Text("Input speech to test", color = NothingTextMuted, fontSize = 11.sp) },
                                     textStyle = TextStyle(color = NothingTextPrimary, fontSize = 12.sp),
+                                    shape = RoundedCornerShape(14.dp),
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedBorderColor = Color.White,
-                                        unfocusedBorderColor = NothingBorder,
+                                        unfocusedBorderColor = Color(0x33FFFFFF),
                                         focusedContainerColor = NothingCardElevated,
                                         unfocusedContainerColor = NothingCardElevated
                                     ),
                                     modifier = Modifier.fillMaxWidth()
                                 )
 
-                                Spacer(modifier = Modifier.height(10.dp))
+                                Spacer(modifier = Modifier.height(12.dp))
 
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -2730,9 +2869,9 @@ fun MainScreen(
                                     Box(
                                         contentAlignment = Alignment.Center,
                                         modifier = Modifier
-                                            .clip(RoundedCornerShape(8.dp))
+                                            .clip(RoundedCornerShape(12.dp))
                                             .background(if (sandboxLoading) SolidColor(Color(0xFF222222)) else Brush.horizontalGradient(listOf(Color(0xFFD71921), Color(0xFFB51219))))
-                                            .border(1.dp, if (sandboxLoading) Color(0xFF333333) else Color(0x66FFFFFF), RoundedCornerShape(8.dp))
+                                            .border(1.dp, if (sandboxLoading) Color(0xFF333333) else Color(0x66FFFFFF), RoundedCornerShape(12.dp))
                                             .clickable(enabled = !sandboxLoading && sandboxInput.isNotBlank()) {
                                                 sandboxLoading = true
                                                 sandboxOutput = "Processing with AI…"
@@ -2786,12 +2925,12 @@ fun MainScreen(
                                                     sandboxLangOverride = null
                                                 }
                                             }
-                                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                                            .padding(horizontal = 16.dp, vertical = 10.dp)
                                     ) {
                                         Text(
                                             text = if (sandboxLoading) "PROCESSING…" else "TEST FORMATTING",
-                                            color = NothingTextPrimary,
-                                            fontSize = 11.sp,
+                                            color = Color.White,
+                                            fontSize = 11.5.sp,
                                             fontWeight = FontWeight.Bold,
                                             letterSpacing = 0.8.sp
                                         )
@@ -2801,49 +2940,50 @@ fun MainScreen(
                                         Box(
                                             contentAlignment = Alignment.Center,
                                             modifier = Modifier
-                                                .clip(RoundedCornerShape(6.dp))
+                                                .clip(RoundedCornerShape(10.dp))
                                                 .background(NothingCardElevated)
+                                                .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(10.dp))
                                                 .clickable {
                                                     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
                                                     clipboard?.setPrimaryClip(ClipData.newPlainText("Lilt Sandbox", sandboxOutput))
                                                     Toast.makeText(context, "Copied sandbox result!", Toast.LENGTH_SHORT).show()
                                                 }
-                                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                                .padding(horizontal = 12.dp, vertical = 8.dp)
                                         ) {
                                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                                Icon(imageVector = Icons.Default.ContentCopy, contentDescription = "Copy", tint = NothingTextPrimary, modifier = Modifier.size(12.dp))
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Text("Copy Result", color = NothingTextPrimary, fontSize = 10.sp)
+                                                Icon(imageVector = Icons.Default.ContentCopy, contentDescription = "Copy", tint = NothingTextPrimary, modifier = Modifier.size(13.dp))
+                                                Spacer(modifier = Modifier.width(5.dp))
+                                                Text("Copy Result", color = NothingTextPrimary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                                             }
                                         }
                                     }
                                 }
 
                                 if (sandboxOutput.isNotBlank()) {
-                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Spacer(modifier = Modifier.height(12.dp))
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .background(NothingCard)
-                                            .border(1.dp, Color(0xFF282828), RoundedCornerShape(10.dp))
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(NothingCardElevated)
+                                            .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(14.dp))
                                             .padding(14.dp)
                                     ) {
                                         Text(
                                             text = sandboxOutput,
                                             color = NothingTextPrimary,
-                                            fontSize = 12.sp,
+                                            fontSize = 12.5.sp,
                                             lineHeight = 18.sp
                                         )
                                     }
                                 } else {
-                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Spacer(modifier = Modifier.height(12.dp))
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .background(NothingCard)
-                                            .border(1.dp, Color(0x1FFFFFFF), RoundedCornerShape(10.dp))
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(NothingCardElevated)
+                                            .border(1.dp, Color(0x1FFFFFFF), RoundedCornerShape(14.dp))
                                             .padding(vertical = 14.dp, horizontal = 14.dp)
                                     ) {
                                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -2852,13 +2992,13 @@ fun MainScreen(
                                                 modifier = Modifier
                                                     .size(34.dp)
                                                     .clip(CircleShape)
-                                                    .background(NothingCardElevated)
+                                                    .background(if (LiltThemeState.isDark) Color(0xFF1E2028) else Color(0xFFE2E2E2))
                                                     .border(1.dp, Color(0x28FFFFFF), CircleShape)
                                             ) {
                                                 Icon(
                                                     imageVector = Icons.Default.AutoAwesome,
                                                     contentDescription = null,
-                                                    tint = Color(0xFF71717A),
+                                                    tint = Color(0xFFA1A1AA),
                                                     modifier = Modifier.size(16.dp)
                                                 )
                                             }
@@ -3185,12 +3325,13 @@ fun MainScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = NothingCard)
+                colors = CardDefaults.cardColors(containerColor = NothingCard),
+                border = BorderStroke(1.dp, LiltGlassSpecularBorderBrush)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
+                        .background(LiltGlassCardBrush)
                         .padding(16.dp)
                 ) {
                     // Item 1: Floating Glass Circle
@@ -3309,10 +3450,16 @@ fun MainScreen(
                     Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0x1AFFFFFF)))
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Item 2: Auto-Paste Service (Accessibility)
+                    // Item 2: Accessibility Service
                     val isAccessibilityActive = LiltAccessibilityService.isServiceRunning()
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable {
+                                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                                context.startActivity(intent)
+                            },
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -3335,42 +3482,41 @@ fun MainScreen(
                             Column {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
-                                        text = "Auto-Paste Service",
+                                        text = "Accessibility Service",
                                         color = NothingTextPrimary,
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.SemiBold
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = if (isAccessibilityActive) "ACTIVE" else "DISABLED",
+                                        text = if (isAccessibilityActive) "ACTIVE" else "TAP TO ENABLE",
                                         color = if (isAccessibilityActive) Color(0xFF34C759) else Color(0xFFFFA000),
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
                                 Text(
-                                    text = "Pastes dictation directly into any text input cursor.",
+                                    text = "Required for contextual floating pill and direct cursor paste.",
                                     color = NothingTextMuted,
                                     fontSize = 11.5.sp
                                 )
                             }
                         }
-                        if (!isAccessibilityActive) {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(NothingCardElevated)
-                                    .border(1.dp, Color(0x33FFA000), RoundedCornerShape(8.dp))
-                                    .clickable {
-                                        val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                                        context.startActivity(intent)
-                                    }
-                                    .padding(horizontal = 10.dp, vertical = 6.dp)
-                            ) {
-                                Text(text = "ENABLE", color = Color(0xFFFFA000), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
+                        Switch(
+                            checked = isAccessibilityActive,
+                            onCheckedChange = {
+                                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                                context.startActivity(intent)
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = Color(0xFF34C759),
+                                checkedBorderColor = Color(0xFF34C759),
+                                uncheckedThumbColor = Color(0xFFA1A1AA),
+                                uncheckedTrackColor = NothingCard,
+                                uncheckedBorderColor = Color(0xFF282933)
+                            )
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -3448,12 +3594,13 @@ fun MainScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = NothingCard)
+                colors = CardDefaults.cardColors(containerColor = NothingCard),
+                border = BorderStroke(1.dp, LiltGlassSpecularBorderBrush)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
+                        .background(LiltGlassCardBrush)
                         .padding(16.dp)
                 ) {
                     // Row 1: Languages in Auto Mode
@@ -3606,12 +3753,13 @@ fun MainScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = NothingCard)
+                colors = CardDefaults.cardColors(containerColor = NothingCard),
+                border = BorderStroke(1.dp, LiltGlassSpecularBorderBrush)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
+                        .background(LiltGlassCardBrush)
                         .padding(16.dp)
                 ) {
                     // Ultra-Fast Cloud Polish Toggle
@@ -3683,7 +3831,7 @@ fun MainScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            listOf("groq" to "GROQ (ULTRA FAST)", "openai" to "OPENAI").forEach { (id, label) ->
+                            listOf("groq" to "GROQ (FAST)", "openai" to "OPENAI", "gemini" to "GEMINI").forEach { (id, label) ->
                                 val isSelected = cloudProvider.lowercase() == id
                                 Box(
                                     contentAlignment = Alignment.Center,
@@ -3696,13 +3844,14 @@ fun MainScreen(
                                         .clickable {
                                             cloudProvider = id
                                             settings.cloudProvider = id
-                                            if (id == "groq" && cloudModel.contains("gpt")) {
-                                                cloudModel = "qwen/qwen3.8-27b"
-                                                settings.cloudModel = cloudModel
-                                            } else if (id == "openai" && !cloudModel.contains("gpt")) {
-                                                cloudModel = "gpt-4o-mini"
-                                                settings.cloudModel = cloudModel
+                                            cloudApiKey = settings.getApiKeyForProvider(id)
+                                            cloudModel = when (id) {
+                                                "openai" -> "gpt-4o-mini"
+                                                "gemini" -> "gemini-2.0-flash"
+                                                else -> "qwen/qwen3.8-27b"
                                             }
+                                            settings.cloudModel = cloudModel
+                                            cloudTestResult = ""
                                         }
                                 ) {
                                     Text(
@@ -3717,12 +3866,106 @@ fun MainScreen(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
+                        // Model Presets
+                        Text(
+                            text = "MODEL PRESET",
+                            color = NothingTextMuted,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        val currentPresets: List<Pair<String, String>> = when (cloudProvider.lowercase()) {
+                            "openai" -> listOf(
+                                "gpt-4o-mini" to "GPT-4o Mini (Fast)",
+                                "gpt-4o" to "GPT-4o (Deep)"
+                            )
+                            "gemini" -> listOf(
+                                "gemini-2.0-flash" to "Gemini 2.0 Flash (Fast)",
+                                "gemini-1.5-flash" to "Gemini 1.5 Flash"
+                            )
+                            else -> listOf(
+                                "qwen/qwen3.8-27b" to "Qwen 3.8 27B",
+                                "llama-3.3-70b-versatile" to "Llama 3.3 70B",
+                                "llama-3.1-8b-instant" to "Llama 3.1 8B"
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            currentPresets.forEach { (modelId, modelLabel) ->
+                                val isModelSelected = cloudModel == modelId
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(34.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isModelSelected) Color(0xFF232530) else Color(0xFF101216))
+                                        .border(1.dp, if (isModelSelected) Color(0x99FFFFFF) else NothingBorder, RoundedCornerShape(8.dp))
+                                        .clickable {
+                                            cloudModel = modelId
+                                            settings.cloudModel = modelId
+                                            cloudTestResult = ""
+                                        }
+                                ) {
+                                    Text(
+                                        text = modelLabel,
+                                        color = if (isModelSelected) Color.White else Color(0xFFA1A1AA),
+                                        fontSize = 9.5.sp,
+                                        fontWeight = if (isModelSelected) FontWeight.Bold else FontWeight.Medium,
+                                        maxLines = 1
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Active Model ID input (editable for custom models)
+                        Text(
+                            text = "ACTIVE MODEL ID",
+                            color = NothingTextMuted,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        OutlinedTextField(
+                            value = cloudModel,
+                            onValueChange = {
+                                cloudModel = it
+                                settings.cloudModel = it
+                            },
+                            singleLine = true,
+                            textStyle = TextStyle(color = NothingTextPrimary, fontSize = 12.sp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color.White,
+                                unfocusedBorderColor = NothingBorder,
+                                focusedContainerColor = NothingCardElevated,
+                                unfocusedContainerColor = NothingCardElevated
+                            ),
+                            placeholder = { Text("Model ID (e.g. qwen/qwen3.8-27b)", color = NothingTextMuted, fontSize = 12.sp) },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
                         // API Key Input
+                        Text(
+                            text = "API KEY (${cloudProvider.uppercase()})",
+                            color = NothingTextMuted,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
                         OutlinedTextField(
                             value = cloudApiKey,
                             onValueChange = {
                                 cloudApiKey = it
-                                settings.cloudApiKey = it
+                                settings.setApiKeyForProvider(cloudProvider, it)
                             },
                             singleLine = true,
                             visualTransformation = if (showApiKey) VisualTransformation.None else PasswordVisualTransformation('●'),
@@ -3733,7 +3976,14 @@ fun MainScreen(
                                 focusedContainerColor = NothingCardElevated,
                                 unfocusedContainerColor = NothingCardElevated
                             ),
-                            placeholder = { Text("Enter your API key", color = NothingTextMuted, fontSize = 12.sp) },
+                            placeholder = {
+                                val ph = when (cloudProvider.lowercase()) {
+                                    "openai" -> "Enter OpenAI API key (sk-...)"
+                                    "gemini" -> "Enter Gemini API key (AIza...)"
+                                    else -> "Enter Groq API key (gsk_...)"
+                                }
+                                Text(ph, color = NothingTextMuted, fontSize = 12.sp)
+                            },
                             trailingIcon = {
                                 IconButton(onClick = { showApiKey = !showApiKey }) {
                                     Icon(
@@ -3931,12 +4181,13 @@ fun MainScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = NothingCard)
+                colors = CardDefaults.cardColors(containerColor = NothingCard),
+                border = BorderStroke(1.dp, LiltGlassSpecularBorderBrush)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(LiltGlassCardBrush).border(1.dp, LiltGlassSpecularBorderBrush, RoundedCornerShape(20.dp))
+                        .background(LiltGlassCardBrush)
                         .padding(16.dp)
                 ) {
                     Row(
@@ -4257,7 +4508,7 @@ fun MainScreen(
                                 ) {
                                     Text("Cloud Polish AI", fontSize = 10.sp, color = NothingTextMuted)
                                     Text(
-                                        if (settings.cloudAiEnabled && settings.cloudApiKey.isNotBlank()) "Groq Ready" else "Off",
+                                        if (settings.cloudAiEnabled && settings.cloudApiKey.isNotBlank()) "${cloudProvider.uppercase()} Ready" else "Off",
                                         fontSize = 10.sp,
                                         color = if (settings.cloudAiEnabled) NothingGreen else NothingTextMuted,
                                         fontWeight = FontWeight.Bold
@@ -4488,25 +4739,11 @@ fun TonePill(
     onClick: () -> Unit
 ) {
     val isDark = LiltThemeState.isDark
-    val scaleAnim by animateFloatAsState(
-        targetValue = if (isActive) 1.04f else 1.0f,
-        animationSpec = spring(
-            dampingRatio = 0.72f,
-            stiffness = Spring.StiffnessMediumLow
-        ),
-        label = "tone_pill_scale"
-    )
 
     val textColorAnim by animateColorAsState(
         targetValue = if (isActive) Color.White else NothingTextSecondary,
         animationSpec = tween(220),
         label = "tone_pill_text_color"
-    )
-
-    val borderAlpha by animateFloatAsState(
-        targetValue = if (isActive) 0.65f else 0.22f,
-        animationSpec = tween(220),
-        label = "tone_pill_border_alpha"
     )
 
     val dotScale by animateFloatAsState(
@@ -4521,10 +4758,6 @@ fun TonePill(
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .graphicsLayer {
-                scaleX = scaleAnim
-                scaleY = scaleAnim
-            }
             .height(38.dp)
             .clip(RoundedCornerShape(19.dp))
             .background(
@@ -4544,25 +4777,15 @@ fun TonePill(
             )
             .border(
                 width = 1.2.dp,
-                brush = if (isDark || isActive) {
-                    Brush.verticalGradient(
-                        listOf(
-                            Color.White.copy(alpha = borderAlpha),
-                            Color.White.copy(alpha = borderAlpha * 0.3f)
-                        )
-                    )
+                brush = if (isActive) {
+                    Brush.verticalGradient(listOf(Color(0x99FFFFFF), Color(0x66FFFFFF)))
                 } else {
-                    Brush.verticalGradient(
-                        listOf(
-                            Color.White,
-                            Color(0x280F172A)
-                        )
-                    )
+                    Brush.verticalGradient(listOf(Color(0x40FFFFFF), Color(0x25FFFFFF)))
                 },
                 shape = RoundedCornerShape(19.dp)
             )
             .clickable { onClick() }
-            .padding(horizontal = 10.dp)
+            .padding(horizontal = 6.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -4580,14 +4803,16 @@ fun TonePill(
                         .clip(CircleShape)
                         .background(Color(0xFFD71921))
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(4.dp))
             }
             Text(
                 text = label,
                 color = textColorAnim,
-                fontSize = 11.5.sp,
+                fontSize = 11.sp,
                 fontWeight = if (isActive) FontWeight.Bold else FontWeight.Medium,
-                letterSpacing = 0.3.sp
+                letterSpacing = 0.sp,
+                maxLines = 1,
+                softWrap = false
             )
         }
     }
@@ -4935,7 +5160,7 @@ fun VoiceNoteCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .border(1.dp, if (isSelected) Color(0x99FFB800) else if (item.isPinned) Color(0x88FFB800) else if (item.isNote) Color(0x33FFB800) else NothingBorder, RoundedCornerShape(18.dp))
+                .border(1.dp, if (isSelected) Color(0x99FFB800) else if (item.isPinned) Color(0x44D71921) else if (item.isNote) Color(0x33FFB800) else NothingBorder, RoundedCornerShape(18.dp))
                 .padding(14.dp)
         ) {
             Row(
@@ -4970,43 +5195,15 @@ fun VoiceNoteCard(
                         Spacer(modifier = Modifier.width(10.dp))
                     }
 
-                    if (item.isPinned) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0x33FFB800))
-                                .border(1.dp, Color(0x88FFB800), RoundedCornerShape(6.dp))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.PushPin,
-                                    contentDescription = "Pinned",
-                                    tint = Color(0xFFFFB800),
-                                    modifier = Modifier.size(10.dp)
-                                )
-                                Spacer(modifier = Modifier.width(3.dp))
-                                Text(
-                                    text = "PINNED",
-                                    color = Color(0xFFFFB800),
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.5.sp
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(7.dp))
-                    }
                     Box(
                         modifier = Modifier
                             .size(6.dp)
                             .clip(CircleShape)
-                            .background(if (item.isNote) Color(0xFFFFB800) else Color.White)
+                            .background(if (item.isPinned) Color(0xFFD71921) else if (item.isNote) Color(0xFFFFB800) else Color.White)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = (if (item.isNote) "NOTE • " else "") + item.tone.uppercase(),
+                        text = item.tone.uppercase(),
                         color = if (item.isNote) Color(0xFFFFB800) else NothingTextMuted,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
@@ -5029,8 +5226,7 @@ fun VoiceNoteCard(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(if (item.isPinned) Color(0x33FFB800) else NothingCardElevated)
-                                .border(1.dp, if (item.isPinned) Color(0x88FFB800) else Color.Transparent, CircleShape)
+                                .background(NothingCardElevated)
                                 .clickable {
                                     view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                                     onTogglePinTop()
@@ -5039,7 +5235,7 @@ fun VoiceNoteCard(
                             Icon(
                                 imageVector = Icons.Default.PushPin,
                                 contentDescription = if (item.isPinned) "Unpin from top" else "Pin to top",
-                                tint = if (item.isPinned) Color(0xFFFFB800) else Color(0xFFA1A1AA),
+                                tint = if (item.isPinned) Color(0xFFD71921) else Color(0xFFA1A1AA),
                                 modifier = Modifier.size(13.dp)
                             )
                         }
@@ -5304,43 +5500,15 @@ fun NoteCard(
                         Spacer(modifier = Modifier.width(10.dp))
                     }
 
-                    if (item.isPinned) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0x33FFB800))
-                                .border(1.dp, Color(0x88FFB800), RoundedCornerShape(6.dp))
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.PushPin,
-                                    contentDescription = "Pinned",
-                                    tint = Color(0xFFFFB800),
-                                    modifier = Modifier.size(10.dp)
-                                )
-                                Spacer(modifier = Modifier.width(3.dp))
-                                Text(
-                                    text = "PINNED",
-                                    color = Color(0xFFFFB800),
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.5.sp
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(7.dp))
-                    }
                     Box(
                         modifier = Modifier
                             .size(7.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFFFB800))
+                            .background(if (item.isPinned) Color(0xFFD71921) else Color(0xFFFFB800))
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "NOTE",
+                        text = item.tone.uppercase(),
                         color = Color(0xFFFFB800),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
@@ -5362,8 +5530,7 @@ fun NoteCard(
                             modifier = Modifier
                                 .size(28.dp)
                                 .clip(CircleShape)
-                                .background(if (item.isPinned) Color(0x33FFB800) else NothingCardElevated)
-                                .border(1.dp, if (item.isPinned) Color(0x88FFB800) else Color.Transparent, CircleShape)
+                                .background(NothingCardElevated)
                                 .clickable {
                                     view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
                                     onTogglePinTop()
@@ -5372,7 +5539,7 @@ fun NoteCard(
                             Icon(
                                 imageVector = Icons.Default.PushPin,
                                 contentDescription = if (item.isPinned) "Unpin from top" else "Pin to top",
-                                tint = if (item.isPinned) Color(0xFFFFB800) else Color(0xFFA1A1AA),
+                                tint = if (item.isPinned) Color(0xFFD71921) else Color(0xFFA1A1AA),
                                 modifier = Modifier.size(13.dp)
                             )
                         }

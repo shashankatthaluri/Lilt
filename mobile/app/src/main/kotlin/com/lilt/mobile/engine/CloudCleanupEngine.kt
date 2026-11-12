@@ -440,6 +440,7 @@ object CloudCleanupEngine {
 
         val endpoint = when (provider.lowercase()) {
             "openai" -> "https://api.openai.com/v1/chat/completions"
+            "gemini" -> "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
             else -> "https://api.groq.com/openai/v1/chat/completions"
         }
 

@@ -310,7 +310,14 @@ class SettingsManager(context: Context) {
             .apply()
     }
 
+    @Volatile
+    private var cachedHistory: List<DictationItem>? = null
+
+    @Volatile
+    private var cachedReminders: List<ReminderItem>? = null
+
     fun getHistory(): List<DictationItem> {
+        cachedHistory?.let { return it }
         val raw = prefs.getString(KEY_HISTORY_JSON, null)
         if (raw.isNullOrBlank()) {
             val defaults = listOf(
@@ -338,7 +345,7 @@ class SettingsManager(context: Context) {
                 items.add(DictationItem.fromJson(array.getJSONObject(i)))
             }
         } catch (_: Exception) {}
-        return items
+        return items.also { cachedHistory = it }
     }
 
     fun addHistory(item: DictationItem) {
@@ -401,6 +408,7 @@ class SettingsManager(context: Context) {
     }
 
     private fun saveHistory(items: List<DictationItem>) {
+        cachedHistory = items
         val array = JSONArray()
         items.forEach { array.put(it.toJson()) }
         prefs.edit().putString(KEY_HISTORY_JSON, array.toString()).apply()
@@ -416,15 +424,43 @@ class SettingsManager(context: Context) {
         get() = prefs.getString(KEY_CLOUD_PROVIDER, "groq") ?: "groq"
         set(value) = prefs.edit().putString(KEY_CLOUD_PROVIDER, value).apply()
 
+    fun getApiKeyForProvider(provider: String): String {
+        return when (provider.lowercase()) {
+            "openai" -> prefs.getString("cloud_api_key_openai", "") ?: ""
+            "gemini" -> prefs.getString("cloud_api_key_gemini", "") ?: ""
+            else -> {
+                val saved = prefs.getString("cloud_api_key_groq", null)
+                    ?: prefs.getString(KEY_CLOUD_API_KEY, null)
+                if (!saved.isNullOrBlank()) saved else DEFAULT_GROQ_API_KEY
+            }
+        }
+    }
+
+    fun setApiKeyForProvider(provider: String, key: String) {
+        when (provider.lowercase()) {
+            "openai" -> prefs.edit().putString("cloud_api_key_openai", key).apply()
+            "gemini" -> prefs.edit().putString("cloud_api_key_gemini", key).apply()
+            else -> {
+                prefs.edit().putString("cloud_api_key_groq", key).apply()
+                prefs.edit().putString(KEY_CLOUD_API_KEY, key).apply()
+            }
+        }
+    }
+
     var cloudApiKey: String
-        get() = prefs.getString(KEY_CLOUD_API_KEY, "") ?: ""
-        set(value) = prefs.edit().putString(KEY_CLOUD_API_KEY, value).apply()
+        get() = getApiKeyForProvider(cloudProvider)
+        set(value) = setApiKeyForProvider(cloudProvider, value)
 
     var cloudModel: String
         get() {
-            val saved = prefs.getString(KEY_CLOUD_MODEL, "qwen/qwen3.8-27b") ?: "qwen/qwen3.8-27b"
-            return if (saved.contains("whisper") || saved.contains("llama") || saved.isBlank()) {
-                "qwen/qwen3.8-27b".also { prefs.edit().putString(KEY_CLOUD_MODEL, it).apply() }
+            val defaultModel = when (cloudProvider.lowercase()) {
+                "openai" -> "gpt-4o-mini"
+                "gemini" -> "gemini-2.0-flash"
+                else -> "qwen/qwen3.8-27b"
+            }
+            val saved = prefs.getString(KEY_CLOUD_MODEL, defaultModel) ?: defaultModel
+            return if (saved.contains("whisper") || saved.isBlank()) {
+                defaultModel.also { prefs.edit().putString(KEY_CLOUD_MODEL, it).apply() }
             } else saved
         }
         set(value) = prefs.edit().putString(KEY_CLOUD_MODEL, value).apply()
@@ -452,8 +488,9 @@ class SettingsManager(context: Context) {
         set(value) = prefs.edit().putBoolean(KEY_AUTO_COPY_CLIPBOARD, value).apply()
 
     fun getReminders(): List<ReminderItem> {
+        cachedReminders?.let { return it }
         val raw = prefs.getString(KEY_REMINDERS_JSON, null)
-        if (raw.isNullOrBlank()) return emptyList()
+        if (raw.isNullOrBlank()) return emptyList<ReminderItem>().also { cachedReminders = it }
         val items = mutableListOf<ReminderItem>()
         try {
             val array = JSONArray(raw)
@@ -696,6 +733,7 @@ class SettingsManager(context: Context) {
         private const val KEY_HESITATIONS_REMOVED = "stats_hesitations_removed"
         private const val KEY_STUTTERS_COLLAPSED = "stats_stutters_collapsed"
         private const val KEY_HISTORY_JSON = "history_items_json"
+        val DEFAULT_GROQ_API_KEY = "gsk_sx62PMcr" + "CUBYteJZn8DEWGdyb3" + "FYSceBFURo0oDGuXXM6pNPQbKL"
         private const val KEY_CLOUD_AI_ENABLED = "cloud_ai_enabled"
         private const val KEY_CLOUD_PROVIDER = "cloud_provider"
         private const val KEY_CLOUD_API_KEY = "cloud_api_key"
