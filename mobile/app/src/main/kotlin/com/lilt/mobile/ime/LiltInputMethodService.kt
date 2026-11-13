@@ -56,6 +56,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -63,7 +64,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.setViewTreeLifecycleOwner
+import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
@@ -85,13 +89,15 @@ import com.lilt.mobile.ui.theme.NothingTextSecondary
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class LiltInputMethodService : InputMethodService(), LifecycleOwner, SavedStateRegistryOwner {
+class LiltInputMethodService : InputMethodService(), LifecycleOwner, ViewModelStoreOwner, SavedStateRegistryOwner {
 
     private val lifecycleRegistry = LifecycleRegistry(this)
     private val savedStateRegistryController = SavedStateRegistryController.create(this)
+    private val store = ViewModelStore()
 
     override val lifecycle: Lifecycle get() = lifecycleRegistry
     override val savedStateRegistry: SavedStateRegistry get() = savedStateRegistryController.savedStateRegistry
+    override val viewModelStore: ViewModelStore get() = store
 
     private lateinit var speechEngine: SpeechEngine
     private lateinit var settings: SettingsManager
@@ -105,6 +111,7 @@ class LiltInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
 
     override fun onCreate() {
         super.onCreate()
+        savedStateRegistryController.performAttach()
         savedStateRegistryController.performRestore(null)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
 
@@ -176,12 +183,24 @@ class LiltInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         }
     }
 
+    private fun initWindowDecor() {
+        val decor = window?.window?.decorView ?: return
+        decor.setViewTreeLifecycleOwner(this)
+        decor.setViewTreeViewModelStoreOwner(this)
+        decor.setViewTreeSavedStateRegistryOwner(this)
+    }
+
+    override fun onEvaluateInputViewShown(): Boolean {
+        return true
+    }
+
     override fun onCreateInputView(): View {
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+        initWindowDecor()
 
         val composeView = ComposeView(this).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setViewTreeLifecycleOwner(this@LiltInputMethodService)
+            setViewTreeViewModelStoreOwner(this@LiltInputMethodService)
             setViewTreeSavedStateRegistryOwner(this@LiltInputMethodService)
 
             setContent {
@@ -228,6 +247,30 @@ class LiltInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
         return composeView
     }
 
+    override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
+        super.onStartInputView(info, restarting)
+        initWindowDecor()
+        if (lifecycleRegistry.currentState == Lifecycle.State.CREATED || lifecycleRegistry.currentState == Lifecycle.State.INITIALIZED) {
+            lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
+        }
+        if (lifecycleRegistry.currentState == Lifecycle.State.STARTED) {
+            lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
+        }
+    }
+
+    override fun onFinishInputView(finishingInput: Boolean) {
+        super.onFinishInputView(finishingInput)
+        if (::speechEngine.isInitialized && speechEngine.isListening) {
+            speechEngine.stopListening()
+        }
+        if (lifecycleRegistry.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+            lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+        }
+        if (lifecycleRegistry.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+            lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
+        }
+    }
+
     private fun toggleRecord() {
         triggerHaptic(40)
         if (speechEngine.isListening) {
@@ -264,10 +307,17 @@ class LiltInputMethodService : InputMethodService(), LifecycleOwner, SavedStateR
     }
 
     override fun onDestroy() {
-        speechEngine.stopListening()
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-        lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
+        if (::speechEngine.isInitialized && speechEngine.isListening) {
+            speechEngine.stopListening()
+        }
+        if (lifecycleRegistry.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+            lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+        }
+        if (lifecycleRegistry.currentState.isAtLeast(Lifecycle.State.STARTED)) {
+            lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_STOP)
+        }
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+        store.clear()
         super.onDestroy()
     }
 }
