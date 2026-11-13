@@ -274,6 +274,8 @@ fun MainScreen(
     var reminderScheduledFeedback by remember { mutableStateOf<String?>(null) }
     var historySearchQuery by remember { mutableStateOf("") }
     var autoCopyClipboard by remember { mutableStateOf(settings.autoCopyToClipboard) }
+    var inlineAiCommandsEnabled by remember { mutableStateOf(settings.inlineAiCommandsEnabled) }
+    var appContextAwarenessEnabled by remember { mutableStateOf(settings.appContextAwarenessEnabled) }
     var historySubTab by remember { mutableStateOf("recent") } // "recent" or "notes"
     var isMultiSelect by remember { mutableStateOf(false) }
     var selectedIds by remember { mutableStateOf(setOf<String>()) }
@@ -2856,10 +2858,11 @@ fun MainScreen(
                                 ) {
                                     listOf(
                                         Triple(Icons.AutoMirrored.Filled.Send, "Email", "Write the email to Alex saying the demo is postponed to Thursday at 2 PM"),
+                                        Triple(Icons.Default.Edit, "@fix", "he dont know nothing about the new schedule @fix"),
+                                        Triple(Icons.Default.FlashOn, "@email", "need to reschedule our sprint demo to friday 3pm @email"),
+                                        Triple(Icons.Default.Translate, "Tenglish", "Write the email to Rahul repu morning 10 AM ki quick sprint catchup undi please be on time"),
                                         Triple(Icons.Default.AutoAwesome, "Notes", "Meeting notes team aligned on Q4 goals Shiva is leading Android launch by Friday"),
-                                        Triple(Icons.Default.CheckCircle, "List", "Make a list buy organic milk finish mobile build deploy to prod"),
-                                        Triple(Icons.Default.Edit, "Raw", "Write it raw honestly the server was bugging out yesterday but we fixed it"),
-                                        Triple(Icons.Default.Translate, "Tenglish", "Write the email to Rahul repu morning 10 AM ki quick sprint catchup undi please be on time")
+                                        Triple(Icons.Default.CheckCircle, "List", "Make a list buy organic milk finish mobile build deploy to prod")
                                     ).forEach { (icon, label, phrase) ->
                                         val isSelected = sandboxSelectedPreset == label
                                         Box(
@@ -2977,7 +2980,23 @@ fun MainScreen(
                                                         enabledLanguageCodes
                                                     )
                                                     var result = ""
-                                                    if (settings.cloudAiEnabled && settings.cloudApiKey.isNotBlank()) {
+                                                    val inlineMatch = Regex("(?s)^(.*?)(?:\\s+|\\n)@(fix|email|tenglish|short|bullets|lilt|ai)\\s*$").find(sandboxInput)
+                                                    if (inlineMatch != null && settings.cloudApiKey.isNotBlank()) {
+                                                        val prompt = inlineMatch.groupValues[1].trim()
+                                                        val cmd = inlineMatch.groupValues[2].lowercase()
+                                                        val inlineRes = CloudCleanupEngine.processInlineCommand(
+                                                            promptText = prompt,
+                                                            command = cmd,
+                                                            provider = settings.cloudProvider,
+                                                            apiKey = settings.cloudApiKey,
+                                                            model = settings.cloudModel,
+                                                            languageMode = directive.effectiveLanguageMode,
+                                                            customVocabulary = customVocab
+                                                        )
+                                                        if (inlineRes.isSuccess) {
+                                                            result = inlineRes.getOrThrow()
+                                                        }
+                                                    } else if (settings.cloudAiEnabled && settings.cloudApiKey.isNotBlank()) {
                                                         val cloudRes = CloudCleanupEngine.polish(
                                                             rawText = directive.strippedText,
                                                             provider = settings.cloudProvider,
@@ -4244,6 +4263,32 @@ fun MainScreen(
                         onCheckedChange = { checked ->
                             autoCopyClipboard = checked
                             settings.autoCopyToClipboard = checked
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    NothingSettingToggle(
+                        icon = Icons.Default.Edit,
+                        title = "Inline AI Commands (@fix, @email)",
+                        subtitle = "Type @fix, @email, @tenglish, @short, or @lilt in any app to transform text in place without switching keyboards.",
+                        checked = inlineAiCommandsEnabled,
+                        onCheckedChange = { checked ->
+                            inlineAiCommandsEnabled = checked
+                            settings.inlineAiCommandsEnabled = checked
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    NothingSettingToggle(
+                        icon = Icons.Default.FlashOn,
+                        title = "Smart App Context Awareness",
+                        subtitle = "Adapts tone and structure to active app (Email for Gmail/Outlook, concise chat for WhatsApp/Slack, notes for Keep).",
+                        checked = appContextAwarenessEnabled,
+                        onCheckedChange = { checked ->
+                            appContextAwarenessEnabled = checked
+                            settings.appContextAwarenessEnabled = checked
                         }
                     )
 

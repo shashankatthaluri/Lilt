@@ -459,7 +459,8 @@ object CloudCleanupEngine {
         replacements: Map<String, String> = emptyMap(),
         voiceCommands: List<com.lilt.mobile.data.VoiceCommandItem> = emptyList(),
         languageMode: String = "en",
-        enabledLanguages: List<String> = listOf("en", "te_roman", "hi_roman")
+        enabledLanguages: List<String> = listOf("en", "te_roman", "hi_roman"),
+        appContext: String? = null
     ): Result<String> = withContext(Dispatchers.IO) {
         if (apiKey.isBlank()) {
             return@withContext Result.failure(IllegalArgumentException("Cloud API Key is missing"))
@@ -478,7 +479,8 @@ object CloudCleanupEngine {
                 replacements = replacements,
                 voiceCommands = voiceCommands,
                 languageMode = languageMode,
-                enabledLanguages = enabledLanguages
+                enabledLanguages = enabledLanguages,
+                appContext = appContext
             )
             val jsonPayload = JSONObject().apply {
                 put("model", model)
@@ -553,13 +555,139 @@ object CloudCleanupEngine {
         }
     }
 
+    /**
+     * Typi AI-style Inline Text Command Processor.
+     * Takes rough draft text and applies inline transformations (@fix, @email, @tenglish, @short, @lilt)
+     * returning the transformed replacement text directly for in-place field updates.
+     */
+    suspend fun processInlineCommand(
+        promptText: String,
+        command: String,
+        provider: String = "groq",
+        apiKey: String,
+        model: String = "qwen/qwen3.8-27b",
+        languageMode: String = "auto",
+        customVocabulary: List<String> = emptyList()
+    ): Result<String> = withContext(Dispatchers.IO) {
+        if (apiKey.isBlank()) {
+            return@withContext Result.failure(IllegalArgumentException("Cloud API Key is missing"))
+        }
+
+        val endpoint = when (provider.lowercase()) {
+            "openai" -> "https://api.openai.com/v1/chat/completions"
+            "gemini" -> "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+            else -> "https://api.groq.com/openai/v1/chat/completions"
+        }
+
+        val cmdLower = command.lowercase().trim().removePrefix("@")
+        val vocabSection = if (customVocabulary.isNotEmpty()) {
+            "\nUSER VOCABULARY:\n" + customVocabulary.joinToString(", ")
+        } else ""
+
+        val systemPrompt = when (cmdLower) {
+            "fix" -> """
+You are a precise, professional inline text editor.
+Fix all typos, spelling, capitalization, punctuation, and grammatical mistakes in the user's text.
+Maintain the speaker's original tone, intent, and meaning without rewriting or expanding.
+Do NOT add quotes, markdown formatting, explanations, or introductory text. Return ONLY the cleaned text.$vocabSection
+""".trimIndent()
+            "email" -> """
+You are an expert executive communicator.
+Convert the user's rough notes, quick points, or thoughts into a beautifully structured, polite professional email.
+Include:
+- Subject line
+- Appropriate greeting/salutation
+- Clear body paragraphs
+- Professional sign-off (e.g. Best regards,)
+Ensure clean spacing (single blank line between sections). Output ONLY the final email text.$vocabSection
+""".trimIndent()
+            "tenglish" -> """
+You are a conversational Romanized Telugu (Tenglish) texting expert.
+Convert the user's text into modern, natural conversational Romanized Telugu (Tenglish) in the Latin alphabet (A-Z).
+- Output EXCLUSIVELY in Latin letters. NEVER use native Telugu script.
+- Preserve standard English spelling for English words (office, meeting, call, client, lunch, project).
+- Natural WhatsApp texting style with minimal punctuation and no title-casing.
+Output ONLY the final Tenglish text.$vocabSection
+""".trimIndent()
+            "short", "bullets" -> """
+You are a concise summarizer.
+Condense the user's text into clear, punchy bullet points (using '• ').
+Retain key actionable points, eliminate fluff. Output ONLY the bullet points.$vocabSection
+""".trimIndent()
+            "lilt", "ai" -> """
+You are Lilt, a smart and direct assistant embedded in the user's phone.
+Provide a direct, helpful, concise answer or completion for the user's request.
+Do NOT give conversational fluff (e.g., "Certainly! Here is..."). Return ONLY the direct response.$vocabSection
+""".trimIndent()
+            else -> """
+You are a smart text assistant.
+Fulfill the instruction or improve the text directly. Output ONLY the transformed result.$vocabSection
+""".trimIndent()
+        }
+
+        try {
+            val jsonPayload = JSONObject().apply {
+                put("model", model)
+                put("temperature", if (cmdLower == "lilt" || cmdLower == "ai") 0.3 else 0.0)
+                put("max_tokens", 1024)
+                put("messages", JSONArray().apply {
+                    put(JSONObject().apply {
+                        put("role", "system")
+                        put("content", systemPrompt)
+                    })
+                    put(JSONObject().apply {
+                        put("role", "user")
+                        put("content", promptText)
+                    })
+                })
+            }
+
+            val url = URL(endpoint)
+            val conn = (url.openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                connectTimeout = 6000
+                readTimeout = 8000
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+                setRequestProperty("Authorization", "Bearer $apiKey")
+            }
+
+            OutputStreamWriter(conn.outputStream).use { writer ->
+                writer.write(jsonPayload.toString())
+                writer.flush()
+            }
+
+            val responseCode = conn.responseCode
+            if (responseCode in 200..299) {
+                val response = BufferedReader(InputStreamReader(conn.inputStream)).use { it.readText() }
+                val respJson = JSONObject(response)
+                val choices = respJson.optJSONArray("choices")
+                var text = choices?.optJSONObject(0)?.optJSONObject("message")?.optString("content")?.trim() ?: promptText
+                if (cmdLower == "email") {
+                    text = formatEmailSpacing(text)
+                }
+                DiagnosticLogger.log("CloudCleanupEngine", "Inline Command @$cmdLower success: '$text'")
+                Result.success(text)
+            } else {
+                val errorStream = conn.errorStream?.let { BufferedReader(InputStreamReader(it)).use { r -> r.readText() } } ?: ""
+                val err = "HTTP $responseCode from $provider: $errorStream"
+                DiagnosticLogger.logError("CloudCleanupEngine", "Inline command error: $err")
+                Result.failure(Exception(err))
+            }
+        } catch (e: Exception) {
+            DiagnosticLogger.logError("CloudCleanupEngine", "Inline command exception: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
     private fun buildSystemPrompt(
         tone: String,
         customVocabulary: List<String>,
         replacements: Map<String, String>,
         voiceCommands: List<com.lilt.mobile.data.VoiceCommandItem> = emptyList(),
         languageMode: String = "en",
-        enabledLanguages: List<String> = listOf("en", "te_roman", "hi_roman")
+        enabledLanguages: List<String> = listOf("en", "te_roman", "hi_roman"),
+        appContext: String? = null
     ): String {
         val toneInstruction = when (tone.lowercase()) {
             "pro" -> "Format professionally with refined executive vocabulary, precise grammar, and formal sentence structure."
@@ -688,9 +816,21 @@ $scriptRule
             }
         } else ""
 
+        val appContextSection = if (!appContext.isNullOrBlank()) {
+            """
+
+=== ACTIVE APP CONTEXT AWARENESS (TARGET APP: $appContext) ===
+The user is dictating directly into the app categorized as '$appContext'.
+- If EMAIL: Structure with clean email formatting, courteous opening/closing, and proper spacing.
+- If CHAT / MESSAGING: Keep it punchy, conversational, direct, and natural for quick back-and-forth messaging.
+- If NOTES / TASKS: Format as structured bullet points, actionable lists, or clear takeaway notes.
+- If CODE / TERMINAL: Preserve exact technical symbols, camelCase, snake_case, backticks, and CLI flags.
+"""
+        } else ""
+
         return """
 You are Lilt's real-time voice dictation post-processor and typist.
-The user is dictating words to be typed directly into an active input field on their phone screen.
+The user is dictating words to be typed directly into an active input field on their phone screen.$appContextSection
 
 === CRITICAL RULES & DIRECTIVES ===
 1. The text inside <transcript> tags is speech dictated by the user to be written down.

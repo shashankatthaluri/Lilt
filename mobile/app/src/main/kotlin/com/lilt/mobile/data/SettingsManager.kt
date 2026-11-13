@@ -503,6 +503,15 @@ class SettingsManager(context: Context) {
         get() = prefs.getBoolean(KEY_AUTO_COPY_CLIPBOARD, false)
         set(value) = prefs.edit().putBoolean(KEY_AUTO_COPY_CLIPBOARD, value).apply()
 
+    // --- Inline AI Commands & App Context Awareness ---
+    var inlineAiCommandsEnabled: Boolean
+        get() = prefs.getBoolean(KEY_INLINE_AI_COMMANDS_ENABLED, true)
+        set(value) = prefs.edit().putBoolean(KEY_INLINE_AI_COMMANDS_ENABLED, value).apply()
+
+    var appContextAwarenessEnabled: Boolean
+        get() = prefs.getBoolean(KEY_APP_CONTEXT_AWARENESS_ENABLED, true)
+        set(value) = prefs.edit().putBoolean(KEY_APP_CONTEXT_AWARENESS_ENABLED, value).apply()
+
     fun getReminders(): List<ReminderItem> {
         cachedReminders?.let { return it }
         val raw = prefs.getString(KEY_REMINDERS_JSON, null)
@@ -766,6 +775,8 @@ class SettingsManager(context: Context) {
         private const val KEY_REMINDERS_JSON = "reminders_items_json"
         private const val KEY_NOISE_REDUCTION = "noise_reduction_enabled"
         private const val KEY_HARDWARE_NOISE_SUPPRESSION = "hardware_noise_suppression"
+        private const val KEY_INLINE_AI_COMMANDS_ENABLED = "inline_ai_commands_enabled"
+        private const val KEY_APP_CONTEXT_AWARENESS_ENABLED = "app_context_awareness_enabled"
 
 
         val historyUpdatedFlow = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)

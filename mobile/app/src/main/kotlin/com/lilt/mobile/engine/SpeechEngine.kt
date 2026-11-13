@@ -388,6 +388,13 @@ class SpeechEngine(private val context: Context) {
                 val regionalKeywords = listOf("Gachibowli", "Hitec City", "Madhapur", "Jubilee Hills", "Banjara Hills", "Kondapur", "Indiranagar", "Koramangala", "Whitefield", "Venkatesh", "Pranay", "Anirudh")
                 val customVocabList = (settings.customVocabulary.split(",").map { it.trim() }.filter { it.isNotEmpty() } + historyNames + regionalKeywords).distinct()
                 val replacementMap = settings.getReplacements().associate { it.heard to it.replacement }
+                val detectedAppContext = if (settings.appContextAwarenessEnabled) {
+                    val category = com.lilt.mobile.accessibility.LiltAccessibilityService.currentAppCategory
+                    val pkg = com.lilt.mobile.accessibility.LiltAccessibilityService.currentForegroundPackage
+                    if (category != com.lilt.mobile.accessibility.LiltAccessibilityService.AppContextCategory.GENERAL) {
+                        "${category.label} ($pkg)"
+                    } else null
+                } else null
 
                 var cleanedText = ""
                 if (settings.cloudApiKey.isNotBlank()) {
@@ -401,7 +408,8 @@ class SpeechEngine(private val context: Context) {
                         replacements = replacementMap,
                         voiceCommands = settings.getVoiceCommands(),
                         languageMode = effectiveLangMode,
-                        enabledLanguages = enabledCodes
+                        enabledLanguages = enabledCodes,
+                        appContext = detectedAppContext
                     )
 
                     if (polishResult.isSuccess) {
@@ -555,6 +563,14 @@ class SpeechEngine(private val context: Context) {
                             var cleanedText = ""
                             if (settings.cloudAiEnabled && settings.cloudApiKey.isNotBlank()) {
                                 listener?.onPartialResult("Polishing with ${settings.cloudProvider.uppercase()}…")
+                                val detectedAppContext = if (settings.appContextAwarenessEnabled) {
+                                    val category = com.lilt.mobile.accessibility.LiltAccessibilityService.currentAppCategory
+                                    val pkg = com.lilt.mobile.accessibility.LiltAccessibilityService.currentForegroundPackage
+                                    if (category != com.lilt.mobile.accessibility.LiltAccessibilityService.AppContextCategory.GENERAL) {
+                                        "${category.label} ($pkg)"
+                                    } else null
+                                } else null
+
                                 val cloudResult = CloudCleanupEngine.polish(
                                     rawText = textToClean,
                                     provider = settings.cloudProvider,
@@ -565,7 +581,8 @@ class SpeechEngine(private val context: Context) {
                                     replacements = replacementMap,
                                     voiceCommands = settings.getVoiceCommands(),
                                     languageMode = effectiveLangMode,
-                                    enabledLanguages = enabledCodes
+                                    enabledLanguages = enabledCodes,
+                                    appContext = detectedAppContext
                                 )
                                 if (cloudResult.isSuccess) {
                                     cleanedText = cloudResult.getOrThrow()

@@ -8,6 +8,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.provider.Settings
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
@@ -15,12 +17,35 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
 import com.lilt.mobile.data.DiagnosticLogger
 import com.lilt.mobile.data.SettingsManager
+import com.lilt.mobile.engine.CloudCleanupEngine
 import com.lilt.mobile.overlay.LiltOverlayService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class LiltAccessibilityService : AccessibilityService() {
 
+    enum class AppContextCategory(val label: String) {
+        GENERAL("General"),
+        EMAIL("Email"),
+        CHAT("Chat & Messaging"),
+        NOTES("Notes & Tasks"),
+        DEV_CODE("Code & Terminal")
+    }
+
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val handler = Handler(Looper.getMainLooper())
     private val recheckRunnable = Runnable { checkKeyboardVisibility() }
+    private var vibrator: Vibrator? = null
+    private var isTransforming = false
+
+    override fun onCreate() {
+        super.onCreate()
+        vibrator = getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+    }
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -34,20 +59,30 @@ class LiltAccessibilityService : AccessibilityService() {
         if (event == null) return
 
         val settings = SettingsManager.getInstance(applicationContext)
-        if (!settings.floatingPillEnabled) return
 
         val pkg = event.packageName?.toString()?.lowercase() ?: ""
-        if (pkg.isNotEmpty() && !pkg.contains("com.lilt")) {
+        if (pkg.isNotEmpty() && !pkg.contains("com.lilt") && !isKeyboardPackage(pkg)) {
+            currentForegroundPackage = pkg
+            currentAppCategory = classifyApp(pkg)
             val isBanking = isBankingPackage(pkg)
             LiltOverlayService.instance?.setBankingSuppressed(isBanking)
             if (isBanking) return
         }
 
+        if (!settings.floatingPillEnabled && !settings.inlineAiCommandsEnabled) return
+
         when (event.eventType) {
+            AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED -> {
+                if (settings.inlineAiCommandsEnabled && !isTransforming) {
+                    handleInlineTextCommand(event, settings)
+                }
+            }
             AccessibilityEvent.TYPE_WINDOWS_CHANGED,
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED,
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
-                checkKeyboardVisibility()
+                if (settings.floatingPillEnabled) {
+                    checkKeyboardVisibility()
+                }
             }
             AccessibilityEvent.TYPE_VIEW_FOCUSED,
             AccessibilityEvent.TYPE_VIEW_CLICKED -> {
@@ -56,12 +91,94 @@ class LiltAccessibilityService : AccessibilityService() {
                         lastFocusedNode = source
                     }
                 }
-                checkKeyboardVisibility()
-                handler.removeCallbacks(recheckRunnable)
-                handler.postDelayed(recheckRunnable, 180)
-                handler.postDelayed(recheckRunnable, 380)
+                if (settings.floatingPillEnabled) {
+                    checkKeyboardVisibility()
+                    handler.removeCallbacks(recheckRunnable)
+                    handler.postDelayed(recheckRunnable, 180)
+                    handler.postDelayed(recheckRunnable, 380)
+                }
             }
         }
+    }
+
+    private fun handleInlineTextCommand(event: AccessibilityEvent, settings: SettingsManager) {
+        if (event.isPassword) return
+        val source = event.source ?: lastFocusedNode ?: return
+        if (!source.isEditable || source.isPassword) return
+
+        val text = source.text?.toString() ?: event.text.joinToString(" ")
+        if (text.length < 5 || !text.contains("@")) return
+
+        val match = INLINE_COMMAND_REGEX.find(text) ?: return
+        val rawPrompt = match.groupValues[1].trim()
+        val command = match.groupValues[2].lowercase()
+        if (rawPrompt.isBlank()) return
+
+        isTransforming = true
+        triggerHaptic(30)
+        DiagnosticLogger.log(TAG, "Inline AI Command detected: @$command for prompt length ${rawPrompt.length}")
+
+        serviceScope.launch(Dispatchers.IO) {
+            try {
+                val customVocabList = settings.customVocabulary.split(",")
+                    .map { it.trim() }
+                    .filter { it.isNotEmpty() }
+
+                val result = CloudCleanupEngine.processInlineCommand(
+                    promptText = rawPrompt,
+                    command = command,
+                    provider = settings.cloudProvider,
+                    apiKey = settings.cloudApiKey,
+                    model = settings.cloudModel,
+                    languageMode = settings.activeLanguageMode,
+                    customVocabulary = customVocabList
+                )
+
+                if (result.isSuccess) {
+                    val transformed = result.getOrThrow()
+                    withContext(Dispatchers.Main) {
+                        val activeNode = if (source.refresh() && source.isEditable) {
+                            source
+                        } else {
+                            findFocusedEditable(rootInActiveWindow) ?: source
+                        }
+                        val bundle = Bundle().apply {
+                            putCharSequence(
+                                AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,
+                                transformed
+                            )
+                        }
+                        val success = activeNode.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, bundle)
+                        if (success) {
+                            triggerHaptic(50)
+                            val selectionBundle = Bundle().apply {
+                                putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, transformed.length)
+                                putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, transformed.length)
+                            }
+                            activeNode.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, selectionBundle)
+                            DiagnosticLogger.log(TAG, "Inline AI Command @$command successfully replaced text.")
+                        }
+                    }
+                } else {
+                    DiagnosticLogger.logError(TAG, "Inline command failed: ${result.exceptionOrNull()?.message}")
+                }
+            } catch (e: Exception) {
+                DiagnosticLogger.logError(TAG, "Inline AI Command error: ${e.message}", e)
+            } finally {
+                handler.postDelayed({ isTransforming = false }, 500)
+            }
+        }
+    }
+
+    private fun triggerHaptic(durationMs: Long = 40) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator?.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                vibrator?.vibrate(durationMs)
+            }
+        } catch (_: Exception) {}
     }
 
     private fun checkKeyboardVisibility() {
@@ -112,6 +229,7 @@ class LiltAccessibilityService : AccessibilityService() {
             instance = null
         }
         lastFocusedNode = null
+        serviceScope.cancel()
         super.onDestroy()
     }
 
@@ -126,6 +244,42 @@ class LiltAccessibilityService : AccessibilityService() {
 
     companion object {
         private const val TAG = "LiltAccessibility"
+
+        private val INLINE_COMMAND_REGEX = Regex("(?s)^(.*?)(?:\\s+|\\n)@(fix|email|tenglish|short|bullets|lilt|ai)\\s*$")
+
+        @Volatile
+        var currentForegroundPackage: String = ""
+            private set
+
+        @Volatile
+        var currentAppCategory: AppContextCategory = AppContextCategory.GENERAL
+            private set
+
+        fun classifyApp(pkg: String): AppContextCategory {
+            val lower = pkg.lowercase()
+            return when {
+                lower.contains("gm") || lower.contains("email") || lower.contains("outlook") ||
+                lower.contains("mail") || lower.contains("k9") || lower.contains("proton") -> AppContextCategory.EMAIL
+
+                lower.contains("whatsapp") || lower.contains("telegram") || lower.contains("slack") ||
+                lower.contains("discord") || lower.contains("messaging") || lower.contains("mms") ||
+                lower.contains("signal") || lower.contains("orca") || lower.contains("instagram") -> AppContextCategory.CHAT
+
+                lower.contains("keep") || lower.contains("notion") || lower.contains("obsidian") ||
+                lower.contains("note") || lower.contains("todo") || lower.contains("task") ||
+                lower.contains("evernote") -> AppContextCategory.NOTES
+
+                lower.contains("termux") || lower.contains("github") || lower.contains("code") ||
+                lower.contains("terminal") -> AppContextCategory.DEV_CODE
+
+                else -> AppContextCategory.GENERAL
+            }
+        }
+
+        fun isKeyboardPackage(pkg: String): Boolean {
+            val lower = pkg.lowercase()
+            return KNOWN_KEYBOARD_PACKAGES.any { lower.contains(it) } || lower.contains("inputmethod")
+        }
 
         private val KNOWN_KEYBOARD_PACKAGES = listOf(
             "com.google.android.inputmethod",     // Gboard (Pixel, Nothing, Motorola, Xiaomi)
